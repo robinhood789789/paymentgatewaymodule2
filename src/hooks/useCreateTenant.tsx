@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { toast } from "sonner";
 
 interface CreateTenantInput {
@@ -32,7 +32,7 @@ export const useCreateTenant = () => {
     mutationFn: async (input: CreateTenantInput) => {
       console.log('Calling create-tenant-on-signup function');
       
-      const { data, error } = await supabase.functions.invoke('create-tenant-on-signup', {
+      const { data, error } = await invokeFunctionWithTenant('create-tenant-on-signup', {
         body: input,
       });
 

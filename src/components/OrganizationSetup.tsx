@@ -28,11 +28,19 @@ export const OrganizationSetup = () => {
       return;
     }
 
-    createTenantMutation.mutate({
-      user_id: user.id,
-      email: user.email!,
-      business_name: businessName.trim(),
-    });
+    createTenantMutation.mutate(
+      {
+        user_id: user.id,
+        email: user.email!,
+        business_name: businessName.trim(),
+      },
+      {
+        onSuccess: () => {
+          // Refresh the page to update tenant switcher
+          window.location.reload();
+        },
+      }
+    );
   };
 
   return (

@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -140,8 +141,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <DashboardSidebar />
         
         <div className="flex-1 flex flex-col">
-          <header className="h-14 border-b border-border bg-background flex items-center px-4">
+          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4">
             <SidebarTrigger />
+            <TenantSwitcher />
           </header>
           
           <main className="flex-1 overflow-auto">
