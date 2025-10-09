@@ -16,6 +16,8 @@ import Reports from "./pages/Reports";
 import AdminUsers from "./pages/AdminUsers";
 import Status from "./pages/Status";
 import NotFound from "./pages/NotFound";
+import PayLink from "./pages/PayLink";
+import PayLinkSuccess from "./pages/PayLinkSuccess";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,10 @@ const App = () => (
             <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
             
             <Route path="/status" element={<Status />} />
+            
+            {/* Public payment link routes */}
+            <Route path="/pay/:slug" element={<PayLink />} />
+            <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />
             
             <Route
               path="/dashboard"

@@ -1,244 +1,292 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, Plus, Copy, ExternalLink, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { toast } from "sonner";
+import { Plus, Copy, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { format } from "date-fns";
 
-interface Link {
+interface PaymentLink {
   id: string;
-  title: string;
-  url: string;
-  clicks: number;
-  status: "active" | "inactive";
-  createdAt: Date;
+  slug: string;
+  amount: number;
+  currency: string;
+  reference: string | null;
+  status: string;
+  expires_at: string | null;
+  usage_limit: number | null;
+  used_count: number;
+  created_at: string;
 }
 
 const Links = () => {
-  const [links, setLinks] = useState<Link[]>([
-    {
-      id: "1",
-      title: "Documentation",
-      url: "https://docs.example.com",
-      clicks: 1234,
-      status: "active",
-      createdAt: new Date("2024-01-15"),
-    },
-    {
-      id: "2",
-      title: "API Reference",
-      url: "https://api.example.com",
-      clicks: 856,
-      status: "active",
-      createdAt: new Date("2024-02-01"),
-    },
-    {
-      id: "3",
-      title: "Support Portal",
-      url: "https://support.example.com",
-      clicks: 432,
-      status: "inactive",
-      createdAt: new Date("2024-03-10"),
-    },
-  ]);
-
-  const [newLink, setNewLink] = useState({ title: "", url: "" });
+  const { activeTenantId } = useTenantSwitcher();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    amount: "",
+    currency: "thb",
+    reference: "",
+    expiresAt: "",
+    usageLimit: "",
+  });
 
-  const handleAddLink = () => {
-    if (!newLink.title || !newLink.url) {
-      toast.error("Please fill in all fields");
+  // Fetch payment links
+  const { data: links, isLoading } = useQuery<PaymentLink[]>({
+    queryKey: ["payment-links", activeTenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_links")
+        .select("*")
+        .eq("tenant_id", activeTenantId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Create payment link mutation
+  const createLinkMutation = useMutation({
+    mutationFn: async (body: any) => {
+      const { data, error } = await invokeFunctionWithTenant("payment-links-create", { body });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-links"] });
+      toast.success("Payment link created successfully");
+      setIsDialogOpen(false);
+      setFormData({
+        amount: "",
+        currency: "thb",
+        reference: "",
+        expiresAt: "",
+        usageLimit: "",
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create payment link");
+    },
+  });
+
+  const handleCreateLink = () => {
+    if (!formData.amount) {
+      toast.error("Amount is required");
       return;
     }
 
-    const link: Link = {
-      id: Date.now().toString(),
-      title: newLink.title,
-      url: newLink.url,
-      clicks: 0,
-      status: "active",
-      createdAt: new Date(),
-    };
+    const amountInCents = Math.round(parseFloat(formData.amount) * 100);
 
-    setLinks([link, ...links]);
-    setNewLink({ title: "", url: "" });
-    setIsDialogOpen(false);
-    toast.success("Link created successfully!");
+    createLinkMutation.mutate({
+      amount: amountInCents,
+      currency: formData.currency,
+      reference: formData.reference || null,
+      expiresAt: formData.expiresAt || null,
+      usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
+    });
   };
 
-  const handleCopyLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard!");
+  const handleCopyLink = (slug: string) => {
+    const link = `${window.location.origin}/pay/${slug}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link copied to clipboard");
   };
 
-  const handleDeleteLink = (id: string) => {
-    setLinks(links.filter((link) => link.id !== id));
-    toast.success("Link deleted successfully!");
+  const handleOpenLink = (slug: string) => {
+    window.open(`/pay/${slug}`, "_blank");
   };
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Links</h1>
-            <p className="text-muted-foreground">Manage your shortened links and track analytics</p>
+            <h1 className="text-3xl font-bold">Payment Links</h1>
+            <p className="text-muted-foreground">Create and manage payment links</p>
           </div>
-          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="gradient" className="gap-2">
-                <Plus className="w-4 h-4" />
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
                 Create Link
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Link</DialogTitle>
+                <DialogTitle>Create Payment Link</DialogTitle>
                 <DialogDescription>
-                  Add a new shortened link to track clicks and engagement
+                  Generate a shareable payment link for your customers
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="amount">Amount *</Label>
                   <Input
-                    id="title"
-                    placeholder="My Awesome Link"
-                    value={newLink.title}
-                    onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="100.00"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="url">Destination URL</Label>
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
                   <Input
-                    id="url"
-                    placeholder="https://example.com"
-                    value={newLink.url}
-                    onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                    id="currency"
+                    value={formData.currency}
+                    onChange={(e) =>
+                      setFormData({ ...formData, currency: e.target.value })
+                    }
                   />
                 </div>
+                <div>
+                  <Label htmlFor="reference">Reference (optional)</Label>
+                  <Input
+                    id="reference"
+                    placeholder="Order #123"
+                    value={formData.reference}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reference: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="expiresAt">Expires At (optional)</Label>
+                  <Input
+                    id="expiresAt"
+                    type="datetime-local"
+                    value={formData.expiresAt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, expiresAt: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="usageLimit">Usage Limit (optional)</Label>
+                  <Input
+                    id="usageLimit"
+                    type="number"
+                    placeholder="10"
+                    value={formData.usageLimit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, usageLimit: e.target.value })
+                    }
+                  />
+                </div>
+                <Button
+                  onClick={handleCreateLink}
+                  className="w-full"
+                  disabled={createLinkMutation.isPending}
+                >
+                  {createLinkMutation.isPending ? "Creating..." : "Create Link"}
+                </Button>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="gradient" onClick={handleAddLink}>
-                  Create Link
-                </Button>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Links List */}
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        ) : !links || links.length === 0 ? (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Links
-              </CardTitle>
-              <LinkIcon className="w-4 h-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{links.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {links.filter((l) => l.status === "active").length} active
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <LinkIcon className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium mb-2">No payment links yet</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Create your first payment link to get started
               </p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Link
+              </Button>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Clicks
-              </CardTitle>
-              <ExternalLink className="w-4 h-4 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {links.reduce((acc, link) => acc + link.clicks, 0)}
-              </div>
-              <p className="text-xs text-success">
-                +12% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Avg. Clicks/Link
-              </CardTitle>
-              <LinkIcon className="w-4 h-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Math.round(links.reduce((acc, link) => acc + link.clicks, 0) / links.length)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Per link
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Links</CardTitle>
-            <CardDescription>All your shortened links in one place</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {links.map((link) => (
-                <div
-                  key={link.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{link.title}</h3>
-                      <Badge variant={link.status === "active" ? "default" : "secondary"}>
-                        {link.status}
-                      </Badge>
+        ) : (
+          <div className="space-y-4">
+            {links.map((link) => (
+              <Card key={link.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl">
+                        {link.currency.toUpperCase()} {(link.amount / 100).toFixed(2)}
+                      </CardTitle>
+                      <CardDescription>
+                        {link.reference && <span className="font-mono">{link.reference}</span>}
+                      </CardDescription>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{link.url}</p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{link.clicks} clicks</span>
-                      <span>Created {link.createdAt.toLocaleDateString()}</span>
+                    <Badge variant={link.status === "active" ? "default" : "secondary"}>
+                      {link.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <code className="bg-muted px-2 py-1 rounded text-xs flex-1">
+                        {window.location.origin}/pay/{link.slug}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopyLink(link.slug)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenLink(link.slug)}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-4 text-sm text-muted-foreground">
+                      <div>
+                        Used: {link.used_count}
+                        {link.usage_limit && ` / ${link.usage_limit}`}
+                      </div>
+                      {link.expires_at && (
+                        <div>
+                          Expires: {format(new Date(link.expires_at), "MMM d, yyyy HH:mm")}
+                        </div>
+                      )}
+                      <div>
+                        Created: {format(new Date(link.created_at), "MMM d, yyyy")}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCopyLink(link.url)}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => window.open(link.url, "_blank")}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteLink(link.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
