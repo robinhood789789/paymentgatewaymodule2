@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.create-tenant-on-signup]
 verify_jwt = false
+
+[functions.api-keys-create]
+verify_jwt = false
+
+[functions.api-keys-revoke]
+verify_jwt = false
+
+[functions.webhooks-test]
+verify_jwt = false

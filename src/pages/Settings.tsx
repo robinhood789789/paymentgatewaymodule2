@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Shield } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Mail, Shield, Key, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { OrganizationSetup } from "@/components/OrganizationSetup";
+import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
+import { WebhooksManager } from "@/components/settings/WebhooksManager";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
@@ -67,7 +70,7 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">ตั้งค่า</h1>
           <p className="text-muted-foreground">จัดการข้อมูลส่วนตัวและความปลอดภัย</p>
@@ -79,106 +82,139 @@ const Settings = () => {
           </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>ข้อมูลโปรไฟล์</CardTitle>
-            <CardDescription>อัพเดทข้อมูลส่วนตัวของคุณ</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20">
-                <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                  {profile?.full_name ? getInitials(profile.full_name) : <User className="w-8 h-8" />}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{profile?.full_name || "ยังไม่ได้ตั้งชื่อ"}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-              </div>
-            </div>
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile" className="gap-2">
+              <User className="w-4 h-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-2">
+              <Shield className="w-4 h-4" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="api-keys" className="gap-2">
+              <Key className="w-4 h-4" />
+              API Keys
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="gap-2">
+              <Webhook className="w-4 h-4" />
+              Webhooks
+            </TabsTrigger>
+          </TabsList>
 
-            <Separator />
+          <TabsContent value="profile" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>ข้อมูลโปรไฟล์</CardTitle>
+                <CardDescription>อัพเดทข้อมูลส่วนตัวของคุณ</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-20 h-20">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                      {profile?.full_name ? getInitials(profile.full_name) : <User className="w-8 h-8" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{profile?.full_name || "ยังไม่ได้ตั้งชื่อ"}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
+                </div>
 
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">ชื่อ-นามสกุล</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    placeholder="นายสมชาย ใจดี"
-                    className="pl-10"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                </div>
-              </div>
+                <Separator />
 
-              <div className="space-y-2">
-                <Label htmlFor="email">อีเมล</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    className="pl-10"
-                    value={user?.email || ""}
-                    disabled
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  ไม่สามารถเปลี่ยนอีเมลได้ในขณะนี้
-                </p>
-              </div>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">ชื่อ-นามสกุล</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="fullName"
+                        placeholder="นายสมชาย ใจดี"
+                        className="pl-10"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-              <Button type="submit" variant="gradient" disabled={isUpdating}>
-                {isUpdating ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">อีเมล</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        className="pl-10"
+                        value={user?.email || ""}
+                        disabled
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      ไม่สามารถเปลี่ยนอีเมลได้ในขณะนี้
+                    </p>
+                  </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>ความปลอดภัย</CardTitle>
-            <CardDescription>จัดการการตั้งค่าความปลอดภัย</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">เปลี่ยนรหัสผ่าน</p>
-                  <p className="text-sm text-muted-foreground">
-                    อัพเดทรหัสผ่านเป็นระยะเพื่อความปลอดภัย
-                  </p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm">
-                เปลี่ยน
-              </Button>
-            </div>
+                  <Button type="submit" variant="gradient" disabled={isUpdating}>
+                    {isUpdating ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-success" />
+          <TabsContent value="security" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>ความปลอดภัย</CardTitle>
+                <CardDescription>จัดการการตั้งค่าความปลอดภัย</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">เปลี่ยนรหัสผ่าน</p>
+                      <p className="text-sm text-muted-foreground">
+                        อัพเดทรหัสผ่านเป็นระยะเพื่อความปลอดภัย
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    เปลี่ยน
+                  </Button>
                 </div>
-                <div>
-                  <p className="font-medium">Two-Factor Authentication</p>
-                  <p className="text-sm text-muted-foreground">
-                    เพิ่มความปลอดภัยด้วย 2FA
-                  </p>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-success" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Two-Factor Authentication</p>
+                      <p className="text-sm text-muted-foreground">
+                        เพิ่มความปลอดภัยด้วย 2FA
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" disabled>
+                    เร็วๆ นี้
+                  </Button>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                เร็วๆ นี้
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="api-keys" className="space-y-4">
+            <ApiKeysManager />
+          </TabsContent>
+
+          <TabsContent value="webhooks" className="space-y-4">
+            <WebhooksManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
