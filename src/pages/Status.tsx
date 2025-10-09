@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Database, Zap, Globe } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 
 interface ServiceStatus {
   name: string;
@@ -10,15 +12,62 @@ interface ServiceStatus {
   responseTime?: number;
 }
 
+interface HealthCheckResponse {
+  status: string;
+  timestamp: string;
+  services: {
+    database: string;
+    api: string;
+    edge_functions: string;
+  };
+  version: string;
+}
+
 const Status = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Query health check endpoint
+  const { data: healthCheck, isLoading, error } = useQuery({
+    queryKey: ["health-check"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke<HealthCheckResponse>("health");
+      
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   const [services, setServices] = useState<ServiceStatus[]>([
     { name: "Frontend", status: "operational", responseTime: 45 },
     { name: "API", status: "operational", responseTime: 120 },
     { name: "Database", status: "operational", responseTime: 15 },
-    { name: "Authentication", status: "operational", responseTime: 80 },
+    { name: "Edge Functions", status: "operational", responseTime: 80 },
   ]);
 
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Update services based on health check
+  useEffect(() => {
+    if (healthCheck) {
+      setServices([
+        { name: "Frontend", status: "operational", responseTime: 45 },
+        { 
+          name: "API", 
+          status: healthCheck.services.api === "operational" ? "operational" : "down",
+          responseTime: 120 
+        },
+        { 
+          name: "Database", 
+          status: healthCheck.services.database === "operational" ? "operational" : "down",
+          responseTime: 15 
+        },
+        { 
+          name: "Edge Functions", 
+          status: healthCheck.services.edge_functions === "operational" ? "operational" : "down",
+          responseTime: 80 
+        },
+      ]);
+    }
+  }, [healthCheck]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -113,19 +162,69 @@ const Status = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Health Check</CardTitle>
-            <CardDescription>Frontend application health status</CardDescription>
+            <CardTitle>Backend Connection</CardTitle>
+            <CardDescription>Lovable Cloud connectivity status</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-success/10 mb-4">
-                <CheckCircle2 className="w-10 h-10 text-success" />
+            {isLoading ? (
+              <div className="text-center py-8">
+                <Clock className="w-10 h-10 mx-auto mb-4 animate-spin text-muted-foreground" />
+                <p className="text-muted-foreground">Checking connection...</p>
               </div>
-              <h2 className="text-3xl font-bold text-success mb-2">OK</h2>
-              <p className="text-muted-foreground">
-                Frontend is running and responsive
-              </p>
-            </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-4">
+                  <XCircle className="w-10 h-10 text-destructive" />
+                </div>
+                <h2 className="text-2xl font-bold text-destructive mb-2">Connection Failed</h2>
+                <p className="text-muted-foreground">Unable to reach backend services</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-success/10 border border-success/20">
+                  <div className="flex items-center gap-3">
+                    <Database className="w-6 h-6 text-success" />
+                    <div>
+                      <h3 className="font-semibold">Database</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Status: {healthCheck?.services.database}
+                      </p>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-6 h-6 text-success" />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-6 h-6 text-primary" />
+                    <div>
+                      <h3 className="font-semibold">API</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Status: {healthCheck?.services.api}
+                      </p>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg bg-accent/10 border border-accent/20">
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-6 h-6 text-accent" />
+                    <div>
+                      <h3 className="font-semibold">Edge Functions</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Status: {healthCheck?.services.edge_functions}
+                      </p>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-6 h-6 text-accent" />
+                </div>
+
+                <div className="text-center pt-4 text-xs text-muted-foreground">
+                  Backend Version: {healthCheck?.version} • Last checked: {healthCheck && format(new Date(healthCheck.timestamp), "HH:mm:ss")}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
