@@ -48,5 +48,8 @@ verify_jwt = false
 [functions.payment-links-checkout]
 verify_jwt = false
 
+[functions.payment-links-disable]
+verify_jwt = true
+
 [functions.refunds-create]
 verify_jwt = false
