@@ -1,10 +1,15 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { RequireTenant } from "@/components/RequireTenant";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { ActivityLog } from "@/components/security/ActivityLog";
 
 const Reports = () => {
+  const { tenantId } = useAuth();
+  
   const revenueData = [
     { month: "Jan", revenue: 4500, users: 120 },
     { month: "Feb", revenue: 5200, users: 145 },
@@ -26,7 +31,8 @@ const Reports = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <RequireTenant>
+        <div className="p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
           <p className="text-muted-foreground">Comprehensive insights into your business performance</p>
@@ -99,6 +105,7 @@ const Reports = () => {
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="users">User Activity</TabsTrigger>
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
+            <TabsTrigger value="activity">Activity Log</TabsTrigger>
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-4">
@@ -182,8 +189,13 @@ const Reports = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="activity" className="space-y-4">
+            {tenantId && <ActivityLog tenantId={tenantId} />}
+          </TabsContent>
         </Tabs>
-      </div>
+        </div>
+      </RequireTenant>
     </DashboardLayout>
   );
 };

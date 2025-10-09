@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { OrganizationSetup } from "@/components/OrganizationSetup";
 import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
+import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
@@ -164,47 +165,7 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>ความปลอดภัย</CardTitle>
-                <CardDescription>จัดการการตั้งค่าความปลอดภัย</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">เปลี่ยนรหัสผ่าน</p>
-                      <p className="text-sm text-muted-foreground">
-                        อัพเดทรหัสผ่านเป็นระยะเพื่อความปลอดภัย
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    เปลี่ยน
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-success" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Two-Factor Authentication</p>
-                      <p className="text-sm text-muted-foreground">
-                        เพิ่มความปลอดภัยด้วย 2FA
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" disabled>
-                    เร็วๆ นี้
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TwoFactorSetup />
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">

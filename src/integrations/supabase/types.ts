@@ -158,6 +158,30 @@ export type Database = {
           },
         ]
       }
+      csrf_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string | null
@@ -402,6 +426,9 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          totp_backup_codes: string[] | null
+          totp_enabled: boolean | null
+          totp_secret: string | null
           updated_at: string
         }
         Insert: {
@@ -410,6 +437,9 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          totp_backup_codes?: string[] | null
+          totp_enabled?: boolean | null
+          totp_secret?: string | null
           updated_at?: string
         }
         Update: {
@@ -418,6 +448,9 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          totp_backup_codes?: string[] | null
+          totp_enabled?: boolean | null
+          totp_secret?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -446,6 +479,36 @@ export type Database = {
           provider?: string
           received_at?: string | null
           type?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          created_at: string | null
+          endpoint: string
+          id: string
+          identifier: string
+          updated_at: string | null
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          identifier: string
+          updated_at?: string | null
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          identifier?: string
+          updated_at?: string | null
+          window_start?: string
         }
         Relationships: []
       }
@@ -562,22 +625,28 @@ export type Database = {
       tenant_settings: {
         Row: {
           created_at: string | null
+          enforce_2fa_roles: Json | null
           features: Json | null
           provider: string
+          security_headers: Json | null
           tenant_id: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          enforce_2fa_roles?: Json | null
           features?: Json | null
           provider?: string
+          security_headers?: Json | null
           tenant_id: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          enforce_2fa_roles?: Json | null
           features?: Json | null
           provider?: string
+          security_headers?: Json | null
           tenant_id?: string
           updated_at?: string | null
         }

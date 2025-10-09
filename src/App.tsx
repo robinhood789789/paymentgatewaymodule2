@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { useCSRF } from "@/hooks/useCSRF";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
@@ -21,6 +22,74 @@ import PayLinkSuccess from "./pages/PayLinkSuccess";
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  useCSRF(); // Initialize CSRF protection
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth/sign-in" element={<SignIn />} />
+      <Route path="/auth/sign-up" element={<SignUp />} />
+      <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
+      
+      <Route path="/status" element={<Status />} />
+      
+      <Route path="/pay/:slug" element={<PayLink />} />
+      <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />
+      
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <Payments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/links"
+        element={
+          <ProtectedRoute>
+            <Links />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute requireAdmin>
+            <AdminUsers />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -28,70 +97,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth/sign-in" element={<SignIn />} />
-            <Route path="/auth/sign-up" element={<SignUp />} />
-            {/* Redirect old /auth to /auth/sign-in */}
-            <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
-            
-            <Route path="/status" element={<Status />} />
-            
-            {/* Public payment link routes */}
-            <Route path="/pay/:slug" element={<PayLink />} />
-            <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />
-            
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments"
-              element={
-                <ProtectedRoute>
-                  <Payments />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/links"
-              element={
-                <ProtectedRoute>
-                  <Links />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AdminUsers />
-                </ProtectedRoute>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppContent />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
