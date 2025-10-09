@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: error.message,
       });
     } else {
-      toast.success("เข้าสู่ระบบสำเร็จ!");
+      toast.success("Sign in successful!");
       navigate("/dashboard");
     }
 
@@ -110,12 +110,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
-      toast.error("สมัครสมาชิกไม่สำเร็จ", {
+      toast.error("Sign up failed", {
         description: error.message,
       });
     } else {
-      toast.success("สมัครสมาชิกสำเร็จ!", {
-        description: "กำลังเข้าสู่ระบบ...",
+      toast.success("Sign up successful!", {
+        description: "Logging you in...",
       });
       navigate("/dashboard");
     }
@@ -127,8 +127,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setIsAdmin(false);
     setUserRole(null);
-    toast.success("ออกจากระบบสำเร็จ");
-    navigate("/auth");
+    toast.success("Signed out successfully");
+    navigate("/auth/sign-in");
   };
 
   return (

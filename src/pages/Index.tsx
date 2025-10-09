@@ -71,10 +71,10 @@ const Index = () => {
             <Button
               variant="gradient"
               size="lg"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth/sign-up")}
               className="gap-2"
             >
-              เริ่มใช้งานเลย
+              Get Started
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -84,7 +84,7 @@ const Index = () => {
               <ProductCard
                 key={index}
                 {...product}
-                onSelect={() => navigate("/auth")}
+                onSelect={() => navigate("/auth/sign-up")}
               />
             ))}
           </div>

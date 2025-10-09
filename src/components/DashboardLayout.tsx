@@ -21,7 +21,9 @@ import {
   Users, 
   LogOut,
   Shield,
-  CreditCard
+  CreditCard,
+  Link2,
+  BarChart3
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -35,8 +37,10 @@ const DashboardSidebar = () => {
 
   const userMenuItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "การชำระเงิน", url: "/payments", icon: CreditCard },
-    { title: "ตั้งค่า", url: "/settings", icon: Settings },
+    { title: "Payments", url: "/payments", icon: CreditCard },
+    { title: "Links", url: "/links", icon: Link2 },
+    { title: "Reports", url: "/reports", icon: BarChart3 },
+    { title: "Settings", url: "/settings", icon: Settings },
   ];
 
   const adminMenuItems = [
