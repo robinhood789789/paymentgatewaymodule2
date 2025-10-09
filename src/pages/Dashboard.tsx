@@ -1,11 +1,11 @@
+import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, CreditCard, TrendingUp, Activity } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
+import { Users, CreditCard, TrendingUp, Activity, Building2 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, tenantName } = useAuth();
 
   const stats = [
     {
@@ -44,10 +44,21 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground">ยินดีต้อนรับกลับมา, {user?.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-muted-foreground">Welcome back, {user?.email}</p>
+              {tenantName && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Building2 className="w-4 h-4" />
+                    <span>{tenantName}</span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           <Badge variant="outline" className="text-sm">
-            {userRole === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
+            {userRole === "admin" ? "Admin" : userRole === "owner" ? "Owner" : "User"}
           </Badge>
         </div>
 

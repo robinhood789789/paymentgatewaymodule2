@@ -13,6 +13,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   userRole: string | null;
+  tenantId: string | null;
+  tenantName: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,6 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setUserRole(null);
+          setTenantId(null);
+          setTenantName(null);
         }
       }
     );
@@ -60,17 +66,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // Fetch user role and tenant info
+      const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
-        .select("role")
+        .select("role, tenant_id")
         .eq("user_id", userId)
         .single();
 
-      if (error) throw error;
+      if (roleError) throw roleError;
 
-      if (data) {
-        setUserRole(data.role);
-        setIsAdmin(data.role === "admin");
+      if (roleData) {
+        setUserRole(roleData.role);
+        setIsAdmin(roleData.role === "admin");
+        setTenantId(roleData.tenant_id);
+
+        // Fetch tenant name if tenant_id exists
+        if (roleData.tenant_id) {
+          const { data: tenantData, error: tenantError } = await supabase
+            .from("tenants")
+            .select("name")
+            .eq("id", roleData.tenant_id)
+            .single();
+
+          if (!tenantError && tenantData) {
+            setTenantName(tenantData.name);
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
@@ -127,6 +148,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setIsAdmin(false);
     setUserRole(null);
+    setTenantId(null);
+    setTenantName(null);
     toast.success("Signed out successfully");
     navigate("/auth/sign-in");
   };
@@ -142,6 +165,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signOut,
         isAdmin,
         userRole,
+        tenantId,
+        tenantName,
       }}
     >
       {children}

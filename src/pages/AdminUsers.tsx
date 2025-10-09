@@ -40,19 +40,32 @@ const AdminUsers = () => {
 
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("*");
+        .select("*, tenants(name)");
 
       if (rolesError) throw rolesError;
 
-      return profiles.map((profile) => ({
-        ...profile,
-        role: roles.find((r) => r.user_id === profile.id)?.role || "user",
-      }));
+      const { data: tenants, error: tenantsError } = await supabase
+        .from("tenants")
+        .select("*");
+
+      if (tenantsError) throw tenantsError;
+
+      return profiles.map((profile) => {
+        const userRole = roles.find((r) => r.user_id === profile.id);
+        const tenant = tenants.find((t) => t.id === userRole?.tenant_id);
+        
+        return {
+          ...profile,
+          role: userRole?.role || "user",
+          tenant_id: userRole?.tenant_id,
+          tenant_name: tenant?.name || "No workspace",
+        };
+      });
     },
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "user" }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "user" | "owner" }) => {
       // Delete existing role
       const { error: deleteError } = await supabase
         .from("user_roles")
@@ -61,10 +74,22 @@ const AdminUsers = () => {
 
       if (deleteError) throw deleteError;
 
+      // Get user's tenant_id if changing to non-admin role
+      let tenantId = null;
+      if (newRole !== "admin") {
+        const { data: tenantData } = await supabase
+          .from("tenants")
+          .select("id")
+          .eq("owner_id", userId)
+          .single();
+        
+        tenantId = tenantData?.id;
+      }
+
       // Insert new role
       const { error: insertError } = await supabase
         .from("user_roles")
-        .insert([{ user_id: userId, role: newRole }]);
+        .insert([{ user_id: userId, role: newRole, tenant_id: tenantId }]);
 
       if (insertError) throw insertError;
     },
@@ -123,11 +148,12 @@ const AdminUsers = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ผู้ใช้</TableHead>
-                      <TableHead>อีเมล</TableHead>
-                      <TableHead>บทบาท</TableHead>
-                      <TableHead>วันที่สมัคร</TableHead>
-                      <TableHead>จัดการ</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Workspace</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Manage</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -145,17 +171,22 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                            {user.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
+                          <span className="text-sm text-muted-foreground">
+                            {user.tenant_name}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.role === "admin" ? "default" : user.role === "owner" ? "secondary" : "outline"}>
+                            {user.role === "admin" ? "Admin" : user.role === "owner" ? "Owner" : "User"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(user.created_at).toLocaleDateString("th-TH")}
+                          {new Date(user.created_at).toLocaleDateString("en-US")}
                         </TableCell>
                         <TableCell>
                           <Select
                             value={user.role}
-                            onValueChange={(value: "admin" | "user") =>
+                            onValueChange={(value: "admin" | "user" | "owner") =>
                               updateRoleMutation.mutate({
                                 userId: user.id,
                                 newRole: value,
@@ -166,8 +197,9 @@ const AdminUsers = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="user">ผู้ใช้งาน</SelectItem>
-                              <SelectItem value="admin">ผู้ดูแลระบบ</SelectItem>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="owner">Owner</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
