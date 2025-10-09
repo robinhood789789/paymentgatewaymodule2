@@ -26,7 +26,8 @@ import {
   Shield,
   CreditCard,
   Link2,
-  BarChart3
+  BarChart3,
+  Book
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -45,6 +46,7 @@ const DashboardSidebar = () => {
     { title: t('dashboard.links'), url: "/links", icon: Link2 },
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
     { title: t('dashboard.settings'), url: "/settings", icon: Settings },
+    { title: 'API Docs', url: "/docs", icon: Book },
   ];
 
   const adminMenuItems = [

@@ -122,27 +122,21 @@ export const WebhooksManager = () => {
 
   const testWebhookMutation = useMutation({
     mutationFn: async (webhookId: string) => {
-      const { data, error } = await invokeFunctionWithTenant("webhooks-test", {
+      const { data, error } = await supabase.functions.invoke('webhooks-send-test', {
         body: { webhook_id: webhookId },
       });
 
       if (error) throw new Error(error.message);
-      if (data.error) throw new Error(data.error);
+      if (!data.success) throw new Error(data.message || 'Test failed');
       return data;
     },
     onSuccess: (data) => {
-      if (data.test_result.delivered) {
-        toast.success("Test webhook sent successfully", {
-          description: `Response: ${data.test_result.response_status}`,
-        });
-      } else {
-        toast.error("Test webhook failed", {
-          description: data.test_result.error || "Unknown error",
-        });
-      }
+      toast.success(data.message || 'Test webhook sent successfully', {
+        description: `Status: ${data.status}`,
+      });
     },
     onError: (error: Error) => {
-      toast.error("Failed to send test webhook", {
+      toast.error('Failed to send test webhook', {
         description: error.message,
       });
     },

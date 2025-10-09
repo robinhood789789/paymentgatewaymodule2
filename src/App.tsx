@@ -19,6 +19,7 @@ import Status from "./pages/Status";
 import NotFound from "./pages/NotFound";
 import PayLink from "./pages/PayLink";
 import PayLinkSuccess from "./pages/PayLinkSuccess";
+import Docs from "./pages/Docs";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/docs"
+        element={
+          <ProtectedRoute>
+            <Docs />
           </ProtectedRoute>
         }
       />
