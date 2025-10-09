@@ -406,6 +406,9 @@ export type Database = {
           paid_at: string | null
           provider: string | null
           provider_payment_id: string | null
+          reconciled_at: string | null
+          reconciliation_status: string | null
+          settlement_id: string | null
           status: string
           tenant_id: string | null
         }
@@ -420,6 +423,9 @@ export type Database = {
           paid_at?: string | null
           provider?: string | null
           provider_payment_id?: string | null
+          reconciled_at?: string | null
+          reconciliation_status?: string | null
+          settlement_id?: string | null
           status: string
           tenant_id?: string | null
         }
@@ -434,6 +440,9 @@ export type Database = {
           paid_at?: string | null
           provider?: string | null
           provider_payment_id?: string | null
+          reconciled_at?: string | null
+          reconciliation_status?: string | null
+          settlement_id?: string | null
           status?: string
           tenant_id?: string | null
         }
@@ -443,6 +452,13 @@ export type Database = {
             columns: ["checkout_session_id"]
             isOneToOne: false
             referencedRelation: "checkout_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "settlements"
             referencedColumns: ["id"]
           },
           {
@@ -668,6 +684,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlements: {
+        Row: {
+          created_at: string | null
+          cycle: string
+          fees: number
+          id: string
+          net_amount: number
+          paid_out_at: string | null
+          provider: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cycle: string
+          fees?: number
+          id?: string
+          net_amount: number
+          paid_out_at?: string | null
+          provider: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cycle?: string
+          fees?: number
+          id?: string
+          net_amount?: number
+          paid_out_at?: string | null
+          provider?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlements_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
