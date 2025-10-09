@@ -11,9 +11,10 @@ import { User, Mail, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { OrganizationSetup } from "@/components/OrganizationSetup";
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, tenantId } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [fullName, setFullName] = useState("");
 
@@ -71,6 +72,12 @@ const Settings = () => {
           <h1 className="text-3xl font-bold text-foreground">ตั้งค่า</h1>
           <p className="text-muted-foreground">จัดการข้อมูลส่วนตัวและความปลอดภัย</p>
         </div>
+
+        {!tenantId && (
+          <div className="mb-6">
+            <OrganizationSetup />
+          </div>
+        )}
 
         <Card>
           <CardHeader>
