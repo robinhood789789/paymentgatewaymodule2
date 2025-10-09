@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.checkout-sessions-get]
 verify_jwt = false
+
+[functions.webhooks-stripe]
+verify_jwt = false
+
+[functions.webhooks-opn]
+verify_jwt = false
+
+[functions.webhooks-twoc2p]
+verify_jwt = false
+
+[functions.webhooks-kbank]
+verify_jwt = false
