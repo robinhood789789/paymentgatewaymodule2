@@ -38,60 +38,55 @@ const AdminUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("*, tenants(name)");
+      const { data: memberships, error: membershipsError } = await supabase
+        .from("memberships")
+        .select("user_id, tenant_id, role_id, roles(name), tenants(name)");
 
-      if (rolesError) throw rolesError;
-
-      const { data: tenants, error: tenantsError } = await supabase
-        .from("tenants")
-        .select("*");
-
-      if (tenantsError) throw tenantsError;
+      if (membershipsError) throw membershipsError;
 
       return profiles.map((profile) => {
-        const userRole = roles.find((r) => r.user_id === profile.id);
-        const tenant = tenants.find((t) => t.id === userRole?.tenant_id);
+        const membership = memberships.find((m) => m.user_id === profile.id);
         
         return {
           ...profile,
-          role: userRole?.role || "user",
-          tenant_id: userRole?.tenant_id,
-          tenant_name: tenant?.name || "No workspace",
+          role: membership?.roles?.name || "viewer",
+          role_id: membership?.role_id || null,
+          tenant_id: membership?.tenant_id || null,
+          tenant_name: membership?.tenants?.name || "No workspace",
         };
       });
     },
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "user" | "owner" }) => {
-      // Delete existing role
-      const { error: deleteError } = await supabase
-        .from("user_roles")
-        .delete()
+    mutationFn: async ({ userId, newRoleName }: { userId: string; newRoleName: string }) => {
+      // Find the role by name
+      const { data: roleData, error: roleError } = await supabase
+        .from("roles")
+        .select("id, tenant_id")
+        .eq("name", newRoleName)
+        .eq("is_system", true)
+        .maybeSingle();
+
+      if (roleError) throw roleError;
+      if (!roleData) throw new Error(`Role ${newRoleName} not found`);
+
+      // Get user's current membership
+      const { data: currentMembership, error: getMembershipError } = await supabase
+        .from("memberships")
+        .select("id, tenant_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (getMembershipError) throw getMembershipError;
+
+      // Update the membership role
+      const { error: updateError } = await supabase
+        .from("memberships")
+        .update({ role_id: roleData.id })
         .eq("user_id", userId);
 
-      if (deleteError) throw deleteError;
-
-      // Get user's tenant_id if changing to non-admin role
-      let tenantId = null;
-      if (newRole !== "admin") {
-        const { data: tenantData } = await supabase
-          .from("tenants")
-          .select("id")
-          .eq("owner_id", userId)
-          .single();
-        
-        tenantId = tenantData?.id;
-      }
-
-      // Insert new role
-      const { error: insertError } = await supabase
-        .from("user_roles")
-        .insert([{ user_id: userId, role: newRole, tenant_id: tenantId }]);
-
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -176,8 +171,13 @@ const AdminUsers = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.role === "admin" ? "default" : user.role === "owner" ? "secondary" : "outline"}>
-                            {user.role === "admin" ? "Admin" : user.role === "owner" ? "Owner" : "User"}
+                          <Badge variant={
+                            user.role === "super_admin" ? "default" : 
+                            user.role === "owner" ? "secondary" : 
+                            user.role === "merchant_admin" ? "secondary" :
+                            "outline"
+                          }>
+                            {user.role || "viewer"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -186,20 +186,24 @@ const AdminUsers = () => {
                         <TableCell>
                           <Select
                             value={user.role}
-                            onValueChange={(value: "admin" | "user" | "owner") =>
+                            onValueChange={(value: string) =>
                               updateRoleMutation.mutate({
                                 userId: user.id,
-                                newRole: value,
+                                newRoleName: value,
                               })
                             }
                           >
-                            <SelectTrigger className="w-32">
+                            <SelectTrigger className="w-40">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="viewer">Viewer</SelectItem>
+                              <SelectItem value="developer">Developer</SelectItem>
+                              <SelectItem value="support">Support</SelectItem>
+                              <SelectItem value="finance">Finance</SelectItem>
+                              <SelectItem value="merchant_admin">Merchant Admin</SelectItem>
                               <SelectItem value="owner">Owner</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="super_admin">Super Admin</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

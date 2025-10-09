@@ -66,32 +66,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      // Fetch user role and tenant info
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role, tenant_id")
+      // Fetch user membership and role info
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("memberships")
+        .select("tenant_id, role_id, roles(name), tenants(name)")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      if (roleError) throw roleError;
+      if (membershipError) throw membershipError;
 
-      if (roleData) {
-        setUserRole(roleData.role);
-        setIsAdmin(roleData.role === "admin");
-        setTenantId(roleData.tenant_id);
-
-        // Fetch tenant name if tenant_id exists
-        if (roleData.tenant_id) {
-          const { data: tenantData, error: tenantError } = await supabase
-            .from("tenants")
-            .select("name")
-            .eq("id", roleData.tenant_id)
-            .single();
-
-          if (!tenantError && tenantData) {
-            setTenantName(tenantData.name);
-          }
-        }
+      if (membershipData) {
+        const roleName = membershipData.roles?.name || null;
+        setUserRole(roleName);
+        setIsAdmin(roleName === "super_admin" || roleName === "admin");
+        setTenantId(membershipData.tenant_id);
+        setTenantName(membershipData.tenants?.name || null);
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
