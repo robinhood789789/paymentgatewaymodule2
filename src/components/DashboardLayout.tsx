@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { useI18n } from "@/lib/i18n";
 import {
   Sidebar,
   SidebarContent,
@@ -34,18 +36,19 @@ interface DashboardLayoutProps {
 const DashboardSidebar = () => {
   const { state } = useSidebar();
   const { signOut, isAdmin, user } = useAuth();
+  const { t } = useI18n();
   const isCollapsed = state === "collapsed";
 
   const userMenuItems = [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "Payments", url: "/payments", icon: CreditCard },
-    { title: "Links", url: "/links", icon: Link2 },
-    { title: "Reports", url: "/reports", icon: BarChart3 },
-    { title: "Settings", url: "/settings", icon: Settings },
+    { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
+    { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
+    { title: t('dashboard.links'), url: "/links", icon: Link2 },
+    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
+    { title: t('dashboard.settings'), url: "/settings", icon: Settings },
   ];
 
   const adminMenuItems = [
-    { title: "จัดการผู้ใช้", url: "/admin/users", icon: Users },
+    { title: t('dashboard.admin'), url: "/admin/users", icon: Users },
   ];
 
   return (
@@ -66,7 +69,7 @@ const DashboardSidebar = () => {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>เมนูหลัก</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {userMenuItems.map((item) => (
@@ -93,7 +96,7 @@ const DashboardSidebar = () => {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>ผู้ดูแลระบบ</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('dashboard.admin')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminMenuItems.map((item) => (
@@ -118,7 +121,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        <div className="mt-auto p-4 border-t border-sidebar-border">
+        <div className="mt-auto p-4 border-t border-sidebar-border space-y-3">
+          {!isCollapsed && <LocaleSwitcher />}
           <Button
             onClick={signOut}
             variant="ghost"
@@ -126,7 +130,7 @@ const DashboardSidebar = () => {
             size={isCollapsed ? "icon" : "default"}
           >
             <LogOut className={isCollapsed ? "" : "mr-2 h-4 w-4"} />
-            {!isCollapsed && <span>ออกจากระบบ</span>}
+            {!isCollapsed && <span>{t('auth.signOut')}</span>}
           </Button>
         </div>
       </SidebarContent>
