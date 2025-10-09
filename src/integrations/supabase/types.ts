@@ -217,6 +217,59 @@ export type Database = {
           },
         ]
       }
+      go_live_checklist: {
+        Row: {
+          admin_2fa: boolean | null
+          backup_schedule: boolean | null
+          created_at: string | null
+          domain_tls: boolean | null
+          id: string
+          logs_alerts: boolean | null
+          notes: Json | null
+          provider_credentials: boolean | null
+          tenant_id: string
+          test_transactions: boolean | null
+          updated_at: string | null
+          webhook_verified: boolean | null
+        }
+        Insert: {
+          admin_2fa?: boolean | null
+          backup_schedule?: boolean | null
+          created_at?: string | null
+          domain_tls?: boolean | null
+          id?: string
+          logs_alerts?: boolean | null
+          notes?: Json | null
+          provider_credentials?: boolean | null
+          tenant_id: string
+          test_transactions?: boolean | null
+          updated_at?: string | null
+          webhook_verified?: boolean | null
+        }
+        Update: {
+          admin_2fa?: boolean | null
+          backup_schedule?: boolean | null
+          created_at?: string | null
+          domain_tls?: boolean | null
+          id?: string
+          logs_alerts?: boolean | null
+          notes?: Json | null
+          provider_credentials?: boolean | null
+          tenant_id?: string
+          test_transactions?: boolean | null
+          updated_at?: string | null
+          webhook_verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "go_live_checklist_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idempotency_keys: {
         Row: {
           created_at: string | null

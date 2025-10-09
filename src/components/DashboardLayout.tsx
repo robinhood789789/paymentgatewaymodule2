@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
+import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +29,8 @@ import {
   CreditCard,
   Link2,
   BarChart3,
-  Book
+  Book,
+  Rocket
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -40,6 +43,22 @@ const DashboardSidebar = () => {
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
 
+  // Check if user is owner
+  const [isOwner, setIsOwner] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkOwner = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('memberships')
+        .select('role_id, roles(name)')
+        .eq('user_id', user.id)
+        .single();
+      setIsOwner((data as any)?.roles?.name === 'owner');
+    };
+    checkOwner();
+  }, [user]);
+
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
@@ -48,6 +67,11 @@ const DashboardSidebar = () => {
     { title: t('dashboard.settings'), url: "/settings", icon: Settings },
     { title: 'API Docs', url: "/docs", icon: Book },
   ];
+
+  // Add Go-Live for owners
+  const ownerMenuItems = isOwner ? [
+    { title: 'Go Live', url: "/go-live", icon: Rocket },
+  ] : [];
 
   const adminMenuItems = [
     { title: t('dashboard.admin'), url: "/admin/users", icon: Users },
@@ -74,7 +98,7 @@ const DashboardSidebar = () => {
           <SidebarGroupLabel>{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {userMenuItems.map((item) => (
+              {[...userMenuItems, ...ownerMenuItems].map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink

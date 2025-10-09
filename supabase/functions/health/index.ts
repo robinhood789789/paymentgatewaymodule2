@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,73 +7,77 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const checks: Record<string, any> = {};
+
   try {
-    console.log('Health check endpoint called');
+    // Database health check
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Create Supabase client to test connection
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Test database connection with a simple query
-    const { error: dbError } = await supabase
-      .from('profiles')
+    const dbStart = Date.now();
+    const { data: dbTest, error: dbError } = await supabaseClient
+      .from('tenants')
       .select('count')
-      .limit(1)
-      .single();
+      .limit(1);
 
-    const status = {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      services: {
-        database: dbError ? 'down' : 'operational',
-        api: 'operational',
-        edge_functions: 'operational',
-      },
-      version: '1.0.0',
+    checks.database = {
+      status: dbError ? 'unhealthy' : 'healthy',
+      latency_ms: Date.now() - dbStart,
+      error: dbError?.message || null,
     };
 
-    console.log('Health check completed:', status);
+    // Storage health check
+    const storageStart = Date.now();
+    const { data: buckets, error: storageError } = await supabaseClient
+      .storage
+      .listBuckets();
 
-    return new Response(
-      JSON.stringify(status),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    checks.storage = {
+      status: storageError ? 'unhealthy' : 'healthy',
+      latency_ms: Date.now() - storageStart,
+      buckets_count: buckets?.length || 0,
+      error: storageError?.message || null,
+    };
+
+    // Edge function health
+    checks.edge_function = {
+      status: 'healthy',
+      latency_ms: Date.now() - startTime,
+    };
+
+    // Overall health
+    const isHealthy = checks.database.status === 'healthy' && 
+                      checks.storage.status === 'healthy';
+
+    const response = {
+      status: isHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      checks,
+      total_latency_ms: Date.now() - startTime,
+    };
+
+    return new Response(JSON.stringify(response, null, 2), {
+      status: isHealthy ? 200 : 503,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Health check error:', error);
-
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        timestamp: new Date().toISOString(),
-        error: errorMessage,
-        services: {
-          database: 'unknown',
-          api: 'operational',
-          edge_functions: 'operational',
-        },
-      }),
-      {
-        status: 503,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: String(error),
+      checks,
+    }), {
+      status: 503,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

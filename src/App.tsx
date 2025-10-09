@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import PayLink from "./pages/PayLink";
 import PayLinkSuccess from "./pages/PayLinkSuccess";
 import Docs from "./pages/Docs";
+import GoLive from "./pages/GoLive";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Docs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/go-live"
+        element={
+          <ProtectedRoute>
+            <GoLive />
           </ProtectedRoute>
         }
       />
