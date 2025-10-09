@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Payment {
   id: string;
@@ -26,6 +33,12 @@ interface PaymentDetailsDrawerProps {
 }
 
 export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsDrawerProps) => {
+  const { hasPermission } = usePermissions();
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [isRefunding, setIsRefunding] = useState(false);
+
   if (!payment) return null;
 
   const copyToClipboard = (text: string, label: string) => {
@@ -39,6 +52,36 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
       case "pending": return "secondary";
       case "failed": return "destructive";
       default: return "outline";
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!payment) return;
+
+    setIsRefunding(true);
+    try {
+      const amount = refundAmount ? parseFloat(refundAmount) * 100 : payment.amount;
+      
+      const { data, error } = await invokeFunctionWithTenant("refunds-create", {
+        body: {
+          paymentId: payment.id,
+          amount,
+          reason: refundReason || undefined
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Refund initiated successfully`);
+      setRefundDialogOpen(false);
+      setRefundAmount("");
+      setRefundReason("");
+      onClose();
+    } catch (error) {
+      console.error("Refund error:", error);
+      toast.error("Failed to process refund");
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -150,8 +193,78 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
               </pre>
             </div>
           )}
+
+          {payment.status === "succeeded" && hasPermission("refunds:create") && (
+            <div className="border-t pt-4">
+              <Button 
+                variant="destructive" 
+                className="w-full gap-2"
+                onClick={() => setRefundDialogOpen(true)}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Process Refund
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
+
+      <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription>
+              Issue a full or partial refund for this payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="refund-amount">Amount ({payment.currency.toUpperCase()})</Label>
+              <Input
+                id="refund-amount"
+                type="number"
+                step="0.01"
+                placeholder={`Leave empty for full refund (${(payment.amount / 100).toLocaleString()})`}
+                value={refundAmount}
+                onChange={(e) => setRefundAmount(e.target.value)}
+                max={payment.amount / 100}
+              />
+              <p className="text-xs text-muted-foreground">
+                Maximum: {(payment.amount / 100).toLocaleString()} {payment.currency.toUpperCase()}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="refund-reason">Reason (Optional)</Label>
+              <Textarea
+                id="refund-reason"
+                placeholder="Enter reason for refund..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setRefundDialogOpen(false)}
+              disabled={isRefunding}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleRefund}
+              disabled={isRefunding}
+            >
+              {isRefunding ? "Processing..." : "Confirm Refund"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 };
