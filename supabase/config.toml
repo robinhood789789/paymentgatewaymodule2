@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.webhooks-test]
 verify_jwt = false
+
+[functions.checkout-sessions-create]
+verify_jwt = false
+
+[functions.checkout-sessions-get]
+verify_jwt = false
