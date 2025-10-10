@@ -33,7 +33,8 @@ import {
   Rocket,
   RefreshCw,
   UserCircle,
-  Webhook
+  Webhook,
+  DollarSign
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -69,6 +70,7 @@ const DashboardSidebar = () => {
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
     { title: t('dashboard.links'), url: "/links", icon: Link2 },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook },
+    { title: t('settlements.title'), url: "/settlements", icon: DollarSign },
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
     { title: t('dashboard.settings'), url: "/settings", icon: Settings },
     { title: 'API Docs', url: "/docs", icon: Book },
