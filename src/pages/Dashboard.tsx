@@ -3,255 +3,472 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, TrendingUp, CreditCard, Activity } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Users, Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { RequireTenant } from "@/components/RequireTenant";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, startOfDay } from "date-fns";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
 import { useI18n } from "@/lib/i18n";
-
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { activeTenantId, activeTenant } = useTenantSwitcher();
+  const { activeTenantId } = useTenantSwitcher();
   const { t } = useI18n();
 
-  const { data: todayStats, isLoading: loadingToday } = useQuery({
-    queryKey: ["payment-stats-today", activeTenantId],
+  // Wallet balance
+  const { data: wallet } = useQuery({
+    queryKey: ["wallet", activeTenantId],
     queryFn: async () => {
       if (!activeTenantId) return null;
-
-      const today = new Date();
-      const startToday = startOfDay(today);
-
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("amount, status")
+      const { data } = await supabase
+        .from("tenant_wallets")
+        .select("*")
         .eq("tenant_id", activeTenantId)
-        .gte("created_at", startToday.toISOString());
-
-      const succeeded = payments?.filter(p => p.status === "succeeded") || [];
-      const totalAmount = succeeded.reduce((sum, p) => sum + p.amount, 0);
-
-      return {
-        count: succeeded.length,
-        amount: totalAmount / 100,
-        total: payments?.length || 0,
-      };
+        .single();
+      return data;
     },
     enabled: !!activeTenantId,
   });
 
-  const { data: weekStats, isLoading: loadingWeek } = useQuery({
-    queryKey: ["payment-stats-week", activeTenantId],
+  // Current month deposits
+  const { data: currentMonthDeposits, isLoading: loadingCurrentDeposits } = useQuery({
+    queryKey: ["deposits-current-month", activeTenantId],
     queryFn: async () => {
-      if (!activeTenantId) return null;
-
-      const sevenDaysAgo = startOfDay(subDays(new Date(), 7));
-
-      const { data: payments } = await supabase
+      if (!activeTenantId) return { total: 0, count: 0 };
+      const startDate = startOfMonth(new Date());
+      const { data } = await supabase
         .from("payments")
-        .select("amount, status")
+        .select("amount")
         .eq("tenant_id", activeTenantId)
-        .gte("created_at", sevenDaysAgo.toISOString());
-
-      const succeeded = payments?.filter(p => p.status === "succeeded") || [];
-      const totalAmount = succeeded.reduce((sum, p) => sum + p.amount, 0);
-
-      return {
-        count: succeeded.length,
-        amount: totalAmount / 100,
-        total: payments?.length || 0,
-      };
+        .eq("type", "deposit")
+        .eq("status", "succeeded")
+        .gte("created_at", startDate.toISOString());
+      
+      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      return { total: total / 100, count: data?.length || 0 };
     },
     enabled: !!activeTenantId,
   });
 
-  const { data: recentPayments, isLoading: loadingRecent } = useQuery({
-    queryKey: ["recent-payments", activeTenantId],
+  // Last month deposits
+  const { data: lastMonthDeposits } = useQuery({
+    queryKey: ["deposits-last-month", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { total: 0 };
+      const startDate = startOfMonth(subMonths(new Date(), 1));
+      const endDate = startOfMonth(new Date());
+      const { data } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "deposit")
+        .eq("status", "succeeded")
+        .gte("created_at", startDate.toISOString())
+        .lt("created_at", endDate.toISOString());
+      
+      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      return { total: total / 100 };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Current month withdrawals
+  const { data: currentMonthWithdrawals, isLoading: loadingCurrentWithdrawals } = useQuery({
+    queryKey: ["withdrawals-current-month", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { total: 0, count: 0 };
+      const startDate = startOfMonth(new Date());
+      const { data } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "withdrawal")
+        .eq("status", "succeeded")
+        .gte("created_at", startDate.toISOString());
+      
+      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      return { total: total / 100, count: data?.length || 0 };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Last month withdrawals
+  const { data: lastMonthWithdrawals } = useQuery({
+    queryKey: ["withdrawals-last-month", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { total: 0 };
+      const startDate = startOfMonth(subMonths(new Date(), 1));
+      const endDate = startOfMonth(new Date());
+      const { data } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "withdrawal")
+        .eq("status", "succeeded")
+        .gte("created_at", startDate.toISOString())
+        .lt("created_at", endDate.toISOString());
+      
+      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      return { total: total / 100 };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Today's transactions
+  const { data: todayStats } = useQuery({
+    queryKey: ["today-stats", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { count: 0 };
+      const today = startOfDay(new Date());
+      const { data } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("tenant_id", activeTenantId)
+        .gte("created_at", today.toISOString());
+      
+      return { count: data?.length || 0 };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // All transactions
+  const { data: allTransactions } = useQuery({
+    queryKey: ["all-transactions", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { deposits: 0, withdrawals: 0 };
+      const { data } = await supabase
+        .from("payments")
+        .select("type")
+        .eq("tenant_id", activeTenantId);
+      
+      const deposits = data?.filter(p => p.type === "deposit").length || 0;
+      const withdrawals = data?.filter(p => p.type === "withdrawal").length || 0;
+      return { deposits, withdrawals };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Deposit transactions
+  const { data: depositStats } = useQuery({
+    queryKey: ["deposit-stats", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { total: 0, successful: 0 };
+      const { data } = await supabase
+        .from("payments")
+        .select("status")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "deposit");
+      
+      const successful = data?.filter(p => p.status === "succeeded").length || 0;
+      return { total: data?.length || 0, successful };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Withdrawal transactions
+  const { data: withdrawalStats } = useQuery({
+    queryKey: ["withdrawal-stats", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { total: 0, successful: 0 };
+      const { data } = await supabase
+        .from("payments")
+        .select("status")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "withdrawal");
+      
+      const successful = data?.filter(p => p.status === "succeeded").length || 0;
+      return { total: data?.length || 0, successful };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Total users (memberships)
+  const { data: usersCount } = useQuery({
+    queryKey: ["users-count", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return { count: 0 };
+      const { data } = await supabase
+        .from("memberships")
+        .select("id")
+        .eq("tenant_id", activeTenantId);
+      
+      return { count: data?.length || 0 };
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Recent transactions
+  const { data: recentTransactions, isLoading: loadingRecent } = useQuery({
+    queryKey: ["recent-transactions", activeTenantId],
     queryFn: async () => {
       if (!activeTenantId) return [];
-
       const { data } = await supabase
         .from("payments")
         .select("*")
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false })
-        .limit(5);
-
+        .limit(10);
       return data || [];
     },
     enabled: !!activeTenantId,
   });
 
-  const { data: methodBreakdown, isLoading: loadingMethods } = useQuery({
-    queryKey: ["method-breakdown", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return [];
+  const calculatePercentChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
 
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("method, amount")
-        .eq("tenant_id", activeTenantId)
-        .eq("status", "succeeded");
+  const depositChange = calculatePercentChange(
+    currentMonthDeposits?.total || 0,
+    lastMonthDeposits?.total || 0
+  );
 
-      const grouped = (payments || []).reduce((acc, p) => {
-        const method = p.method || "unknown";
-        if (!acc[method]) acc[method] = 0;
-        acc[method] += p.amount / 100;
-        return acc;
-      }, {} as Record<string, number>);
-
-      return Object.entries(grouped).map(([name, value]) => ({ name, value }));
-    },
-    enabled: !!activeTenantId,
-  });
-
-  const stats = [
-    {
-      title: t('dashboard.todayPayments'),
-      value: loadingToday ? "-" : todayStats?.count || 0,
-      subValue: loadingToday ? "-" : `฿${todayStats?.amount.toLocaleString() || 0}`,
-      icon: DollarSign,
-    },
-    {
-      title: t('dashboard.weekPayments'),
-      value: loadingWeek ? "-" : weekStats?.count || 0,
-      subValue: loadingWeek ? "-" : `฿${weekStats?.amount.toLocaleString() || 0}`,
-      icon: TrendingUp,
-    },
-    {
-      title: t('dashboard.todaySuccessRate'),
-      value: loadingToday ? "-" : todayStats?.total ? `${((todayStats.count / todayStats.total) * 100).toFixed(1)}%` : "0%",
-      subValue: loadingToday ? "-" : `${todayStats?.count || 0}/${todayStats?.total || 0}`,
-      icon: Activity,
-    },
-    {
-      title: t('dashboard.weekSuccessRate'),
-      value: loadingWeek ? "-" : weekStats?.total ? `${((weekStats.count / weekStats.total) * 100).toFixed(1)}%` : "0%",
-      subValue: loadingWeek ? "-" : `${weekStats?.count || 0}/${weekStats?.total || 0}`,
-      icon: CreditCard,
-    },
-  ];
+  const withdrawalChange = calculatePercentChange(
+    currentMonthWithdrawals?.total || 0,
+    lastMonthWithdrawals?.total || 0
+  );
 
   return (
     <DashboardLayout>
       <RequireTenant>
         <div className="p-6 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('dashboard.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('dashboard.welcomeBack')}, {user?.email}!
-            </p>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{t('dashboard.title')}</h1>
+              <p className="text-muted-foreground">
+                {t('dashboard.welcomeBack')}, {user?.email}!
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button className="bg-primary hover:bg-primary/90">
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                {t('dashboard.depositButton')}
+              </Button>
+              <Button variant="outline">
+                <ArrowDownRight className="mr-2 h-4 w-4" />
+                {t('dashboard.withdrawalButton')}
+              </Button>
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={stat.title}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    {loadingToday || loadingWeek ? (
-                      <>
-                        <Skeleton className="h-8 w-24 mb-2" />
-                        <Skeleton className="h-4 w-32" />
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-2xl font-bold">{stat.value}</div>
-                        <p className="text-xs text-muted-foreground">{stat.subValue}</p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          {/* Top Stats - Deposits, Withdrawals, Balance */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium opacity-90">{t('dashboard.totalDeposit')}</p>
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+                {loadingCurrentDeposits ? (
+                  <Skeleton className="h-10 w-32 bg-white/20" />
+                ) : (
+                  <>
+                    <p className="text-3xl font-bold">
+                      ฿{currentMonthDeposits?.total.toLocaleString() || "0.00"}
+                    </p>
+                    <div className="flex items-center mt-2 text-sm">
+                      {depositChange >= 0 ? (
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 mr-1" />
+                      )}
+                      <span className="opacity-90">
+                        {depositChange >= 0 ? "+" : ""}{depositChange.toFixed(1)}% {t('dashboard.compareLastMonth')}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
 
-          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="bg-gradient-to-br from-pink-500 to-purple-600 text-white border-0">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium opacity-90">{t('dashboard.totalWithdrawal')}</p>
+                  <ArrowDownRight className="h-5 w-5" />
+                </div>
+                {loadingCurrentWithdrawals ? (
+                  <Skeleton className="h-10 w-32 bg-white/20" />
+                ) : (
+                  <>
+                    <p className="text-3xl font-bold">
+                      ฿{currentMonthWithdrawals?.total.toLocaleString() || "0.00"}
+                    </p>
+                    <div className="flex items-center mt-2 text-sm">
+                      {withdrawalChange >= 0 ? (
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 mr-1" />
+                      )}
+                      <span className="opacity-90">
+                        {withdrawalChange >= 0 ? "+" : ""}{withdrawalChange.toFixed(1)}% {t('dashboard.compareLastMonth')}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
-              <CardHeader>
-                <CardTitle>{t('dashboard.recentPayments')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingRecent ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
-                  </div>
-                ) : !recentPayments || recentPayments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">{t('dashboard.noPaymentsYet')}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {t('dashboard.noPaymentsDesc')}
+              <CardContent className="pt-6">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  {t('dashboard.totalBalance')}
+                </p>
+                <p className="text-3xl font-bold text-foreground">
+                  ฿{((wallet?.balance || 0) / 100).toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {todayStats?.count || 0} {t('dashboard.transactions')}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Middle Stats Grid */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t('dashboard.todayTransactions')}
+                    </p>
+                    <p className="text-2xl font-bold">{todayStats?.count || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {allTransactions?.deposits || 0} {t('dashboard.deposits')} / {allTransactions?.withdrawals || 0} {t('dashboard.withdrawals')}
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentPayments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <Activity className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t('dashboard.allTransactions')}
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {(allTransactions?.deposits || 0) + (allTransactions?.withdrawals || 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ฝาก {allTransactions?.deposits || 0} / ถอน {allTransactions?.withdrawals || 0}
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-8 w-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t('dashboard.depositTransactions')}
+                    </p>
+                    <p className="text-2xl font-bold">{depositStats?.total || 0}</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {t('dashboard.successful')}: {depositStats?.successful || 0}
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-8 w-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t('dashboard.withdrawalTransactions')}
+                    </p>
+                    <p className="text-2xl font-bold">{withdrawalStats?.total || 0}</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {t('dashboard.successful')}: {withdrawalStats?.successful || 0}
+                    </p>
+                  </div>
+                  <ArrowDownRight className="h-8 w-8 text-pink-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Users Card */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {t('dashboard.totalUsers')}
+                  </p>
+                  <p className="text-3xl font-bold">{usersCount?.count || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('dashboard.users')}
+                  </p>
+                </div>
+                <Users className="h-10 w-10 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Transactions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('dashboard.recentTransactions')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingRecent ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+              ) : !recentTransactions || recentTransactions.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">{t('dashboard.noTransactionsYet')}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        {transaction.type === "deposit" ? (
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                          </div>
+                        ) : (
+                          <div className="p-2 bg-pink-100 rounded-full">
+                            <ArrowDownRight className="h-4 w-4 text-pink-600" />
+                          </div>
+                        )}
                         <div>
-                          <p className="font-medium">฿{(payment.amount / 100).toLocaleString()}</p>
+                          <p className="font-medium">
+                            {transaction.type === "deposit" ? "ฝากเงิน" : "ถอนเงิน"}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(payment.created_at), "PPp")}
+                            {format(new Date(transaction.created_at), "dd/MM/yyyy HH:mm")}
                           </p>
                         </div>
-                        <Badge variant={payment.status === "succeeded" ? "default" : "secondary"}>
-                          {payment.status}
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${transaction.type === "deposit" ? "text-green-600" : "text-pink-600"}`}>
+                          {transaction.type === "deposit" ? "+" : "-"}฿{(transaction.amount / 100).toLocaleString()}
+                        </p>
+                        <Badge variant={transaction.status === "succeeded" ? "default" : "secondary"} className="mt-1">
+                          {transaction.status}
                         </Badge>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('dashboard.paymentMethods')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingMethods ? (
-                  <Skeleton className="h-64 w-full" />
-                ) : !methodBreakdown || methodBreakdown.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">{t('dashboard.noDataAvailable')}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {t('dashboard.methodBreakdownDesc')}
-                    </p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={methodBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="hsl(var(--primary))"
-                        dataKey="value"
-                      >
-                        {methodBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </RequireTenant>
     </DashboardLayout>

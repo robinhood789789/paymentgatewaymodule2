@@ -411,6 +411,7 @@ export type Database = {
           settlement_id: string | null
           status: string
           tenant_id: string | null
+          type: string | null
         }
         Insert: {
           amount: number
@@ -428,6 +429,7 @@ export type Database = {
           settlement_id?: string | null
           status: string
           tenant_id?: string | null
+          type?: string | null
         }
         Update: {
           amount?: number
@@ -445,6 +447,7 @@ export type Database = {
           settlement_id?: string | null
           status?: string
           tenant_id?: string | null
+          type?: string | null
         }
         Relationships: [
           {
@@ -766,6 +769,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tenant_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_wallets: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_wallets_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
             referencedRelation: "tenants"
