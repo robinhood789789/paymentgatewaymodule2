@@ -31,7 +31,8 @@ import {
   BarChart3,
   Book,
   Rocket,
-  RefreshCw
+  RefreshCw,
+  UserCircle
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -64,6 +65,7 @@ const DashboardSidebar = () => {
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
     { title: t('refunds.title'), url: "/refunds", icon: RefreshCw },
+    { title: t('customers.title'), url: "/customers", icon: UserCircle },
     { title: t('dashboard.links'), url: "/links", icon: Link2 },
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
     { title: t('dashboard.settings'), url: "/settings", icon: Settings },

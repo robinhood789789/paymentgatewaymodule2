@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import Refunds from "./pages/Refunds";
+import Customers from "./pages/Customers";
 import Links from "./pages/Links";
 import Reports from "./pages/Reports";
 import AdminUsers from "./pages/AdminUsers";
@@ -61,6 +62,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Refunds />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customers"
+        element={
+          <ProtectedRoute>
+            <Customers />
           </ProtectedRoute>
         }
       />
