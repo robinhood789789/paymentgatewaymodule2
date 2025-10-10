@@ -25,6 +25,7 @@ import PayLink from "./pages/PayLink";
 import PayLinkSuccess from "./pages/PayLinkSuccess";
 import Docs from "./pages/Docs";
 import GoLive from "./pages/GoLive";
+import DepositList from "./pages/DepositList";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <GoLive />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/deposit-list"
+        element={
+          <ProtectedRoute>
+            <DepositList />
           </ProtectedRoute>
         }
       />

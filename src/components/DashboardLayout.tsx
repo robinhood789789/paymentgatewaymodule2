@@ -82,7 +82,7 @@ const DashboardSidebar = () => {
 
   // Transaction menu items
   const transactionMenuItems = [
-    { title: t('dashboard.deposit'), url: "/deposit", icon: ArrowDownToLine },
+    { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine },
     { title: t('dashboard.withdrawal'), url: "/withdrawal", icon: ArrowUpFromLine },
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
   ];
