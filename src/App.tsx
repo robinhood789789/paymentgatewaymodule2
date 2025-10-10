@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import Refunds from "./pages/Refunds";
 import Customers from "./pages/Customers";
+import WebhookEvents from "./pages/WebhookEvents";
 import Links from "./pages/Links";
 import Reports from "./pages/Reports";
 import AdminUsers from "./pages/AdminUsers";
@@ -70,6 +71,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Customers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/webhook-events"
+        element={
+          <ProtectedRoute>
+            <WebhookEvents />
           </ProtectedRoute>
         }
       />
