@@ -4,22 +4,26 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Settings, RefreshCw, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
-type PaymentStatus = "all" | "pending" | "processing" | "succeeded" | "expired" | "rejected";
+type PaymentStatus = "all" | "pending" | "completed" | "expired" | "rejected";
 
 export default function DepositList() {
   const { t } = useI18n();
   const [statusFilter, setStatusFilter] = useState<PaymentStatus>("all");
   const [sortBy, setSortBy] = useState("created_at");
-  const [priority, setPriority] = useState("all");
+  const [priority, setPriority] = useState("high");
+  const [startDate, setStartDate] = useState("2025-05-01");
+  const [endDate, setEndDate] = useState("2025-06-30");
+  const [accName, setAccName] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterExpanded, setFilterExpanded] = useState(true);
 
   const { data: deposits, isLoading, refetch } = useQuery({
     queryKey: ["deposits", statusFilter],
@@ -41,21 +45,21 @@ export default function DepositList() {
   });
 
   const statusButtons: { value: PaymentStatus; label: string }[] = [
-    { value: "all", label: "ทั้งหมด" },
-    { value: "pending", label: "รอชำระเงิน" },
-    { value: "processing", label: "กำลังชำระเงิน" },
-    { value: "succeeded", label: "สำเร็จ" },
-    { value: "expired", label: "หมดเวลา" },
-    { value: "rejected", label: "ถูกปฏิเสธ" },
+    { value: "all", label: "All" },
+    { value: "pending", label: "Pending" },
+    { value: "completed", label: "Completed" },
+    { value: "expired", label: "Expired" },
+    { value: "rejected", label: "Rejected" },
   ];
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      succeeded: { label: "สำเร็จ", variant: "default" as const },
-      pending: { label: "รอชำระ", variant: "secondary" as const },
-      processing: { label: "กำลังดำเนินการ", variant: "default" as const },
-      expired: { label: "หมดเวลา", variant: "destructive" as const },
-      rejected: { label: "ถูกปฏิเสธ", variant: "destructive" as const },
+      completed: { label: "Completed", variant: "default" as const },
+      succeeded: { label: "Completed", variant: "default" as const },
+      pending: { label: "Pending", variant: "secondary" as const },
+      processing: { label: "Processing", variant: "default" as const },
+      expired: { label: "Expired", variant: "destructive" as const },
+      rejected: { label: "Rejected", variant: "destructive" as const },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || { 
@@ -70,156 +74,195 @@ export default function DepositList() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">รายการเติมเงิน</h1>
-          <div className="flex gap-2">
-            <Button variant="default" className="bg-green-600 hover:bg-green-700">
-              <Plus className="mr-2 h-4 w-4" />
-              เติมเงิน
-            </Button>
-            <Button variant="default">
-              <Settings className="mr-2 h-4 w-4" />
-              ตั้งค่า
-            </Button>
-          </div>
+          <h1 className="text-3xl font-bold">Topup List</h1>
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="space-y-4">
             <div className="flex flex-wrap gap-2">
               {statusButtons.map((btn) => (
                 <Button
                   key={btn.value}
-                  variant={statusFilter === btn.value ? "default" : "outline"}
+                  variant={statusFilter === btn.value ? "default" : "ghost"}
                   onClick={() => setStatusFilter(btn.value)}
                   size="sm"
+                  className={statusFilter === btn.value ? "" : "text-muted-foreground"}
                 >
                   {btn.label}
                 </Button>
               ))}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">เรียงตาม</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="created_at">สร้างเมื่อ</SelectItem>
-                    <SelectItem value="amount">จำนวนเงิน</SelectItem>
-                    <SelectItem value="status">สถานะ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Priority</label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="high">มาก</SelectItem>
-                    <SelectItem value="medium">ปานกลาง</SelectItem>
-                    <SelectItem value="low">น้อย</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Date Range</label>
-                <Input type="date" />
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">กรองชื่อตาม</label>
-                <Select defaultValue="verified">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="verified">ยืนยันแล้ว</SelectItem>
-                    <SelectItem value="unverified">ยังไม่ยืนยัน</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="quick search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Button variant="outline" onClick={() => refetch()}>
-                <RefreshCw className="h-4 w-4" />
+            <div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilterExpanded(!filterExpanded)}
+                className="flex items-center gap-2 text-muted-foreground"
+              >
+                {filterExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                Filter
               </Button>
             </div>
+
+            {filterExpanded && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Sort By</label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="created_at">Create At</SelectItem>
+                        <SelectItem value="amount">Amount</SelectItem>
+                        <SelectItem value="status">Status</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Priority</label>
+                    <Select value={priority} onValueChange={setPriority}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Start Date</label>
+                    <div className="relative">
+                      <Input 
+                        type="date" 
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">End Date</label>
+                    <div className="relative">
+                      <Input 
+                        type="date" 
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Text Filter</label>
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Acc Name</label>
+                    <Select value={accName} onValueChange={setAccName}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Accounts</SelectItem>
+                        <SelectItem value="account1">Account 1</SelectItem>
+                        <SelectItem value="account2">Account 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Input
+                    placeholder="Input search here..."
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
 
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>สร้างเมื่อ</TableHead>
+                    <TableHead>Create At</TableHead>
                     <TableHead>Ref ID</TableHead>
-                    <TableHead>TX ID</TableHead>
-                    <TableHead>ผู้ค้า</TableHead>
-                    <TableHead>จำนวนเงิน</TableHead>
-                    <TableHead>ธนาคาร</TableHead>
-                    <TableHead>เลขบัญชี</TableHead>
-                    <TableHead>สถานะ</TableHead>
-                    <TableHead>ประเภท</TableHead>
-                    <TableHead>จัดการ</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Merchant</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Bank</TableHead>
+                    <TableHead>Acc Num</TableHead>
+                    <TableHead>Acc Name</TableHead>
+                    <TableHead>Sys Bank</TableHead>
+                    <TableHead>Sys Acc Num</TableHead>
+                    <TableHead>Sys Acc Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Transfer Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8">
-                        กำลังโหลด...
+                      <TableCell colSpan={15} className="text-center py-8">
+                        Loading...
                       </TableCell>
                     </TableRow>
                   ) : deposits && deposits.length > 0 ? (
                     deposits.map((deposit) => (
                       <TableRow key={deposit.id}>
-                        <TableCell>
-                          {format(new Date(deposit.created_at), "yyyy-MM-dd HH:mm")}
+                        <TableCell className="text-sm">
+                          {format(new Date(deposit.created_at), "MM/dd/yyyy HH:mm")}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="font-mono text-xs">
                           {deposit.id.slice(0, 8)}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {deposit.provider_payment_id?.slice(0, 8) || "-"}
-                        </TableCell>
-                        <TableCell>{deposit.provider || "-"}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">-</TableCell>
+                        <TableCell className="text-sm">{deposit.provider || "-"}</TableCell>
+                        <TableCell className="text-sm font-medium">
                           {(deposit.amount / 100).toLocaleString()} {deposit.currency}
                         </TableCell>
-                        <TableCell>{deposit.method || "-"}</TableCell>
-                        <TableCell>-</TableCell>
+                        <TableCell className="text-sm">{deposit.method || "-"}</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
                         <TableCell>{getStatusBadge(deposit.status)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{deposit.type}</Badge>
-                        </TableCell>
+                        <TableCell className="text-sm">{deposit.method || "-"}</TableCell>
+                        <TableCell className="text-sm">-</TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm">
-                            ดูรายละเอียด
+                            Manage
                           </Button>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        No transactions found
+                      <TableCell colSpan={15} className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                          <div className="text-4xl">📋</div>
+                          <div>No data</div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
