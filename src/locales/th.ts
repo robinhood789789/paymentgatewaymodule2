@@ -62,7 +62,14 @@ export const thTranslations = {
     withdrawals: 'ถอน',
     successful: 'สำเร็จ',
     transactions: 'รายการ',
-    users: 'ผู้ใช้'
+    users: 'ผู้ใช้',
+    summaryReport: 'รายงานสรุปภาพรวม',
+    deposit: 'เติมเงิน',
+    withdrawal: 'จ่ายเงิน',
+    systemDeposit: 'เติมเงินเข้าระบบ',
+    mdr: 'MDR',
+    rolesPermissions: 'บทบาทและสิทธิ์',
+    activityHistory: 'ประวัติการใช้งาน',
   },
   payments: {
     title: 'รายการชำระเงิน',

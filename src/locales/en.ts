@@ -62,7 +62,14 @@ export const enTranslations = {
     withdrawals: 'Withdrawals',
     successful: 'Successful',
     transactions: 'Transactions',
-    users: 'Users'
+    users: 'Users',
+    summaryReport: 'Summary Report',
+    deposit: 'Deposit',
+    withdrawal: 'Withdrawal',
+    systemDeposit: 'System Deposit',
+    mdr: 'MDR',
+    rolesPermissions: 'Roles & Permissions',
+    activityHistory: 'Activity History',
   },
   payments: {
     title: 'Payments',

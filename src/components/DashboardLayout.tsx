@@ -34,7 +34,14 @@ import {
   RefreshCw,
   UserCircle,
   Webhook,
-  DollarSign
+  DollarSign,
+  PieChart,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  PlusCircle,
+  Receipt,
+  KeyRound,
+  Activity
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -65,19 +72,44 @@ const DashboardSidebar = () => {
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
+    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
+  ];
+
+  // Owner-only menu items
+  const ownerMenuItems = isOwner ? [
+    { title: t('dashboard.summaryReport'), url: "/summary-report", icon: PieChart },
+  ] : [];
+
+  // Transaction menu items
+  const transactionMenuItems = [
+    { title: t('dashboard.deposit'), url: "/deposit", icon: ArrowDownToLine },
+    { title: t('dashboard.withdrawal'), url: "/withdrawal", icon: ArrowUpFromLine },
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
-    { title: t('refunds.title'), url: "/refunds", icon: RefreshCw },
+  ];
+
+  // Owner transaction items
+  const ownerTransactionItems = isOwner ? [
+    { title: t('dashboard.systemDeposit'), url: "/system-deposit", icon: PlusCircle },
+  ] : [];
+
+  // Management menu items
+  const managementMenuItems = [
+    { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
-    { title: t('dashboard.links'), url: "/links", icon: Link2 },
+    { title: t('dashboard.rolesPermissions'), url: "/roles-permissions", icon: KeyRound },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook },
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign },
-    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
+    { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
+  ];
+
+  // Settings menu items
+  const settingsMenuItems = [
     { title: t('dashboard.settings'), url: "/settings", icon: Settings },
     { title: 'API Docs', url: "/docs", icon: Book },
   ];
 
-  // Add Go-Live for owners
-  const ownerMenuItems = isOwner ? [
+  // Go-Live for owners
+  const goLiveItems = isOwner ? [
     { title: 'Go Live', url: "/go-live", icon: Rocket },
   ] : [];
 
@@ -102,6 +134,7 @@ const DashboardSidebar = () => {
           </div>
         </div>
 
+        {/* Main Menu */}
         <SidebarGroup>
           <SidebarGroupLabel>{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -112,6 +145,83 @@ const DashboardSidebar = () => {
                     <NavLink
                       to={item.url}
                       end
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Transaction Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel>ธุรกรรม</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {[...transactionMenuItems, ...ownerTransactionItems].map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Management Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel>จัดการ</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {managementMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Settings & Docs */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {[...settingsMenuItems, ...goLiveItems].map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
                       className={({ isActive }) =>
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
