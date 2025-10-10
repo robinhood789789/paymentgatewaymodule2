@@ -87,8 +87,10 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
   ];
 
-  // Owner transaction items - removed system-deposit as the route doesn't exist yet
-  const ownerTransactionItems: typeof transactionMenuItems = [];
+  // Owner transaction items
+  const ownerTransactionItems = isOwner ? [
+    { title: t('dashboard.systemDeposit'), url: "/system-deposit", icon: PlusCircle },
+  ] : [];
 
   // Management menu items
   const managementMenuItems = [
