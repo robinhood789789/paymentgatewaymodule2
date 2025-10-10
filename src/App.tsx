@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
+import Refunds from "./pages/Refunds";
 import Links from "./pages/Links";
 import Reports from "./pages/Reports";
 import AdminUsers from "./pages/AdminUsers";
@@ -52,6 +53,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Payments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/refunds"
+        element={
+          <ProtectedRoute>
+            <Refunds />
           </ProtectedRoute>
         }
       />
