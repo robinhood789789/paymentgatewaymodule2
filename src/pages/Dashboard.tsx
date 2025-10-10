@@ -12,12 +12,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfDay } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useI18n } from "@/lib/i18n";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { activeTenantId, activeTenant } = useTenantSwitcher();
+  const { t } = useI18n();
 
   const { data: todayStats, isLoading: loadingToday } = useQuery({
     queryKey: ["payment-stats-today", activeTenantId],
@@ -112,25 +114,25 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: "Today's Payments",
+      title: t('dashboard.todayPayments'),
       value: loadingToday ? "-" : todayStats?.count || 0,
       subValue: loadingToday ? "-" : `฿${todayStats?.amount.toLocaleString() || 0}`,
       icon: DollarSign,
     },
     {
-      title: "7-Day Payments",
+      title: t('dashboard.weekPayments'),
       value: loadingWeek ? "-" : weekStats?.count || 0,
       subValue: loadingWeek ? "-" : `฿${weekStats?.amount.toLocaleString() || 0}`,
       icon: TrendingUp,
     },
     {
-      title: "Today's Success Rate",
+      title: t('dashboard.todaySuccessRate'),
       value: loadingToday ? "-" : todayStats?.total ? `${((todayStats.count / todayStats.total) * 100).toFixed(1)}%` : "0%",
       subValue: loadingToday ? "-" : `${todayStats?.count || 0}/${todayStats?.total || 0}`,
       icon: Activity,
     },
     {
-      title: "7-Day Success Rate",
+      title: t('dashboard.weekSuccessRate'),
       value: loadingWeek ? "-" : weekStats?.total ? `${((weekStats.count / weekStats.total) * 100).toFixed(1)}%` : "0%",
       subValue: loadingWeek ? "-" : `${weekStats?.count || 0}/${weekStats?.total || 0}`,
       icon: CreditCard,
@@ -142,9 +144,9 @@ const Dashboard = () => {
       <RequireTenant>
         <div className="p-6 space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('dashboard.title')}</h1>
             <p className="text-muted-foreground">
-              Welcome back, {user?.email}!
+              {t('dashboard.welcomeBack')}, {user?.email}!
             </p>
           </div>
 
@@ -178,7 +180,7 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Payments</CardTitle>
+                <CardTitle>{t('dashboard.recentPayments')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingRecent ? (
@@ -187,9 +189,9 @@ const Dashboard = () => {
                   </div>
                 ) : !recentPayments || recentPayments.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">No payments yet</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.noPaymentsYet')}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Payments will appear here once customers complete checkout
+                      {t('dashboard.noPaymentsDesc')}
                     </p>
                   </div>
                 ) : (
@@ -214,16 +216,16 @@ const Dashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Payment Methods</CardTitle>
+                <CardTitle>{t('dashboard.paymentMethods')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingMethods ? (
                   <Skeleton className="h-64 w-full" />
                 ) : !methodBreakdown || methodBreakdown.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">No data available</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.noDataAvailable')}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Method breakdown will appear once payments are processed
+                      {t('dashboard.methodBreakdownDesc')}
                     </p>
                   </div>
                 ) : (
