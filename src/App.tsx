@@ -30,6 +30,7 @@ import WithdrawalList from "./pages/WithdrawalList";
 import SystemDeposit from "./pages/SystemDeposit";
 import MDR from "./pages/MDR";
 import RolesPermissions from "./pages/RolesPermissions";
+import ActivityHistory from "./pages/ActivityHistory";
 
 const queryClient = new QueryClient();
 
@@ -173,6 +174,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <RolesPermissions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/activity-history"
+        element={
+          <ProtectedRoute>
+            <ActivityHistory />
           </ProtectedRoute>
         }
       />
