@@ -178,7 +178,7 @@ const RolesPermissions = () => {
     <DashboardLayout>
       <RequireTenant>
         <PermissionGate
-          permission="users:manage"
+          permission="users.manage"
           fallback={
             <div className="p-6">
               <div className="max-w-7xl mx-auto">
