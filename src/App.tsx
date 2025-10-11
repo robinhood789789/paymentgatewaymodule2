@@ -27,6 +27,7 @@ import Docs from "./pages/Docs";
 import GoLive from "./pages/GoLive";
 import DepositList from "./pages/DepositList";
 import WithdrawalList from "./pages/WithdrawalList";
+import SystemDeposit from "./pages/SystemDeposit";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +147,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <WithdrawalList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-deposit"
+        element={
+          <ProtectedRoute>
+            <SystemDeposit />
           </ProtectedRoute>
         }
       />
