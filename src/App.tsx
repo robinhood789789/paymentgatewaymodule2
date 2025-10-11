@@ -29,6 +29,7 @@ import DepositList from "./pages/DepositList";
 import WithdrawalList from "./pages/WithdrawalList";
 import SystemDeposit from "./pages/SystemDeposit";
 import MDR from "./pages/MDR";
+import RolesPermissions from "./pages/RolesPermissions";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +165,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <MDR />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roles-permissions"
+        element={
+          <ProtectedRoute>
+            <RolesPermissions />
           </ProtectedRoute>
         }
       />
