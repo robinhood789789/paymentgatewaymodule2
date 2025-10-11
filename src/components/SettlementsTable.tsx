@@ -6,8 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Calendar, Wallet } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SettlementDetailsDrawer } from "./SettlementDetailsDrawer";
@@ -24,9 +25,11 @@ export const SettlementsTable = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const { data: settlements = [], isLoading } = useQuery({
-    queryKey: ["settlements", activeTenantId, statusFilter, providerFilter, searchQuery],
+    queryKey: ["settlements", activeTenantId, statusFilter, providerFilter, searchQuery, dateFrom, dateTo],
     queryFn: async () => {
       if (!activeTenantId) return [];
 
@@ -49,6 +52,16 @@ export const SettlementsTable = () => {
 
       if (searchQuery) {
         query = query.or(`id.ilike.%${searchQuery}%,cycle.ilike.%${searchQuery}%`);
+      }
+
+      if (dateFrom) {
+        query = query.gte("created_at", new Date(dateFrom).toISOString());
+      }
+
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endDate.toISOString());
       }
 
       const { data, error } = await query;
@@ -105,71 +118,109 @@ export const SettlementsTable = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">
+              <Calendar className="inline h-3 w-3 mr-1" />
+              {t('settlements.dateFrom')}
+            </Label>
             <Input
-              placeholder={t('settlements.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">
+              <Calendar className="inline h-3 w-3 mr-1" />
+              {t('settlements.dateTo')}
+            </Label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">{t('settlements.status')}</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('settlements.allStatus')}</SelectItem>
+                <SelectItem value="paid">{t('settlements.paid')}</SelectItem>
+                <SelectItem value="pending">{t('settlements.pending')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">{t('settlements.provider')}</Label>
+            <Select value={providerFilter} onValueChange={setProviderFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('settlements.allProviders')}</SelectItem>
+                <SelectItem value="stripe">Stripe</SelectItem>
+                <SelectItem value="opn">OPN</SelectItem>
+                <SelectItem value="kbank">KBank</SelectItem>
+                <SelectItem value="twoc2p">2C2P</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('settlements.allStatus')}</SelectItem>
-            <SelectItem value="paid">{t('settlements.paid')}</SelectItem>
-            <SelectItem value="pending">{t('settlements.pending')}</SelectItem>
-          </SelectContent>
-        </Select>
 
-        <Select value={providerFilter} onValueChange={setProviderFilter}>
-          <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('settlements.allProviders')}</SelectItem>
-            <SelectItem value="stripe">Stripe</SelectItem>
-            <SelectItem value="opn">OPN</SelectItem>
-            <SelectItem value="kbank">KBank</SelectItem>
-            <SelectItem value="twoc2p">2C2P</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('settlements.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
 
-        <Button onClick={handleExportCSV} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          {t('settlements.export')}
-        </Button>
+          <Button onClick={handleExportCSV} variant="outline" size="default">
+            <Download className="h-4 w-4 mr-2" />
+            {t('settlements.export')}
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg">
+      <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>{t('settlements.id')}</TableHead>
-              <TableHead>{t('settlements.provider')}</TableHead>
-              <TableHead>{t('settlements.cycle')}</TableHead>
-              <TableHead className="text-right">{t('settlements.grossAmount')}</TableHead>
-              <TableHead className="text-right">{t('settlements.fees')}</TableHead>
-              <TableHead className="text-right">{t('settlements.netAmount')}</TableHead>
-              <TableHead>{t('settlements.status')}</TableHead>
-              <TableHead>{t('settlements.created')}</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="font-semibold">{t('settlements.id')}</TableHead>
+              <TableHead className="font-semibold">{t('settlements.provider')}</TableHead>
+              <TableHead className="font-semibold">{t('settlements.cycle')}</TableHead>
+              <TableHead className="text-right font-semibold">{t('settlements.grossAmount')}</TableHead>
+              <TableHead className="text-right font-semibold">{t('settlements.fees')}</TableHead>
+              <TableHead className="text-right font-semibold">{t('settlements.netAmount')}</TableHead>
+              <TableHead className="font-semibold">{t('settlements.status')}</TableHead>
+              <TableHead className="font-semibold">{t('settlements.created')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {settlements.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  {t('settlements.noData')}
+                <TableCell colSpan={8} className="h-32 text-center">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <Wallet className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="font-medium">{t('settlements.noData')}</p>
+                    <p className="text-xs">{t('settlements.noDataDesc')}</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -180,29 +231,31 @@ export const SettlementsTable = () => {
                 return (
                   <TableRow
                     key={settlement.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => handleRowClick(settlement)}
                   >
                     <TableCell className="font-mono text-xs">
                       {settlement.id.slice(0, 8)}...
                     </TableCell>
-                    <TableCell className="font-medium">{settlement.provider}</TableCell>
-                    <TableCell>{settlement.cycle}</TableCell>
-                    <TableCell className="text-right">
-                      {(grossAmount / 100).toLocaleString()}
+                    <TableCell>
+                      <span className="font-medium capitalize">{settlement.provider}</span>
                     </TableCell>
-                    <TableCell className="text-right text-destructive">
-                      -{(settlement.fees / 100).toLocaleString()}
+                    <TableCell className="text-muted-foreground">{settlement.cycle}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      ฿{(grossAmount / 100).toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {(settlement.net_amount / 100).toLocaleString()}
+                    <TableCell className="text-right text-destructive font-medium">
+                      -฿{(settlement.fees / 100).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right font-bold">
+                      ฿{(settlement.net_amount / 100).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={isPaid ? "default" : "secondary"}>
+                      <Badge variant={isPaid ? "default" : "secondary"} className="font-medium">
                         {isPaid ? t('settlements.paid') : t('settlements.pending')}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-muted-foreground">
                       {format(new Date(settlement.created_at), "PP")}
                     </TableCell>
                   </TableRow>
