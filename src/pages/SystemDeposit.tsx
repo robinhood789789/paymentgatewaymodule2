@@ -37,17 +37,17 @@ export default function SystemDeposit() {
   });
 
   const statusButtons: { value: PaymentStatus; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "pending", label: "Pending" },
-    { value: "completed", label: "Completed" },
+    { value: "all", label: "ทั้งหมด" },
+    { value: "pending", label: "รอดำเนินการ" },
+    { value: "completed", label: "เสร็จสิ้น" },
   ];
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      completed: { label: "Completed", variant: "default" as const },
-      succeeded: { label: "Completed", variant: "default" as const },
-      pending: { label: "Pending", variant: "secondary" as const },
-      processing: { label: "Processing", variant: "default" as const },
+      completed: { label: "เสร็จสิ้น", variant: "default" as const },
+      succeeded: { label: "เสร็จสิ้น", variant: "default" as const },
+      pending: { label: "รอดำเนินการ", variant: "secondary" as const },
+      processing: { label: "กำลังดำเนินการ", variant: "default" as const },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || { 
@@ -62,7 +62,7 @@ export default function SystemDeposit() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">System Deposit</h1>
+          <h1 className="text-3xl font-bold">ระบบฝากเงิน</h1>
         </div>
 
         <Card>
@@ -83,7 +83,7 @@ export default function SystemDeposit() {
 
             <div>
               <Input
-                placeholder="Search..."
+                placeholder="ค้นหา..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-sm"
@@ -96,28 +96,28 @@ export default function SystemDeposit() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Create At</TableHead>
-                    <TableHead>Ref ID</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Bank</TableHead>
-                    <TableHead>Account Number</TableHead>
-                    <TableHead>Account Name</TableHead>
-                    <TableHead>System Bank</TableHead>
-                    <TableHead>System Account Number</TableHead>
-                    <TableHead>System Account Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Transfer Date</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>สร้างเมื่อ</TableHead>
+                    <TableHead>รหัสอ้างอิง</TableHead>
+                    <TableHead>ลูกค้า</TableHead>
+                    <TableHead>ร้านค้า</TableHead>
+                    <TableHead>จำนวนเงิน</TableHead>
+                    <TableHead>ธนาคาร</TableHead>
+                    <TableHead>เลขบัญชี</TableHead>
+                    <TableHead>ชื่อบัญชี</TableHead>
+                    <TableHead>ธนาคารระบบ</TableHead>
+                    <TableHead>เลขบัญชีระบบ</TableHead>
+                    <TableHead>ชื่อบัญชีระบบ</TableHead>
+                    <TableHead>สถานะ</TableHead>
+                    <TableHead>วิธีการ</TableHead>
+                    <TableHead>วันที่โอน</TableHead>
+                    <TableHead>จัดการ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
                       <TableCell colSpan={15} className="text-center py-8">
-                        Loading...
+                        กำลังโหลด...
                       </TableCell>
                     </TableRow>
                   ) : deposits && deposits.length > 0 ? (
@@ -147,7 +147,7 @@ export default function SystemDeposit() {
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm">
-                            View
+                            ดู
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -157,7 +157,7 @@ export default function SystemDeposit() {
                       <TableCell colSpan={15} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                           <div className="text-4xl">📋</div>
-                          <div>No data</div>
+                          <div>ไม่มีข้อมูล</div>
                         </div>
                       </TableCell>
                     </TableRow>
