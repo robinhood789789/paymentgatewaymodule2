@@ -7,7 +7,7 @@ export const usePermissions = () => {
   const { user } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
 
-  const { data: permissions = [], isLoading } = useQuery({
+  const { data: permissions = [], isLoading: queryLoading } = useQuery({
     queryKey: ["user-permissions", user?.id, activeTenantId],
     queryFn: async () => {
       if (!user?.id || !activeTenantId) return [];
@@ -18,7 +18,7 @@ export const usePermissions = () => {
         .select("role_id")
         .eq("user_id", user.id)
         .eq("tenant_id", activeTenantId)
-        .single();
+        .maybeSingle();
 
       if (membershipError || !membership) return [];
 
@@ -44,6 +44,8 @@ export const usePermissions = () => {
     },
     enabled: !!user?.id && !!activeTenantId,
   });
+
+  const isLoading = queryLoading || !activeTenantId;
 
   const hasPermission = (permission: string): boolean => {
     return permissions.includes(permission);

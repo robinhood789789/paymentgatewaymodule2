@@ -29,12 +29,12 @@ export const PermissionGate = ({
   allowOwner = false,
   allowAdmin = false,
 }: PermissionGateProps) => {
-  const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading } = usePermissions();
-  const { activeTenant } = useTenantSwitcher();
+  const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading: permsLoading } = usePermissions();
+  const { activeTenant, activeTenantId, isLoading: tenantLoading } = useTenantSwitcher();
   const isOwner = activeTenant?.roles?.name === "owner";
   const isAdmin = activeTenant?.roles?.name === "admin";
 
-  if (isLoading) {
+  if (permsLoading || tenantLoading || !activeTenantId) {
     return null;
   }
 
