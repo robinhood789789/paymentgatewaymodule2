@@ -22,15 +22,25 @@ export const usePermissions = () => {
 
       if (membershipError || !membership) return [];
 
-      // Get permissions for this role
-      const { data: rolePermissions, error: permissionsError } = await supabase
+      // Get permissions for this role (fetch IDs then names to avoid FK dependency)
+      const { data: rolePerms, error: rolePermsError } = await supabase
         .from("role_permissions")
-        .select("permissions(name)")
+        .select("permission_id")
         .eq("role_id", membership.role_id);
 
-      if (permissionsError) return [];
+      if (rolePermsError || !rolePerms) return [];
 
-      return rolePermissions.map((rp) => rp.permissions.name);
+      const permissionIds = rolePerms.map((rp) => rp.permission_id).filter(Boolean);
+      if (permissionIds.length === 0) return [];
+
+      const { data: perms, error: permsError } = await supabase
+        .from("permissions")
+        .select("name")
+        .in("id", permissionIds);
+
+      if (permsError || !perms) return [];
+
+      return perms.map((p) => p.name);
     },
     enabled: !!user?.id && !!activeTenantId,
   });
