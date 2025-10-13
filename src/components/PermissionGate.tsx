@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -7,6 +8,7 @@ interface PermissionGateProps {
   permissions?: string[];
   requireAll?: boolean;
   fallback?: ReactNode;
+  allowOwner?: boolean;
 }
 
 /**
@@ -23,11 +25,18 @@ export const PermissionGate = ({
   permissions,
   requireAll = false,
   fallback = null,
+  allowOwner = false,
 }: PermissionGateProps) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading } = usePermissions();
+  const { activeTenant } = useTenantSwitcher();
+  const isOwner = activeTenant?.roles?.name === "owner";
 
   if (isLoading) {
     return null;
+  }
+
+  if (allowOwner && isOwner) {
+    return <>{children}</>;
   }
 
   // Check single permission
