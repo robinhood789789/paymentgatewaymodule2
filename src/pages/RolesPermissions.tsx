@@ -178,6 +178,8 @@ const RolesPermissions = () => {
     <DashboardLayout>
       <RequireTenant>
         <PermissionGate
+          allowOwner
+          allowAdmin
           permissions={["users.manage", "settings.manage"]}
           requireAll={false}
           fallback={
