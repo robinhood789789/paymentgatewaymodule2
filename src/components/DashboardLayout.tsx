@@ -96,7 +96,7 @@ const DashboardSidebar = () => {
   const managementMenuItems = [
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
-    { title: t('dashboard.rolesPermissions'), url: "/roles-permissions", icon: KeyRound },
+    { title: t('dashboard.manageAdmins'), url: "/roles-permissions", icon: KeyRound },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook },
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign },
     { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },

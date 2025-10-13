@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { RequireTenant } from "@/components/RequireTenant";
-import { PermissionGate } from "@/components/PermissionGate";
+// ... keep existing code
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,23 +177,6 @@ const RolesPermissions = () => {
   return (
     <DashboardLayout>
       <RequireTenant>
-        <PermissionGate
-          allowOwner
-          allowAdmin
-          permissions={["users.manage", "settings.manage"]}
-          requireAll={false}
-          fallback={
-            <div className="p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="text-center p-8 border rounded-lg">
-                  <p className="text-muted-foreground">
-                    คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อ Owner เพื่อขอสิทธิ์การเข้าถึง
-                  </p>
-                </div>
-              </div>
-            </div>
-          }
-        >
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex items-center justify-between">
@@ -404,7 +387,7 @@ const RolesPermissions = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </PermissionGate>
+        
       </RequireTenant>
     </DashboardLayout>
   );
