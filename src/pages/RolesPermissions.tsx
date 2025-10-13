@@ -189,16 +189,15 @@ const RolesPermissions = () => {
               </div>
 
               <Card>
-                <CardHeader>
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <CardHeader>
                     <TabsList className="grid w-full max-w-md grid-cols-2">
                       <TabsTrigger value="admins">แอดมินร้านค้า</TabsTrigger>
                       <TabsTrigger value="history">ประวัติการเชิญ</TabsTrigger>
                     </TabsList>
-                  </Tabs>
-                </CardHeader>
-                <CardContent>
-                  <TabsContent value="admins" className="space-y-4 mt-0">
+                  </CardHeader>
+                  <CardContent>
+                    <TabsContent value="admins" className="space-y-4 mt-0">
                     {/* Search and Filter */}
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="flex flex-1 gap-2">
@@ -300,12 +299,13 @@ const RolesPermissions = () => {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="history" className="mt-0">
-                    <div className="text-center py-12 text-muted-foreground">
-                      ยังไม่มีประวัติการเชิญ
-                    </div>
-                  </TabsContent>
-                </CardContent>
+                    <TabsContent value="history" className="mt-0">
+                      <div className="text-center py-12 text-muted-foreground">
+                        ยังไม่มีประวัติการเชิญ
+                      </div>
+                    </TabsContent>
+                  </CardContent>
+                </Tabs>
               </Card>
             </div>
           </div>
