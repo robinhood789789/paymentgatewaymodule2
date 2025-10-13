@@ -178,15 +178,14 @@ const RolesPermissions = () => {
     <DashboardLayout>
       <RequireTenant>
         <PermissionGate
-          allowOwner
-          allowAdmin
-          permission="users.manage"
+          permissions={["users.manage", "settings.manage"]}
+          requireAll={false}
           fallback={
             <div className="p-6">
               <div className="max-w-7xl mx-auto">
                 <div className="text-center p-8 border rounded-lg">
                   <p className="text-muted-foreground">
-                    คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Owner เท่านั้นที่สามารถจัดการบทบาทและสิทธิ์ได้
+                    คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อ Owner เพื่อขอสิทธิ์การเข้าถึง
                   </p>
                 </div>
               </div>
