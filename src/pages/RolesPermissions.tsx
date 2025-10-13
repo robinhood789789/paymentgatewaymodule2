@@ -357,7 +357,7 @@ const RolesPermissions = () => {
                           htmlFor={`perm-${permission.id}`}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                         >
-                          {permission.name}
+                          {permission.description || permission.name}
                         </label>
                       </div>
                     ))}
