@@ -5,12 +5,38 @@ import { RequireTenant } from "@/components/RequireTenant";
 import { PermissionGate } from "@/components/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
 
 interface Role {
   id: string;
@@ -25,17 +51,30 @@ interface Permission {
   description: string;
 }
 
-interface RolePermission {
+interface Membership {
+  id: string;
+  user_id: string;
   role_id: string;
-  permission_id: string;
+  created_at: string;
+  roles: {
+    name: string;
+  };
+  profiles: {
+    full_name: string | null;
+    email: string;
+  };
 }
 
 const RolesPermissions = () => {
   const { activeTenantId } = useTenantSwitcher();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [permissionChanges, setPermissionChanges] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [newMemberRole, setNewMemberRole] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("admins");
 
   // Fetch roles
   const { data: roles = [], isLoading: rolesLoading } = useQuery({
@@ -49,6 +88,52 @@ const RolesPermissions = () => {
       
       if (error) throw error;
       return data as Role[];
+    },
+    enabled: !!activeTenantId,
+  });
+
+  // Fetch memberships
+  const { data: memberships = [], isLoading: membershipsLoading } = useQuery({
+    queryKey: ["memberships", activeTenantId, selectedRole, searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from("memberships")
+        .select(`
+          id,
+          user_id,
+          role_id,
+          created_at,
+          roles!inner (
+            name
+          ),
+          profiles!inner (
+            full_name,
+            email
+          )
+        `)
+        .eq("tenant_id", activeTenantId);
+
+      if (selectedRole && selectedRole !== "all") {
+        query = query.eq("role_id", selectedRole);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+      
+      if (error) throw error;
+
+      let filtered = data as unknown as Membership[];
+      
+      if (searchQuery) {
+        filtered = filtered.filter((m) => {
+          const searchLower = searchQuery.toLowerCase();
+          return (
+            m.profiles.full_name?.toLowerCase().includes(searchLower) ||
+            m.profiles.email.toLowerCase().includes(searchLower)
+          );
+        });
+      }
+
+      return filtered;
     },
     enabled: !!activeTenantId,
   });
@@ -67,112 +152,27 @@ const RolesPermissions = () => {
     },
   });
 
-  // Fetch role permissions for selected role
-  const { data: rolePermissions = [], isLoading: rolePermissionsLoading } = useQuery({
-    queryKey: ["role-permissions", selectedRole],
-    queryFn: async () => {
-      if (!selectedRole) return [];
-      
-      const { data, error } = await supabase
-        .from("role_permissions")
-        .select("*")
-        .eq("role_id", selectedRole);
-      
-      if (error) throw error;
-      return data as RolePermission[];
-    },
-    enabled: !!selectedRole,
-  });
 
-  // Update role permissions
-  const updatePermissionsMutation = useMutation({
-    mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
-      // Delete existing permissions
-      await supabase
-        .from("role_permissions")
-        .delete()
-        .eq("role_id", roleId);
-
-      // Insert new permissions
-      if (permissionIds.length > 0) {
-        const { error } = await supabase
-          .from("role_permissions")
-          .insert(
-            permissionIds.map((permissionId) => ({
-              role_id: roleId,
-              permission_id: permissionId,
-            }))
-          );
-
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["role-permissions"] });
-      queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
-      toast({
-        title: "บันทึกสำเร็จ",
-        description: "อัปเดตสิทธิ์การเข้าถึงเรียบร้อยแล้ว",
-      });
-      setPermissionChanges({});
-    },
-    onError: (error) => {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถอัปเดตสิทธิ์การเข้าถึงได้",
-        variant: "destructive",
-      });
-      console.error(error);
-    },
-  });
-
-  const handlePermissionToggle = (permissionId: string, checked: boolean) => {
-    setPermissionChanges((prev) => ({
-      ...prev,
-      [permissionId]: checked,
-    }));
-  };
-
-  const handleSave = () => {
-    if (!selectedRole) return;
-
-    const currentPermissionIds = rolePermissions.map((rp) => rp.permission_id);
-    const updatedPermissionIds = permissions
-      .filter((p) => {
-        const isCurrentlyEnabled = currentPermissionIds.includes(p.id);
-        const hasChange = permissionChanges.hasOwnProperty(p.id);
-        return hasChange ? permissionChanges[p.id] : isCurrentlyEnabled;
-      })
-      .map((p) => p.id);
-
-    updatePermissionsMutation.mutate({
-      roleId: selectedRole,
-      permissionIds: updatedPermissionIds,
-    });
-  };
-
-  const isPermissionEnabled = (permissionId: string) => {
-    if (permissionChanges.hasOwnProperty(permissionId)) {
-      return permissionChanges[permissionId];
-    }
-    return rolePermissions.some((rp) => rp.permission_id === permissionId);
-  };
-
-  const selectedRoleData = roles.find((r) => r.id === selectedRole);
-  const isOwnerRole = selectedRoleData?.name === "owner";
-  const hasChanges = Object.keys(permissionChanges).length > 0;
-
-  if (rolesLoading || permissionsLoading) {
-    return (
-      <DashboardLayout>
-        <RequireTenant>
-          <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        </RequireTenant>
-      </DashboardLayout>
+  const handlePermissionToggle = (permissionId: string) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
+        : [...prev, permissionId]
     );
-  }
+  };
+
+  const handleAddAdmin = () => {
+    // TODO: Implement add admin functionality
+    toast({
+      title: "ฟังก์ชันยังไม่พร้อมใช้งาน",
+      description: "ฟังก์ชันนี้อยู่ระหว่างการพัฒนา",
+    });
+    setIsAddDialogOpen(false);
+  };
+
+  const filteredMemberships = memberships;
+
+  const isLoading = rolesLoading || permissionsLoading || membershipsLoading;
 
   return (
     <DashboardLayout>
@@ -196,120 +196,214 @@ const RolesPermissions = () => {
         >
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">บทบาทและสิทธิ์การเข้าถึง</h1>
-                <p className="text-muted-foreground">จัดการบทบาทและสิทธิ์การเข้าถึงหน้าต่างๆ ในระบบ</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">จัดการแอดมิน</h1>
+                  <p className="text-muted-foreground">
+                    Brick City &gt; จัดการแอดมิน
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Roles List */}
-                <Card className="lg:col-span-1">
-                  <CardHeader>
-                    <CardTitle>บทบาท</CardTitle>
-                    <CardDescription>เลือกบทบาทเพื่อจัดการสิทธิ์</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {roles.map((role) => (
-                      <button
-                        key={role.id}
-                        onClick={() => {
-                          setSelectedRole(role.id);
-                          setPermissionChanges({});
-                        }}
-                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                          selectedRole === role.id
-                            ? "bg-primary/10 border-primary"
-                            : "hover:bg-accent border-border"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{role.name}</p>
-                            <p className="text-sm text-muted-foreground">{role.description}</p>
-                          </div>
-                          {role.name === "owner" && (
-                            <Badge variant="default">เจ้าของ</Badge>
-                          )}
+              <Card>
+                <CardHeader>
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="grid w-full max-w-md grid-cols-2">
+                      <TabsTrigger value="admins">แอดมินร้านค้า</TabsTrigger>
+                      <TabsTrigger value="history">ประวัติการเชิญ</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </CardHeader>
+                <CardContent>
+                  <TabsContent value="admins" className="space-y-4 mt-0">
+                    {/* Search and Filter */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex flex-1 gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="ชื่อแอดมิน, เบอร์โทร"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                          />
                         </div>
-                      </button>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                {/* Permissions List */}
-                <Card className="lg:col-span-2">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>
-                          สิทธิ์การเข้าถึง
-                          {selectedRoleData && ` - ${selectedRoleData.name}`}
-                        </CardTitle>
-                        <CardDescription>
-                          {isOwnerRole
-                            ? "Owner มีสิทธิ์เข้าถึงทุกหน้าและไม่สามารถแก้ไขได้"
-                            : "เลือกสิทธิ์ที่ต้องการให้บทบาทนี้เข้าถึงได้"}
-                        </CardDescription>
-                      </div>
-                      {selectedRole && !isOwnerRole && (
-                        <Button
-                          onClick={handleSave}
-                          disabled={!hasChanges || updatePermissionsMutation.isPending}
-                        >
-                          {updatePermissionsMutation.isPending ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              กำลังบันทึก...
-                            </>
-                          ) : (
-                            "บันทึก"
-                          )}
+                        <Button variant="outline" size="icon">
+                          <Search className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {!selectedRole ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        เลือกบทบาทเพื่อดูและจัดการสิทธิ์การเข้าถึง
                       </div>
-                    ) : rolePermissionsLoading ? (
+                      <div className="flex gap-2">
+                        <Select value={selectedRole} onValueChange={setSelectedRole}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="สาขา" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">ทั้งหมด</SelectItem>
+                            {roles.map((role) => (
+                              <SelectItem key={role.id} value={role.id}>
+                                {role.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          onClick={() => setIsAddDialogOpen(true)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          เพิ่มแอดมิน
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="text-sm text-muted-foreground">
+                      รายชื่อ <span className="font-semibold">แอดมินร้านค้า ({filteredMemberships.length}/10)</span>
+                    </div>
+
+                    {/* Table */}
+                    {isLoading ? (
                       <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : filteredMemberships.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        ไม่มีข้อมูล
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {permissions.map((permission) => (
-                          <div
-                            key={permission.id}
-                            className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors"
-                          >
-                            <Checkbox
-                              id={permission.id}
-                              checked={isPermissionEnabled(permission.id)}
-                              disabled={isOwnerRole}
-                              onCheckedChange={(checked) =>
-                                handlePermissionToggle(permission.id, checked === true)
-                              }
-                            />
-                            <label
-                              htmlFor={permission.id}
-                              className="flex-1 cursor-pointer"
-                            >
-                              <p className="font-medium">{permission.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {permission.description}
-                              </p>
-                            </label>
-                          </div>
-                        ))}
+                      <div className="rounded-lg border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>เบอร์/ชื่อ-สกุล/อีเมล</TableHead>
+                              <TableHead>สาขา</TableHead>
+                              <TableHead>วันที่เชิญ</TableHead>
+                              <TableHead>วันที่ยอมรับ</TableHead>
+                              <TableHead>สถานะ</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredMemberships.map((membership) => (
+                              <TableRow key={membership.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {membership.profiles.full_name || "-"}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {membership.profiles.email}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">
+                                    {membership.roles.name}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {format(new Date(membership.created_at), "dd/MM/yyyy")}
+                                </TableCell>
+                                <TableCell>
+                                  {format(new Date(membership.created_at), "dd/MM/yyyy")}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary">ใช้งาน</Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              </div>
+                  </TabsContent>
+
+                  <TabsContent value="history" className="mt-0">
+                    <div className="text-center py-12 text-muted-foreground">
+                      ยังไม่มีประวัติการเชิญ
+                    </div>
+                  </TabsContent>
+                </CardContent>
+              </Card>
             </div>
           </div>
+
+          {/* Add Admin Dialog */}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>เพิ่มแอดมิน</DialogTitle>
+                <DialogDescription>
+                  เลือกสาขาและสิทธิ์การเข้าถึงสำหรับแอดมินคนใหม่
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                {/* Branch/Role Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    สาขา<span className="text-destructive">*</span>
+                  </label>
+                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="เลือกสาขา" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Permissions */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">
+                    สิทธิ์การเข้าถึง<span className="text-destructive">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {permissions.map((permission) => (
+                      <div key={permission.id} className="flex items-start space-x-3">
+                        <Checkbox
+                          id={`perm-${permission.id}`}
+                          checked={selectedPermissions.includes(permission.id)}
+                          onCheckedChange={() => handlePermissionToggle(permission.id)}
+                        />
+                        <label
+                          htmlFor={`perm-${permission.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {permission.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddDialogOpen(false);
+                    setSelectedPermissions([]);
+                    setNewMemberRole("");
+                  }}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleAddAdmin}
+                  disabled={!newMemberRole || selectedPermissions.length === 0}
+                >
+                  สร้างบัญชีสมาชิก
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </PermissionGate>
       </RequireTenant>
     </DashboardLayout>
