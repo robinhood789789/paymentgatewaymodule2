@@ -135,8 +135,8 @@ const DashboardSidebar = () => {
         </div>
 
         {/* Main Menu */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t('dashboard.overview')}</SidebarGroupLabel>
+        <SidebarGroup className="border-l-4 border-primary pl-2">
+          <SidebarGroupLabel className="text-primary">{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {[...userMenuItems, ...ownerMenuItems].map((item) => (
@@ -162,8 +162,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Transaction Menu */}
-        <SidebarGroup>
-          <SidebarGroupLabel>ธุรกรรม</SidebarGroupLabel>
+        <SidebarGroup className="border-l-4 border-secondary pl-2">
+          <SidebarGroupLabel className="text-secondary">ธุรกรรม</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {[...transactionMenuItems, ...ownerTransactionItems].map((item) => (
@@ -188,8 +188,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Management Menu */}
-        <SidebarGroup>
-          <SidebarGroupLabel>จัดการ</SidebarGroupLabel>
+        <SidebarGroup className="border-l-4 border-warning pl-2">
+          <SidebarGroupLabel className="text-warning">จัดการ</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementMenuItems.map((item) => (
@@ -214,7 +214,7 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Settings & Docs */}
-        <SidebarGroup>
+        <SidebarGroup className="border-l-4 border-accent pl-2">
           <SidebarGroupContent>
             <SidebarMenu>
               {[...settingsMenuItems, ...goLiveItems].map((item) => (
@@ -239,8 +239,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('dashboard.admin')}</SidebarGroupLabel>
+          <SidebarGroup className="border-l-4 border-destructive pl-2">
+            <SidebarGroupLabel className="text-destructive">{t('dashboard.admin')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminMenuItems.map((item) => (
