@@ -243,11 +243,11 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button variant="deposit">
                 <ArrowUpRight className="mr-2 h-4 w-4" />
                 {t('dashboard.depositButton')}
               </Button>
-              <Button variant="outline">
+              <Button variant="withdrawal">
                 <ArrowDownRight className="mr-2 h-4 w-4" />
                 {t('dashboard.withdrawalButton')}
               </Button>

@@ -60,6 +60,8 @@ export default {
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
         "gradient-success": "var(--gradient-success)",
+        "gradient-deposit": "var(--gradient-deposit)",
+        "gradient-withdrawal": "var(--gradient-withdrawal)",
         "gradient-hero": "var(--gradient-hero)",
       },
       boxShadow: {

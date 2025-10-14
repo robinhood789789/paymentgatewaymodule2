@@ -17,6 +17,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         success: "bg-success text-success-foreground hover:bg-success/90 hover:shadow-md",
         gradient: "bg-gradient-primary text-white hover:opacity-90 hover:shadow-glow",
+        deposit: "bg-gradient-deposit text-white hover:opacity-90 hover:shadow-glow",
+        withdrawal: "bg-gradient-withdrawal text-white hover:opacity-90 hover:shadow-glow",
       },
       size: {
         default: "h-10 px-4 py-2",
