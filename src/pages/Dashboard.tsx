@@ -312,15 +312,15 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-balance text-white border-0">
               <CardContent className="pt-6">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
+                <p className="text-sm font-medium opacity-90 mb-2">
                   {t('dashboard.totalBalance')}
                 </p>
-                <p className="text-3xl font-bold text-foreground">
+                <p className="text-3xl font-bold">
                   ฿{((wallet?.balance || 0) / 100).toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm opacity-90 mt-2">
                   {todayStats?.count || 0} {t('dashboard.transactions')}
                 </p>
               </CardContent>
@@ -329,99 +329,99 @@ const Dashboard = () => {
 
           {/* Middle Stats Grid */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card>
+            <Card className="bg-gradient-activity text-white border-0 hover:shadow-glow transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium opacity-90">
                       {t('dashboard.todayTransactions')}
                     </p>
                     <p className="text-2xl font-bold">{todayStats?.count || 0}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs opacity-90 mt-1">
                       {allTransactions?.deposits || 0} {t('dashboard.deposits')} / {allTransactions?.withdrawals || 0} {t('dashboard.withdrawals')}
                     </p>
                   </div>
-                  <Activity className="h-8 w-8 text-muted-foreground" />
+                  <Activity className="h-8 w-8 opacity-90" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-info text-white border-0 hover:shadow-glow transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium opacity-90">
                       {t('dashboard.allTransactions')}
                     </p>
                     <p className="text-2xl font-bold">
                       {(allTransactions?.deposits || 0) + (allTransactions?.withdrawals || 0)}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs opacity-90 mt-1">
                       ฝาก {allTransactions?.deposits || 0} / ถอน {allTransactions?.withdrawals || 0}
                     </p>
                   </div>
-                  <ArrowUpRight className="h-8 w-8 text-blue-500" />
+                  <ArrowUpRight className="h-8 w-8 opacity-90" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 hover:shadow-glow transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium opacity-90">
                       {t('dashboard.depositTransactions')}
                     </p>
                     <p className="text-2xl font-bold">{depositStats?.total || 0}</p>
-                    <p className="text-xs text-green-600 mt-1">
+                    <p className="text-xs opacity-90 mt-1">
                       {t('dashboard.successful')}: {depositStats?.successful || 0}
                     </p>
                   </div>
-                  <ArrowUpRight className="h-8 w-8 text-green-500" />
+                  <ArrowUpRight className="h-8 w-8 opacity-90" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-rose-500 to-pink-600 text-white border-0 hover:shadow-glow transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium opacity-90">
                       {t('dashboard.withdrawalTransactions')}
                     </p>
                     <p className="text-2xl font-bold">{withdrawalStats?.total || 0}</p>
-                    <p className="text-xs text-green-600 mt-1">
+                    <p className="text-xs opacity-90 mt-1">
                       {t('dashboard.successful')}: {withdrawalStats?.successful || 0}
                     </p>
                   </div>
-                  <ArrowDownRight className="h-8 w-8 text-pink-500" />
+                  <ArrowDownRight className="h-8 w-8 opacity-90" />
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Users Card */}
-          <Card>
+          <Card className="bg-gradient-users text-white border-0 hover:shadow-glow transition-all duration-300">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium opacity-90">
                     {t('dashboard.totalUsers')}
                   </p>
                   <p className="text-3xl font-bold">{usersCount?.count || 0}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs opacity-90 mt-1">
                     {t('dashboard.users')}
                   </p>
                 </div>
-                <Users className="h-10 w-10 text-muted-foreground" />
+                <Users className="h-10 w-10 opacity-90" />
               </div>
             </CardContent>
           </Card>
 
           {/* Recent Transactions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dashboard.recentTransactions')}</CardTitle>
+          <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardTitle className="text-primary">{t('dashboard.recentTransactions')}</CardTitle>
             </CardHeader>
             <CardContent>
               {loadingRecent ? (

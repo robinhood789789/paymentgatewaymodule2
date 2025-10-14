@@ -62,6 +62,10 @@ export default {
         "gradient-success": "var(--gradient-success)",
         "gradient-deposit": "var(--gradient-deposit)",
         "gradient-withdrawal": "var(--gradient-withdrawal)",
+        "gradient-balance": "var(--gradient-balance)",
+        "gradient-activity": "var(--gradient-activity)",
+        "gradient-info": "var(--gradient-info)",
+        "gradient-users": "var(--gradient-users)",
         "gradient-hero": "var(--gradient-hero)",
       },
       boxShadow: {
