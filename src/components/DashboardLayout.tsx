@@ -135,8 +135,8 @@ const DashboardSidebar = () => {
         </div>
 
         {/* Main Menu */}
-        <SidebarGroup className="border-l-4 border-primary pl-2">
-          <SidebarGroupLabel className="text-primary">{t('dashboard.overview')}</SidebarGroupLabel>
+        <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
+          <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {[...userMenuItems, ...ownerMenuItems].map((item) => (
@@ -162,8 +162,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Transaction Menu */}
-        <SidebarGroup className="border-l-4 border-secondary pl-2">
-          <SidebarGroupLabel className="text-secondary">ธุรกรรม</SidebarGroupLabel>
+        <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
+          <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {[...transactionMenuItems, ...ownerTransactionItems].map((item) => (
@@ -188,8 +188,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Management Menu */}
-        <SidebarGroup className="border-l-4 border-warning pl-2">
-          <SidebarGroupLabel className="text-warning">จัดการ</SidebarGroupLabel>
+        <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
+          <SidebarGroupLabel className="text-warning font-semibold">จัดการ</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementMenuItems.map((item) => (
@@ -214,7 +214,7 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {/* Settings & Docs */}
-        <SidebarGroup className="border-l-4 border-accent pl-2">
+        <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
           <SidebarGroupContent>
             <SidebarMenu>
               {[...settingsMenuItems, ...goLiveItems].map((item) => (
@@ -239,8 +239,8 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         {isAdmin && (
-          <SidebarGroup className="border-l-4 border-destructive pl-2">
-            <SidebarGroupLabel className="text-destructive">{t('dashboard.admin')}</SidebarGroupLabel>
+          <SidebarGroup className="border-l-[6px] border-destructive bg-destructive/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-destructive font-semibold">{t('dashboard.admin')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminMenuItems.map((item) => (
