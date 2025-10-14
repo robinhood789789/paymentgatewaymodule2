@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
 import { useI18n } from "@/lib/i18n";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -243,13 +244,17 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="deposit">
-                <ArrowUpRight className="mr-2 h-4 w-4" />
-                {t('dashboard.depositButton')}
+              <Button variant="deposit" asChild>
+                <Link to="/deposit-list">
+                  <ArrowUpRight className="mr-2 h-4 w-4" />
+                  {t('dashboard.depositButton')}
+                </Link>
               </Button>
-              <Button variant="withdrawal">
-                <ArrowDownRight className="mr-2 h-4 w-4" />
-                {t('dashboard.withdrawalButton')}
+              <Button variant="withdrawal" asChild>
+                <Link to="/withdrawal-list">
+                  <ArrowDownRight className="mr-2 h-4 w-4" />
+                  {t('dashboard.withdrawalButton')}
+                </Link>
               </Button>
             </div>
           </div>
