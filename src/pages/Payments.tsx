@@ -19,13 +19,15 @@ const Payments = () => {
             </div>
 
             <PermissionGate 
-              permission="payments:read"
-              fallback={
-                <div className="text-center p-8 border rounded-lg">
-                  <p className="text-muted-foreground">{t('payments.noPermission')}</p>
-                </div>
-              }
-            >
+               permission="payments:read"
+               allowOwner
+               allowAdmin
+               fallback={
+                 <div className="text-center p-8 border rounded-lg">
+                   <p className="text-muted-foreground">{t('payments.noPermission')}</p>
+                 </div>
+               }
+             >
               <PaymentsStats />
               <PaymentsTable />
             </PermissionGate>

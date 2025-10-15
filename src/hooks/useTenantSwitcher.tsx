@@ -57,6 +57,25 @@ export const useTenantSwitcher = () => {
     }
   }, [memberships, activeTenantId]);
 
+  // Auto-correct invalid stored tenant selection
+  useEffect(() => {
+    if (!isLoading && memberships) {
+      if (activeTenantId && memberships.length > 0) {
+        const exists = memberships.some((m) => m.tenant_id === activeTenantId);
+        if (!exists) {
+          const nextTenant = memberships[0];
+          setActiveTenantId(nextTenant.tenant_id);
+          localStorage.setItem(ACTIVE_TENANT_KEY, nextTenant.tenant_id);
+          // Refresh queries for corrected tenant
+          queryClient.invalidateQueries();
+          toast.info(`Switched to ${nextTenant.tenants.name}`, {
+            description: "Your previous workspace was unavailable.",
+          });
+        }
+      }
+    }
+  }, [activeTenantId, memberships, isLoading, queryClient]);
+
   // Switch active tenant
   const switchTenant = (tenantId: string) => {
     const membership = memberships?.find((m) => m.tenant_id === tenantId);
