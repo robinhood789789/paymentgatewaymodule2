@@ -17,10 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
-import { CalendarIcon, Search, ChevronUp, ChevronDown } from "lucide-react";
+import { CalendarIcon, Search, ChevronUp, ChevronDown, Download, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentDetailsDrawer } from "./PaymentDetailsDrawer";
+import { toast } from "sonner";
 
 export const PaymentsTable = () => {
   const { activeTenantId } = useTenantSwitcher();
@@ -107,8 +108,68 @@ export const PaymentsTable = () => {
     return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
   };
 
+  const exportToCSV = () => {
+    if (!payments || payments.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const headers = ["Date", "Ref ID", "TX ID", "Amount", "Currency", "Status", "Method", "Provider"];
+    const csvData = payments.map(payment => [
+      format(new Date(payment.created_at), "yyyy-MM-dd HH:mm:ss"),
+      payment.provider_payment_id || "",
+      payment.id,
+      (payment.amount / 100).toString(),
+      payment.currency,
+      payment.status,
+      payment.method || "",
+      payment.provider || ""
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `payments_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Data exported successfully");
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={exportToCSV}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
+
       {/* Status Tabs */}
       <div className="flex flex-wrap gap-2">
         <Button

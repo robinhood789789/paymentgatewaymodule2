@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { RequireTenant } from "@/components/RequireTenant";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PaymentsTable } from "@/components/PaymentsTable";
+import { PaymentsStats } from "@/components/PaymentsStats";
 import { useI18n } from "@/lib/i18n";
 
 const Payments = () => {
@@ -25,6 +26,7 @@ const Payments = () => {
                 </div>
               }
             >
+              <PaymentsStats />
               <PaymentsTable />
             </PermissionGate>
           </div>
