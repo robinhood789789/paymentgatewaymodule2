@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, Plus, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -75,6 +75,18 @@ export default function DepositList() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Topup List</h1>
+          <Button 
+            size="lg"
+            className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold"
+            onClick={() => {
+              // TODO: Open deposit dialog or navigate to deposit page
+              console.log("Deposit clicked");
+            }}
+          >
+            <Wallet className="mr-2 h-5 w-5" />
+            เติมเงิน
+            <Plus className="ml-2 h-5 w-5" />
+          </Button>
         </div>
 
         <Card>
