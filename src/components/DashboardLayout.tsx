@@ -118,7 +118,7 @@ const DashboardSidebar = () => {
   ];
 
   return (
-    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon" scrollWithContent>
       <SidebarContent>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
