@@ -92,9 +92,8 @@ export default function SystemDeposit() {
           </CardHeader>
           
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
                   <TableRow>
                     <TableHead>Create At</TableHead>
                     <TableHead>Ref ID</TableHead>
@@ -162,9 +161,8 @@ export default function SystemDeposit() {
                       </TableCell>
                     </TableRow>
                   )}
-                </TableBody>
-              </Table>
-            </div>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

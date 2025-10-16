@@ -209,10 +209,8 @@ export default function DepositList() {
             )}
           </CardHeader>
           <CardContent className="space-y-4">
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
                   <TableRow>
                     <TableHead>Create At</TableHead>
                     <TableHead>Ref ID</TableHead>
@@ -280,7 +278,6 @@ export default function DepositList() {
                   )}
                 </TableBody>
               </Table>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -230,9 +230,8 @@ const MDR = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
                   <TableRow>
                     <TableHead>วันที่</TableHead>
                     <TableHead>Merchant</TableHead>
@@ -274,9 +273,8 @@ const MDR = () => {
                       );
                     })
                   )}
-                </TableBody>
-              </Table>
-            </div>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
