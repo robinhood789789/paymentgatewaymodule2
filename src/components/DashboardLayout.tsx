@@ -285,18 +285,20 @@ const DashboardSidebar = () => {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
-        <DashboardSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4">
-            <SidebarTrigger />
-            <TenantSwitcher />
-          </header>
+      <div className="min-h-screen w-full overflow-x-auto">
+        <div className="flex min-h-screen min-w-[1024px]">
+          <DashboardSidebar />
           
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+          <div className="flex-1 flex flex-col">
+            <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4 sticky top-0 z-10">
+              <SidebarTrigger />
+              <TenantSwitcher />
+            </header>
+            
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
       </div>
     </SidebarProvider>
