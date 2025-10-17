@@ -35,6 +35,8 @@ import MDR from "./pages/MDR";
 import RolesPermissions from "./pages/RolesPermissions";
 import ActivityHistory from "./pages/ActivityHistory";
 import PaymentMethods from "./pages/PaymentMethods";
+import Products from "./pages/Products";
+import Reconciliation from "./pages/Reconciliation";
 
 const queryClient = new QueryClient();
 
@@ -194,6 +196,22 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <PaymentMethods />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products"
+        element={
+          <ProtectedRoute>
+            <Products />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reconciliation"
+        element={
+          <ProtectedRoute>
+            <Reconciliation />
           </ProtectedRoute>
         }
       />

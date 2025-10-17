@@ -20,10 +20,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Settings, 
-  Users, 
+import {
+  LayoutDashboard,
+  Settings,
+  Users,
   LogOut,
   Shield,
   CreditCard,
@@ -41,7 +41,9 @@ import {
   PlusCircle,
   Receipt,
   KeyRound,
-  Activity
+  Activity,
+  Package,
+  FileCheck,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -94,6 +96,9 @@ const DashboardSidebar = () => {
 
   // Management menu items
   const managementMenuItems = [
+    { title: "Products", url: "/products", icon: Package },
+    { title: "Payment Methods", url: "/payment-methods", icon: CreditCard },
+    { title: "Reconciliation", url: "/reconciliation", icon: FileCheck },
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
     { title: t('dashboard.manageAdmins'), url: "/roles-permissions", icon: KeyRound },
