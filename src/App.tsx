@@ -37,6 +37,8 @@ import ActivityHistory from "./pages/ActivityHistory";
 import PaymentMethods from "./pages/PaymentMethods";
 import Products from "./pages/Products";
 import Reconciliation from "./pages/Reconciliation";
+import Disputes from "./pages/Disputes";
+import KYCVerification from "./pages/KYCVerification";
 
 const queryClient = new QueryClient();
 
@@ -212,6 +214,22 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Reconciliation />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/disputes"
+        element={
+          <ProtectedRoute>
+            <Disputes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/kyc-verification"
+        element={
+          <ProtectedRoute>
+            <KYCVerification />
           </ProtectedRoute>
         }
       />

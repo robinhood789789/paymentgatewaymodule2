@@ -44,6 +44,8 @@ import {
   Activity,
   Package,
   FileCheck,
+  AlertCircle,
+  UserCheck,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -99,6 +101,8 @@ const DashboardSidebar = () => {
     { title: "Products", url: "/products", icon: Package },
     { title: "Payment Methods", url: "/payment-methods", icon: CreditCard },
     { title: "Reconciliation", url: "/reconciliation", icon: FileCheck },
+    { title: "Disputes", url: "/disputes", icon: AlertCircle },
+    { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck },
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
     { title: t('dashboard.manageAdmins'), url: "/roles-permissions", icon: KeyRound },
