@@ -34,6 +34,7 @@ import SystemDeposit from "./pages/SystemDeposit";
 import MDR from "./pages/MDR";
 import RolesPermissions from "./pages/RolesPermissions";
 import ActivityHistory from "./pages/ActivityHistory";
+import PaymentMethods from "./pages/PaymentMethods";
 
 const queryClient = new QueryClient();
 
@@ -185,6 +186,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <ActivityHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment-methods"
+        element={
+          <ProtectedRoute>
+            <PaymentMethods />
           </ProtectedRoute>
         }
       />
