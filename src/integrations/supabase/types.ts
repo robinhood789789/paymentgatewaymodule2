@@ -217,6 +217,69 @@ export type Database = {
           },
         ]
       }
+      disputes: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          due_at: string | null
+          evidence_url: string | null
+          id: string
+          metadata: Json | null
+          payment_id: string
+          reason: string | null
+          stage: string
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency: string
+          due_at?: string | null
+          evidence_url?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id: string
+          reason?: string | null
+          stage?: string
+          status?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          due_at?: string | null
+          evidence_url?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string
+          reason?: string | null
+          stage?: string
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       go_live_checklist: {
         Row: {
           admin_2fa: boolean | null
@@ -394,6 +457,44 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          tenant_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          tenant_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          tenant_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -491,6 +592,91 @@ export type Database = {
         }
         Relationships: []
       }
+      prices: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          product_id: string
+          recurring: boolean | null
+          recurring_interval: string | null
+          recurring_interval_count: number | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          product_id: string
+          recurring?: boolean | null
+          recurring_interval?: string | null
+          recurring_interval_count?: number | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          product_id?: string
+          recurring?: boolean | null
+          recurring_interval?: string | null
+          recurring_interval_count?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          status?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -498,6 +684,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_super_admin: boolean | null
           totp_backup_codes: string[] | null
           totp_enabled: boolean | null
           totp_secret: string | null
@@ -509,6 +696,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_super_admin?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -520,6 +708,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_super_admin?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -810,22 +999,61 @@ export type Database = {
       }
       tenants: {
         Row: {
+          brand_logo_url: string | null
+          brand_primary_color: string | null
+          business_type: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string | null
+          fee_plan: Json | null
           id: string
+          kyc_status: string | null
+          kyc_verified_at: string | null
           name: string
+          payout_bank_account: string | null
+          payout_bank_name: string | null
+          payout_schedule: string | null
+          risk_rules: Json | null
           status: string
+          tax_id: string | null
         }
         Insert: {
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          business_type?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          fee_plan?: Json | null
           id?: string
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
           name: string
+          payout_bank_account?: string | null
+          payout_bank_name?: string | null
+          payout_schedule?: string | null
+          risk_rules?: Json | null
           status?: string
+          tax_id?: string | null
         }
         Update: {
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          business_type?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          fee_plan?: Json | null
           id?: string
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
           name?: string
+          payout_bank_account?: string | null
+          payout_bank_name?: string | null
+          payout_schedule?: string | null
+          risk_rules?: Json | null
           status?: string
+          tax_id?: string | null
         }
         Relationships: []
       }
@@ -916,6 +1144,10 @@ export type Database = {
       get_user_tenant_id: {
         Args: { user_uuid: string }
         Returns: string
+      }
+      is_super_admin: {
+        Args: { user_uuid: string }
+        Returns: boolean
       }
       user_has_role_in_tenant: {
         Args: { role_name: string; tenant_uuid: string; user_uuid: string }
