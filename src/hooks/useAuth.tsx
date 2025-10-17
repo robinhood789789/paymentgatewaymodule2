@@ -107,21 +107,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      // Check if user has 2FA enabled
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("totp_enabled, id")
+        .eq("id", data.user?.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
+
+      if (profile?.totp_enabled) {
+        // User has 2FA enabled, redirect to verification page
+        toast.info("กรุณายืนยันตัวตนด้วย 2FA");
+        navigate("/auth/two-factor", { 
+          state: { 
+            userId: profile.id,
+            returnTo: "/dashboard" 
+          } 
+        });
+      } else {
+        // No 2FA, proceed to dashboard
+        toast.success("Sign in successful!");
+        navigate("/dashboard");
+      }
+      
+      return { error: null };
+    } catch (error: any) {
       toast.error("เข้าสู่ระบบไม่สำเร็จ", {
         description: error.message,
       });
-    } else {
-      toast.success("Sign in successful!");
-      navigate("/dashboard");
+      return { error };
     }
-
-    return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
