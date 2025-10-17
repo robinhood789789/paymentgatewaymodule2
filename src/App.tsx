@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useCSRF } from "@/hooks/useCSRF";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SuperAdminRoute from "@/components/SuperAdminRoute";
 import Index from "./pages/Index";
+import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import TenantManagement from "./pages/admin/TenantManagement";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
@@ -183,6 +186,22 @@ function AppContent() {
           <ProtectedRoute>
             <ActivityHistory />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <SuperAdminRoute>
+            <SuperAdminDashboard />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/tenants"
+        element={
+          <SuperAdminRoute>
+            <TenantManagement />
+          </SuperAdminRoute>
         }
       />
       <Route

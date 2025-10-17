@@ -12,6 +12,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   userRole: string | null;
   tenantId: string | null;
   tenantName: string | null;
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsSuperAdmin(false);
           setUserRole(null);
           setTenantId(null);
           setTenantName(null);
@@ -66,6 +69,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      // Check if user is super admin first
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      const isSuperAdminUser = profileData?.is_super_admin || false;
+      setIsSuperAdmin(isSuperAdminUser);
+
       // Fetch user membership and role info
       const { data: membershipData, error: membershipError } = await supabase
         .from("memberships")
@@ -73,14 +88,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (membershipError) throw membershipError;
+      if (membershipError && !isSuperAdminUser) throw membershipError;
 
       if (membershipData) {
         const roleName = membershipData.roles?.name || null;
         setUserRole(roleName);
-        setIsAdmin(roleName === "super_admin" || roleName === "admin");
+        setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
         setTenantName(membershipData.tenants?.name || null);
+      } else if (isSuperAdminUser) {
+        // Super admin doesn't need membership
+        setUserRole("super_admin");
+        setIsAdmin(true);
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
@@ -136,6 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setIsSuperAdmin(false);
     setUserRole(null);
     setTenantId(null);
     setTenantName(null);
@@ -153,6 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         signOut,
         isAdmin,
+        isSuperAdmin,
         userRole,
         tenantId,
         tenantName,
