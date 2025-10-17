@@ -54,7 +54,7 @@ interface DashboardLayoutProps {
 
 const DashboardSidebar = () => {
   const { state } = useSidebar();
-  const { signOut, isAdmin, user } = useAuth();
+  const { signOut, isAdmin, isSuperAdmin, user } = useAuth();
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
 
@@ -122,8 +122,10 @@ const DashboardSidebar = () => {
     { title: 'Go Live', url: "/go-live", icon: Rocket },
   ] : [];
 
-  const adminMenuItems = [
-    { title: t('dashboard.admin'), url: "/admin/users", icon: Users },
+  const superAdminMenuItems = [
+    { title: "Super Admin Console", url: "/admin", icon: Shield },
+    { title: "Tenant Management", url: "/admin/tenants", icon: Users },
+    { title: "User Management", url: "/admin/users", icon: UserCircle },
   ];
 
   return (
@@ -247,12 +249,12 @@ const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
+        {isSuperAdmin && (
           <SidebarGroup className="border-l-[6px] border-destructive bg-destructive/5 pl-3 py-2 rounded-r-lg">
-            <SidebarGroupLabel className="text-destructive font-semibold">{t('dashboard.admin')}</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-destructive font-semibold">Super Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminMenuItems.map((item) => (
+                {superAdminMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink

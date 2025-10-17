@@ -233,22 +233,30 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/admin"
-        element={
-          <SuperAdminRoute>
-            <SuperAdminDashboard />
-          </SuperAdminRoute>
-        }
-      />
-      <Route
-        path="/admin/tenants"
-        element={
-          <SuperAdminRoute>
-            <TenantManagement />
-          </SuperAdminRoute>
-        }
-      />
+            <Route
+              path="/admin"
+              element={
+                <SuperAdminRoute>
+                  <SuperAdminDashboard />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/tenants"
+              element={
+                <SuperAdminRoute>
+                  <TenantManagement />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <SuperAdminRoute>
+                  <AdminUsers />
+                </SuperAdminRoute>
+              }
+            />
       <Route
         path="/admin/users"
         element={
