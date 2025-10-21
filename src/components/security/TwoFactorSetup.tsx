@@ -76,15 +76,20 @@ export function TwoFactorSetup() {
   });
 
   const startSetup = async () => {
-    const newSecret = generateTOTPSecret();
-    const codes = generateBackupCodes();
-    setSecret(newSecret);
-    setBackupCodes(codes);
-
-    const otpUrl = getTOTPQRCodeUrl(newSecret, user?.email || '', 'Payment Platform');
-    const qr = await QRCode.toDataURL(otpUrl);
-    setQrCodeUrl(qr);
-    setSetupStep('setup');
+    try {
+      // Call backend to enroll
+      const { data, error } = await supabase.functions.invoke('mfa-enroll');
+      
+      if (error) throw error;
+      
+      setSecret(data.secret);
+      const qr = await QRCode.toDataURL(data.otpauthUrl);
+      setQrCodeUrl(qr);
+      setSetupStep('setup');
+      toast.success('Scan the QR code with your authenticator app');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start enrollment');
+    }
   };
 
   const verifyAndEnable = async () => {
@@ -93,8 +98,25 @@ export function TwoFactorSetup() {
       return;
     }
 
-    // In production, verify the code server-side
-    enableMutation.mutate({ secret, codes: backupCodes });
+    try {
+      // Call backend to verify and enable
+      const { data, error } = await supabase.functions.invoke('mfa-verify', {
+        body: { code: verificationCode }
+      });
+      
+      if (error) throw error;
+      
+      // Store recovery codes
+      setBackupCodes(data.recovery_codes);
+      
+      // Update local state
+      queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
+      toast.success('Two-factor authentication enabled successfully');
+      
+      // Don't close setup yet, show recovery codes
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid verification code');
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -142,16 +164,13 @@ export function TwoFactorSetup() {
 
   const regenerateMutation = useMutation({
     mutationFn: async () => {
-      const newCodes = generateBackupCodes();
-      const { error } = await supabase
-        .from('profiles')
-        .update({ totp_backup_codes: newCodes })
-        .eq('id', user?.id);
+      const { data, error } = await supabase.functions.invoke('mfa-recovery-regen');
       if (error) throw error;
-      return newCodes;
+      return data.recovery_codes;
     },
     onSuccess: (newCodes) => {
       setBackupCodes(newCodes);
+      setSetupStep('setup'); // Show codes modal
       queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
       toast.success('Recovery codes regenerated');
     },

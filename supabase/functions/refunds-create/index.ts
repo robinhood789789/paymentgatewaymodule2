@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
+import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
     // Check refunds:create permission
     const { data: membership } = await supabase
       .from('memberships')
-      .select('role_id')
+      .select('role_id, roles!inner(name)')
       .eq('user_id', user.id)
       .eq('tenant_id', tenantId)
       .single();
@@ -66,6 +67,8 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const userRole = (membership.roles as any)?.name;
 
     const { data: permissions } = await supabase
       .from('role_permissions')
@@ -81,6 +84,19 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Missing refunds:create permission' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // MFA Step-up check for refunds
+    const mfaCheck = await requireStepUp({
+      supabase: supabase as any,
+      userId: user.id,
+      tenantId,
+      action: 'refund',
+      userRole
+    });
+
+    if (!mfaCheck.ok) {
+      return createMfaError(mfaCheck.code!, mfaCheck.message!);
     }
 
     // Parse request body

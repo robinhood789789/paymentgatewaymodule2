@@ -42,6 +42,7 @@ import Reconciliation from "./pages/Reconciliation";
 import Disputes from "./pages/Disputes";
 import KYCVerification from "./pages/KYCVerification";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
+import TwoFactorChecklist from "./pages/TwoFactorChecklist";
 
 const queryClient = new QueryClient();
 
@@ -237,6 +238,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <KYCVerification />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/go-live/2fa-checklist"
+        element={
+          <ProtectedRoute>
+            <TwoFactorChecklist />
           </ProtectedRoute>
         }
       />

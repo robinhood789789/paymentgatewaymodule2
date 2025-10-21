@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { verifyTOTP } from '@/lib/security/totp';
 import { toast } from 'sonner';
 
 export default function MfaChallenge() {
@@ -40,59 +39,25 @@ export default function MfaChallenge() {
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('totp_secret, totp_backup_codes')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile) throw new Error('Profile not found');
-
-      // Check if it's a 6-digit TOTP code
-      if (!useRecovery && code.length === 6 && /^\d+$/.test(code)) {
-        const isValid = await verifyTOTP(profile.totp_secret || '', code);
-        if (isValid) {
-          // Update last verified timestamp
-          await supabase
-            .from('profiles')
-            .update({ mfa_last_verified_at: new Date().toISOString() })
-            .eq('id', user.id);
-          
-          toast.success('Verification successful');
-          navigate(returnTo);
-          return;
+      const { data, error } = await supabase.functions.invoke('mfa-challenge', {
+        body: { 
+          code: code.toUpperCase(), 
+          type: useRecovery ? 'recovery' : 'totp'
         }
-      }
+      });
 
-      // Check if it's a recovery code
-      if (useRecovery) {
-        const backupCodes = profile.totp_backup_codes || [];
-        const codeIndex = backupCodes.indexOf(code.toUpperCase().replace(/-/g, ''));
-        
-        if (codeIndex !== -1) {
-          // Remove used backup code
-          const newBackupCodes = backupCodes.filter((_: string, i: number) => i !== codeIndex);
-          await supabase
-            .from('profiles')
-            .update({ 
-              totp_backup_codes: newBackupCodes,
-              mfa_last_verified_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
-          
-          toast.success('Recovery code accepted');
-          navigate(returnTo);
-          return;
-        }
-      }
+      if (error) throw error;
 
-      setError('Invalid code. Please try again.');
+      if (data.ok) {
+        toast.success('Verification successful');
+        navigate(returnTo);
+      } else {
+        setError('Invalid code. Please try again.');
+      }
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
-      toast.error('Verification failed');
+      const message = err.message || 'Verification failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsVerifying(false);
     }
