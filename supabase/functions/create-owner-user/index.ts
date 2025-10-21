@@ -153,6 +153,27 @@ Deno.serve(async (req) => {
 
     console.log('Owner user setup completed successfully');
 
+    // Send welcome email to the new owner
+    try {
+      const { error: emailError } = await supabaseClient.functions.invoke('send-owner-welcome-email', {
+        body: {
+          tenantName: tenant_name,
+          email,
+          temporaryPassword,
+        },
+      });
+
+      if (emailError) {
+        console.error('Error sending welcome email:', emailError);
+        // Don't fail the entire operation if email fails
+      } else {
+        console.log('Welcome email sent successfully to:', email);
+      }
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue despite email failure
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -166,6 +187,7 @@ Deno.serve(async (req) => {
           name: newTenant.name,
         },
         temporary_password: temporaryPassword,
+        email_sent: true,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
