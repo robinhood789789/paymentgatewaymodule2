@@ -277,10 +277,21 @@ const DashboardSidebar = () => {
         )}
 
         <div className="mt-auto p-4 border-t border-sidebar-border space-y-3">
+          {!isCollapsed && (
+            <div className="space-y-2 mb-3">
+              <p className="text-xs text-muted-foreground">Logged in as:</p>
+              <p className="text-sm font-medium truncate">{user?.email}</p>
+              {isSuperAdmin && (
+                <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-destructive/10 text-destructive">
+                  Super Admin
+                </span>
+              )}
+            </div>
+          )}
           {!isCollapsed && <LocaleSwitcher />}
           <Button
             onClick={signOut}
-            variant="ghost"
+            variant="destructive"
             className="w-full justify-start"
             size={isCollapsed ? "icon" : "default"}
           >
