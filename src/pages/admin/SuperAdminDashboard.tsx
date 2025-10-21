@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Activity, TrendingUp } from "lucide-react";
+import { Building2, Users, Activity, TrendingUp, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -93,7 +93,7 @@ export default function SuperAdminDashboard() {
             <CardDescription>Platform management tools</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
               <a
                 href="/admin/tenants"
                 className="flex items-center gap-2 rounded-lg border p-3 hover:bg-accent transition-colors"
@@ -112,6 +112,16 @@ export default function SuperAdminDashboard() {
                 <div>
                   <div className="font-medium">Manage Users</div>
                   <div className="text-sm text-muted-foreground">Platform user management</div>
+                </div>
+              </a>
+              <a
+                href="/platform/security"
+                className="flex items-center gap-2 rounded-lg border p-3 hover:bg-accent transition-colors"
+              >
+                <Shield className="h-5 w-5" />
+                <div>
+                  <div className="font-medium">Platform Security</div>
+                  <div className="text-sm text-muted-foreground">Configure security defaults</div>
                 </div>
               </a>
             </div>

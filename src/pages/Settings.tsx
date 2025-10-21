@@ -17,6 +17,7 @@ import { OrganizationSetup } from "@/components/OrganizationSetup";
 import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
+import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
@@ -180,6 +181,7 @@ const Settings = () => {
 
           <TabsContent value="security" className="space-y-4">
             <TwoFactorSetup />
+            <TenantSecurityPolicy />
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">

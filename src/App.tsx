@@ -10,6 +10,7 @@ import SuperAdminRoute from "@/components/SuperAdminRoute";
 import Index from "./pages/Index";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
+import PlatformSecurity from "./pages/admin/PlatformSecurity";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import TwoFactorVerification from "./pages/TwoFactorVerification";
@@ -262,6 +263,14 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <TenantManagement />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/security"
+              element={
+                <SuperAdminRoute>
+                  <PlatformSecurity />
                 </SuperAdminRoute>
               }
             />
