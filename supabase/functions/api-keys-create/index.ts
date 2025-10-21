@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
+import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,7 +74,12 @@ serve(async (req) => {
     // Check if user has api_keys:manage permission
     const { data: membership } = await supabase
       .from('memberships')
-      .select('role_id, roles(name)')
+      .select(`
+        role_id,
+        roles!inner (
+          name
+        )
+      `)
       .eq('user_id', user.id)
       .eq('tenant_id', tenantId)
       .single();
@@ -85,7 +91,7 @@ serve(async (req) => {
       );
     }
 
-    const roleName = membership.roles?.name;
+    const roleName = (membership.roles as any)?.name;
     const allowedRoles = ['owner', 'developer', 'merchant_admin'];
     
     if (!allowedRoles.includes(roleName)) {
@@ -93,6 +99,26 @@ serve(async (req) => {
         JSON.stringify({ error: 'Insufficient permissions. Required: owner, developer, or merchant_admin' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // MFA Step-up check
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single();
+
+    const mfaCheck = await requireStepUp({
+      supabase,
+      userId: user.id,
+      tenantId,
+      action: 'api-keys',
+      userRole: roleName,
+      isSuperAdmin: profile?.is_super_admin || false,
+    });
+
+    if (!mfaCheck.ok) {
+      return createMfaError(mfaCheck.code!, mfaCheck.message!);
     }
 
     // Parse request body

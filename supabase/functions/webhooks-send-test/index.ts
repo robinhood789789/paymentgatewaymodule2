@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,14 +37,62 @@ serve(async (req) => {
       });
     }
 
-    // Get webhook details
+    // Get webhook to find tenant_id
     const { data: webhook, error: webhookError } = await supabaseClient
+      .from('webhooks')
+      .select('tenant_id')
+      .eq('id', webhook_id)
+      .single();
+
+    if (webhookError || !webhook) {
+      return new Response(JSON.stringify({ error: 'Webhook not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get user role and check MFA
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single();
+
+    const { data: membership } = await supabaseClient
+      .from('memberships')
+      .select(`
+        role_id,
+        roles!inner (
+          name
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('tenant_id', webhook.tenant_id)
+      .single();
+
+    const userRole = (membership?.roles as any)?.name;
+
+    const mfaCheck = await requireStepUp({
+      supabase: supabaseClient,
+      userId: user.id,
+      tenantId: webhook.tenant_id,
+      action: 'webhooks',
+      userRole,
+      isSuperAdmin: profile?.is_super_admin || false,
+    });
+
+    if (!mfaCheck.ok) {
+      return createMfaError(mfaCheck.code!, mfaCheck.message!);
+    }
+
+    // Get webhook details (already fetched above for MFA check)
+    const { data: webhookDetails, error: webhookDetailsError } = await supabaseClient
       .from('webhooks')
       .select('*')
       .eq('id', webhook_id)
       .single();
 
-    if (webhookError || !webhook) {
+    if (webhookDetailsError || !webhookDetails) {
       return new Response(JSON.stringify({ error: 'Webhook not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -62,10 +111,10 @@ serve(async (req) => {
     };
 
     // Generate signature
-    const signature = await generateSignature(JSON.stringify(testPayload), webhook.secret);
+    const signature = await generateSignature(JSON.stringify(testPayload), webhookDetails.secret);
 
     // Send test webhook
-    const webhookResponse = await fetch(webhook.url, {
+    const webhookResponse = await fetch(webhookDetails.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +131,7 @@ serve(async (req) => {
     await supabaseClient
       .from('webhook_events')
       .insert({
-        tenant_id: webhook.tenant_id,
+        tenant_id: webhookDetails.tenant_id,
         event_type: 'webhook.test',
         payload: testPayload,
         status: success ? 'delivered' : 'failed',

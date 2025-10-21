@@ -7,7 +7,7 @@ interface StepUpResult {
 }
 
 interface RequireStepUpOptions {
-  supabase: SupabaseClient;
+  supabase: any;
   userId: string;
   tenantId?: string;
   action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout';

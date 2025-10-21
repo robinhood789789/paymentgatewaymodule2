@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
+import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,6 +165,43 @@ serve(async (req) => {
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // MFA Step-up check for user-initiated payment creation
+    if (auth.userId) {
+      // Get user role and check if super admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', auth.userId)
+        .single();
+
+      const { data: membership } = await supabase
+        .from('memberships')
+        .select(`
+          role_id,
+          roles!inner (
+            name
+          )
+        `)
+        .eq('user_id', auth.userId)
+        .eq('tenant_id', tenantId)
+        .single();
+
+      const userRole = (membership?.roles as any)?.name;
+
+      const mfaCheck = await requireStepUp({
+        supabase,
+        userId: auth.userId,
+        tenantId,
+        action: 'create-payment',
+        userRole,
+        isSuperAdmin: profile?.is_super_admin || false,
+      });
+
+      if (!mfaCheck.ok) {
+        return createMfaError(mfaCheck.code!, mfaCheck.message!);
+      }
     }
 
     // Check for idempotency key
