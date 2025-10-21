@@ -52,8 +52,10 @@ export const useTenantSwitcher = () => {
   useEffect(() => {
     if (memberships && memberships.length > 0 && !activeTenantId) {
       const firstTenant = memberships[0];
-      setActiveTenantId(firstTenant.tenant_id);
-      localStorage.setItem(ACTIVE_TENANT_KEY, firstTenant.tenant_id);
+      if (firstTenant?.tenants) {
+        setActiveTenantId(firstTenant.tenant_id);
+        localStorage.setItem(ACTIVE_TENANT_KEY, firstTenant.tenant_id);
+      }
     }
   }, [memberships, activeTenantId]);
 
@@ -64,13 +66,15 @@ export const useTenantSwitcher = () => {
         const exists = memberships.some((m) => m.tenant_id === activeTenantId);
         if (!exists) {
           const nextTenant = memberships[0];
-          setActiveTenantId(nextTenant.tenant_id);
-          localStorage.setItem(ACTIVE_TENANT_KEY, nextTenant.tenant_id);
-          // Refresh queries for corrected tenant
-          queryClient.invalidateQueries();
-          toast.info(`Switched to ${nextTenant.tenants.name}`, {
-            description: "Your previous workspace was unavailable.",
-          });
+          if (nextTenant?.tenants) {
+            setActiveTenantId(nextTenant.tenant_id);
+            localStorage.setItem(ACTIVE_TENANT_KEY, nextTenant.tenant_id);
+            // Refresh queries for corrected tenant
+            queryClient.invalidateQueries();
+            toast.info(`Switched to ${nextTenant.tenants.name}`, {
+              description: "Your previous workspace was unavailable.",
+            });
+          }
         }
       }
     }
@@ -79,7 +83,7 @@ export const useTenantSwitcher = () => {
   // Switch active tenant
   const switchTenant = (tenantId: string) => {
     const membership = memberships?.find((m) => m.tenant_id === tenantId);
-    if (!membership) {
+    if (!membership || !membership.tenants) {
       toast.error("Invalid tenant selection");
       return;
     }
