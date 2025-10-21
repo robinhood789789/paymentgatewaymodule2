@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Building2, Search, Eye, Settings } from "lucide-react";
+import { CreateOwnerDialog } from "@/components/CreateOwnerDialog";
 
 export default function TenantManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,6 +76,7 @@ export default function TenantManagement() {
             </h1>
             <p className="text-muted-foreground">Manage and monitor all platform tenants</p>
           </div>
+          <CreateOwnerDialog />
         </div>
 
         <Card>
