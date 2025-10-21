@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
-import { supabase } from "@/integrations/supabase/client";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -39,7 +39,7 @@ import {
   PieChart,
   ArrowDownToLine,
   ArrowUpFromLine,
-  PlusCircle,
+  
   Receipt,
   KeyRound,
   Activity,
@@ -60,21 +60,12 @@ const DashboardSidebar = () => {
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
 
-  // Check if user is owner
-  const [isOwner, setIsOwner] = React.useState(false);
-  
-  React.useEffect(() => {
-    const checkOwner = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from('memberships')
-        .select('role_id, roles(name)')
-        .eq('user_id', user.id)
-        .single();
-      setIsOwner((data as any)?.roles?.name === 'owner');
-    };
-    checkOwner();
-  }, [user]);
+  const { memberships, activeTenantId } = useTenantSwitcher();
+  const isOwner = React.useMemo(() => {
+    if (!memberships || !activeTenantId) return false;
+    const membership = memberships.find((m: any) => m.tenant_id === activeTenantId);
+    return membership?.roles?.name === 'owner';
+  }, [memberships, activeTenantId]);
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
