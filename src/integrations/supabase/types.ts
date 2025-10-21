@@ -368,6 +368,131 @@ export type Database = {
           },
         ]
       }
+      kyc_documents: {
+        Row: {
+          created_at: string
+          document_number: string | null
+          document_type: Database["public"]["Enums"]["kyc_document_type"]
+          document_url: string | null
+          expiry_date: string | null
+          id: string
+          metadata: Json | null
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["kyc_verification_status"]
+          tenant_id: string
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_number?: string | null
+          document_type: Database["public"]["Enums"]["kyc_document_type"]
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          metadata?: Json | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["kyc_verification_status"]
+          tenant_id: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["kyc_document_type"]
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          metadata?: Json | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["kyc_verification_status"]
+          tenant_id?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kyc_verification_logs: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string | null
+          id: string
+          ip_address: unknown | null
+          new_status:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          notes: string | null
+          performed_by: string | null
+          previous_status:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          tenant_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status?:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          tenant_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_status?:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["kyc_verification_status"]
+            | null
+          tenant_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_verification_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "kyc_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kyc_verification_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           created_at: string | null
@@ -683,6 +808,10 @@ export type Database = {
           created_at: string
           email: string
           full_name: string | null
+          google_email: string | null
+          google_id: string | null
+          google_picture: string | null
+          google_verified_email: boolean | null
           id: string
           is_super_admin: boolean | null
           totp_backup_codes: string[] | null
@@ -695,6 +824,10 @@ export type Database = {
           created_at?: string
           email: string
           full_name?: string | null
+          google_email?: string | null
+          google_id?: string | null
+          google_picture?: string | null
+          google_verified_email?: boolean | null
           id: string
           is_super_admin?: boolean | null
           totp_backup_codes?: string[] | null
@@ -707,6 +840,10 @@ export type Database = {
           created_at?: string
           email?: string
           full_name?: string | null
+          google_email?: string | null
+          google_id?: string | null
+          google_picture?: string | null
+          google_verified_email?: boolean | null
           id?: string
           is_super_admin?: boolean | null
           totp_backup_codes?: string[] | null
@@ -1007,8 +1144,11 @@ export type Database = {
           created_at: string | null
           fee_plan: Json | null
           id: string
+          kyc_level: number | null
+          kyc_notes: string | null
           kyc_status: string | null
           kyc_verified_at: string | null
+          kyc_verified_by: string | null
           name: string
           payout_bank_account: string | null
           payout_bank_name: string | null
@@ -1026,8 +1166,11 @@ export type Database = {
           created_at?: string | null
           fee_plan?: Json | null
           id?: string
+          kyc_level?: number | null
+          kyc_notes?: string | null
           kyc_status?: string | null
           kyc_verified_at?: string | null
+          kyc_verified_by?: string | null
           name: string
           payout_bank_account?: string | null
           payout_bank_name?: string | null
@@ -1045,8 +1188,11 @@ export type Database = {
           created_at?: string | null
           fee_plan?: Json | null
           id?: string
+          kyc_level?: number | null
+          kyc_notes?: string | null
           kyc_status?: string | null
           kyc_verified_at?: string | null
+          kyc_verified_by?: string | null
           name?: string
           payout_bank_account?: string | null
           payout_bank_name?: string | null
@@ -1155,7 +1301,20 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      kyc_document_type:
+        | "national_id"
+        | "passport"
+        | "drivers_license"
+        | "business_registration"
+        | "tax_certificate"
+        | "bank_statement"
+        | "proof_of_address"
+      kyc_verification_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1282,6 +1441,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      kyc_document_type: [
+        "national_id",
+        "passport",
+        "drivers_license",
+        "business_registration",
+        "tax_certificate",
+        "bank_statement",
+        "proof_of_address",
+      ],
+      kyc_verification_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "expired",
+      ],
+    },
   },
 } as const
