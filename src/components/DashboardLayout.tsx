@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Settings,
@@ -46,6 +47,7 @@ import {
   FileCheck,
   AlertCircle,
   UserCheck,
+  Wallet,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -91,9 +93,9 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
   ];
 
-  // Owner transaction items
+  // Owner transaction items - System Deposit (Owner only)
   const ownerTransactionItems = isOwner ? [
-    { title: t('dashboard.systemDeposit'), url: "/system-deposit", icon: PlusCircle },
+    { title: "เติมเงินเข้าระบบ", url: "/system-deposit", icon: Wallet },
   ] : [];
 
   // Management menu items
@@ -177,7 +179,7 @@ const DashboardSidebar = () => {
           <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {[...transactionMenuItems, ...ownerTransactionItems].map((item) => (
+              {transactionMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -190,6 +192,30 @@ const DashboardSidebar = () => {
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              
+              {/* Owner Only: System Deposit */}
+              {isOwner && ownerTransactionItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "hover:bg-primary/10 border-l-2 border-primary/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && (
+                        <span className="flex items-center gap-2">
+                          {item.title}
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0">Owner</Badge>
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
