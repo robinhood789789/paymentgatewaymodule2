@@ -48,13 +48,14 @@ export const useTenantSwitcher = () => {
   // Get current active tenant details
   const activeTenant = memberships?.find((m) => m.tenant_id === activeTenantId);
 
-  // Auto-select first tenant if none is selected
+  // Auto-select preferred tenant (prefer 'owner' role) if none is selected
   useEffect(() => {
     if (memberships && memberships.length > 0 && !activeTenantId) {
-      const firstTenant = memberships[0];
-      if (firstTenant?.tenants) {
-        setActiveTenantId(firstTenant.tenant_id);
-        localStorage.setItem(ACTIVE_TENANT_KEY, firstTenant.tenant_id);
+      const ownerMembership = memberships.find((m) => m.roles?.name === "owner");
+      const preferred = ownerMembership ?? memberships[0];
+      if (preferred?.tenants) {
+        setActiveTenantId(preferred.tenant_id);
+        localStorage.setItem(ACTIVE_TENANT_KEY, preferred.tenant_id);
       }
     }
   }, [memberships, activeTenantId]);
@@ -65,7 +66,8 @@ export const useTenantSwitcher = () => {
       if (activeTenantId && memberships.length > 0) {
         const exists = memberships.some((m) => m.tenant_id === activeTenantId);
         if (!exists) {
-          const nextTenant = memberships[0];
+          const ownerMembership = memberships.find((m) => m.roles?.name === "owner");
+          const nextTenant = ownerMembership ?? memberships[0];
           if (nextTenant?.tenants) {
             setActiveTenantId(nextTenant.tenant_id);
             localStorage.setItem(ACTIVE_TENANT_KEY, nextTenant.tenant_id);

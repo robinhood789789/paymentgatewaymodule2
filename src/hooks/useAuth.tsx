@@ -192,6 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUserRole(null);
     setTenantId(null);
     setTenantName(null);
+    try { localStorage.removeItem("active_tenant_id"); } catch {}
     toast.success("Signed out successfully");
     navigate("/auth/sign-in");
   };
