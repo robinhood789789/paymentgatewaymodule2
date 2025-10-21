@@ -40,6 +40,7 @@ import Products from "./pages/Products";
 import Reconciliation from "./pages/Reconciliation";
 import Disputes from "./pages/Disputes";
 import KYCVerification from "./pages/KYCVerification";
+import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,8 @@ function AppContent() {
       <Route path="/auth/sign-up" element={<SignUp />} />
       <Route path="/auth/two-factor" element={<TwoFactorVerification />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
+      
+      <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
       
       <Route path="/status" element={<Status />} />
       
