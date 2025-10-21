@@ -63,9 +63,9 @@ serve(async (req) => {
     }
 
     const roleName = (membership.roles as any)?.name;
-    if (roleName !== "owner" && roleName !== "admin") {
+    if (roleName !== "owner") {
       return new Response(
-        JSON.stringify({ error: "Only owners and admins can create system deposits" }),
+        JSON.stringify({ error: "Only owners can create system deposits" }),
         {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

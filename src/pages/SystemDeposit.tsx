@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,16 +11,58 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import SystemDepositDialog from "@/components/SystemDepositDialog";
-import { Wallet } from "lucide-react";
+import { Wallet, ShieldAlert } from "lucide-react";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 type PaymentStatus = "all" | "pending" | "completed";
 
 export default function SystemDeposit() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const [statusFilter, setStatusFilter] = useState<PaymentStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isOwner, setIsOwner] = useState<boolean | null>(null);
+
+  // Check if user is owner
+  useEffect(() => {
+    const checkOwnerRole = async () => {
+      if (!user || !activeTenantId) {
+        setIsOwner(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("memberships")
+        .select("role_id, roles(name)")
+        .eq("user_id", user.id)
+        .eq("tenant_id", activeTenantId)
+        .single();
+
+      if (error || !data) {
+        setIsOwner(false);
+        toast.error("ไม่สามารถตรวจสอบสิทธิ์ได้");
+        navigate("/dashboard");
+        return;
+      }
+
+      const roleName = (data.roles as any)?.name;
+      if (roleName !== "owner") {
+        setIsOwner(false);
+        toast.error("คุณไม่มีสิทธิ์เข้าถึงหน้านี้", {
+          description: "หน้านี้สำหรับ Owner เท่านั้น",
+        });
+        navigate("/dashboard");
+      } else {
+        setIsOwner(true);
+      }
+    };
+
+    checkOwnerRole();
+  }, [user, activeTenantId, navigate]);
 
   // Query for wallet balance
   const { data: wallet } = useQuery({
@@ -81,6 +124,43 @@ export default function SystemDeposit() {
 
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
+
+  // Show loading while checking permissions
+  if (isOwner === null) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">กำลังตรวจสอบสิทธิ์...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Don't render if not owner (will redirect)
+  if (!isOwner) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Card className="max-w-md">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="h-6 w-6" />
+                <h3 className="text-lg font-semibold">ไม่มีสิทธิ์เข้าถึง</h3>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                หน้านี้สำหรับ Owner เท่านั้น คุณจะถูกนำกลับไปยังหน้าหลัก...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
