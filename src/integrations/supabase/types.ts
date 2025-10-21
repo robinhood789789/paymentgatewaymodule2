@@ -814,6 +814,7 @@ export type Database = {
           google_verified_email: boolean | null
           id: string
           is_super_admin: boolean | null
+          mfa_last_verified_at: string | null
           totp_backup_codes: string[] | null
           totp_enabled: boolean | null
           totp_secret: string | null
@@ -830,6 +831,7 @@ export type Database = {
           google_verified_email?: boolean | null
           id: string
           is_super_admin?: boolean | null
+          mfa_last_verified_at?: string | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -846,6 +848,7 @@ export type Database = {
           google_verified_email?: boolean | null
           id?: string
           is_super_admin?: boolean | null
+          mfa_last_verified_at?: string | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -1059,6 +1062,41 @@ export type Database = {
             foreignKeyName: "settlements_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_security_policy: {
+        Row: {
+          created_at: string | null
+          require_2fa_for_admin: boolean | null
+          require_2fa_for_owner: boolean | null
+          stepup_window_seconds: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          require_2fa_for_admin?: boolean | null
+          require_2fa_for_owner?: boolean | null
+          stepup_window_seconds?: number | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          require_2fa_for_admin?: boolean | null
+          require_2fa_for_owner?: boolean | null
+          stepup_window_seconds?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_security_policy_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },

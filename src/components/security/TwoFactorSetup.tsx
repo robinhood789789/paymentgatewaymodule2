@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Shield, Copy, CheckCircle2, AlertCircle, Download, Printer, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateTOTPSecret, generateBackupCodes, getTOTPQRCodeUrl } from '@/lib/security/totp';
 import QRCode from 'qrcode';
@@ -102,6 +102,61 @@ export function TwoFactorSetup() {
     toast.success('Copied to clipboard');
   };
 
+  const downloadRecoveryCodes = () => {
+    const content = backupCodes.join('\n');
+    const blob = new Blob([`Payment Platform - Recovery Codes\n\nGenerated: ${new Date().toLocaleString()}\n\n${content}\n\nKeep these codes safe. Each code can only be used once.`], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recovery-codes-${new Date().getTime()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Recovery codes downloaded');
+  };
+
+  const printRecoveryCodes = () => {
+    const printWindow = window.open('', '', 'width=600,height=400');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Recovery Codes</title>
+            <style>
+              body { font-family: monospace; padding: 20px; }
+              h1 { font-size: 18px; }
+              .code { padding: 5px; margin: 5px 0; }
+            </style>
+          </head>
+          <body>
+            <h1>Payment Platform - Recovery Codes</h1>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            <p>Keep these codes safe. Each code can only be used once.</p>
+            ${backupCodes.map(code => `<div class="code">${code}</div>`).join('')}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const regenerateMutation = useMutation({
+    mutationFn: async () => {
+      const newCodes = generateBackupCodes();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ totp_backup_codes: newCodes })
+        .eq('id', user?.id);
+      if (error) throw error;
+      return newCodes;
+    },
+    onSuccess: (newCodes) => {
+      setBackupCodes(newCodes);
+      queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
+      toast.success('Recovery codes regenerated');
+    },
+  });
+
   if (setupStep === 'setup') {
     return (
       <Card>
@@ -142,12 +197,43 @@ export function TwoFactorSetup() {
             </AlertDescription>
           </Alert>
 
-          <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
-            {backupCodes.map((code, i) => (
-              <code key={i} className="text-xs font-mono">
-                {code}
-              </code>
-            ))}
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
+              {backupCodes.map((code, i) => (
+                <code key={i} className="text-xs font-mono">
+                  {code}
+                </code>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyToClipboard(backupCodes.join('\n'))}
+                className="flex-1"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadRecoveryCodes}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={printRecoveryCodes}
+                className="flex-1"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -204,13 +290,23 @@ export function TwoFactorSetup() {
                 Two-factor authentication is currently enabled on your account.
               </AlertDescription>
             </Alert>
-            <Button
-              variant="destructive"
-              onClick={() => disableMutation.mutate()}
-              disabled={disableMutation.isPending}
-            >
-              Disable 2FA
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => regenerateMutation.mutate()}
+                disabled={regenerateMutation.isPending}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Regenerate Recovery Codes
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => disableMutation.mutate()}
+                disabled={disableMutation.isPending}
+              >
+                Disable 2FA
+              </Button>
+            </div>
           </div>
         ) : (
           <Button onClick={startSetup}>

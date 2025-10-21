@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, Copy, Check } from "lucide-react";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 const formSchema = z.object({
   email: z.string().email("กรุณากรอกอีเมลให้ถูกต้อง"),
@@ -44,6 +46,7 @@ export function CreateOwnerDialog({ children }: CreateOwnerDialogProps) {
   } | null>(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const queryClient = useQueryClient();
+  const { isOpen: is2FAOpen, setIsOpen: set2FAOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,6 +103,11 @@ export function CreateOwnerDialog({ children }: CreateOwnerDialogProps) {
     setCopiedPassword(false);
   };
 
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+    // Check 2FA and challenge if needed
+    await checkAndChallenge(() => createOwnerMutation.mutate(data));
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -121,7 +129,7 @@ export function CreateOwnerDialog({ children }: CreateOwnerDialogProps) {
         {!createdCredentials ? (
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => createOwnerMutation.mutate(data))}
+              onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-4"
             >
               <FormField
@@ -226,6 +234,14 @@ export function CreateOwnerDialog({ children }: CreateOwnerDialogProps) {
           </div>
         )}
       </DialogContent>
+
+      <TwoFactorChallenge
+        open={is2FAOpen}
+        onOpenChange={set2FAOpen}
+        onSuccess={onSuccess}
+        title="ยืนยันตัวตนด้วย 2FA"
+        description="กรุณากรอกรหัส 6 หลักจาก Authenticator App หรือ Recovery Code เพื่อสร้าง Owner User"
+      />
     </Dialog>
   );
 }
