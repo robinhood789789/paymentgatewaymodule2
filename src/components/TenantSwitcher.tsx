@@ -20,7 +20,7 @@ export const TenantSwitcher = () => {
   const [open, setOpen] = useState(false);
   const { memberships, activeTenantId, activeTenant, switchTenant, hasMultipleTenants } = useTenantSwitcher();
 
-  if (!activeTenant) {
+  if (!activeTenant || !activeTenant.tenants) {
     return null;
   }
 
@@ -46,7 +46,7 @@ export const TenantSwitcher = () => {
             <CommandInput placeholder="Search workspace..." className="h-9" />
             <CommandEmpty>No workspace found.</CommandEmpty>
             <CommandGroup className="bg-background">
-              {memberships.map((membership) => (
+              {memberships.filter(m => m.tenants && m.roles).map((membership) => (
                 <CommandItem
                   key={membership.tenant_id}
                   value={membership.tenants.name}
