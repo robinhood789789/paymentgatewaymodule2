@@ -57,21 +57,30 @@ export function TwoFactorSetup() {
     },
   });
 
+  const [disableCode, setDisableCode] = useState('');
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const [useRecoveryForDisable, setUseRecoveryForDisable] = useState(false);
+
   const disableMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          totp_secret: null,
-          totp_enabled: false,
-          totp_backup_codes: null,
-        })
-        .eq('id', user?.id);
+    mutationFn: async (code: string) => {
+      const { data, error } = await supabase.functions.invoke('mfa-disable', {
+        body: { 
+          code: code.toUpperCase(),
+          type: useRecoveryForDisable ? 'recovery' : 'totp'
+        }
+      });
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
-      toast.success('2FA disabled');
+      toast.success('2FA disabled successfully');
+      setShowDisableDialog(false);
+      setDisableCode('');
+      setUseRecoveryForDisable(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to disable 2FA');
     },
   });
 
@@ -279,6 +288,78 @@ export function TwoFactorSetup() {
     );
   }
 
+  // Disable dialog
+  if (showDisableDialog) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Disable Two-Factor Authentication
+          </CardTitle>
+          <CardDescription>
+            Enter your {useRecoveryForDisable ? 'recovery code' : 'authentication code'} to disable 2FA
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Warning: Disabling 2FA will make your account less secure. You'll need to re-enroll if you want to enable it again.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-2">
+            <Label htmlFor="disable-code">
+              {useRecoveryForDisable ? 'Recovery Code' : 'Authentication Code'}
+            </Label>
+            <Input
+              id="disable-code"
+              value={disableCode}
+              onChange={(e) => setDisableCode(e.target.value.toUpperCase())}
+              placeholder={useRecoveryForDisable ? 'XXXX-XXXX' : '000000'}
+              className="text-center text-lg font-mono tracking-widest"
+              maxLength={useRecoveryForDisable ? 11 : 6}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDisableDialog(false);
+                setDisableCode('');
+                setUseRecoveryForDisable(false);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUseRecoveryForDisable(!useRecoveryForDisable);
+                setDisableCode('');
+              }}
+              className="flex-1"
+            >
+              {useRecoveryForDisable ? 'Use authenticator' : 'Use recovery code'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => disableMutation.mutate(disableCode)}
+              disabled={disableMutation.isPending || !disableCode.trim()}
+              className="flex-1"
+            >
+              {disableMutation.isPending ? 'Disabling...' : 'Disable 2FA'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -320,8 +401,7 @@ export function TwoFactorSetup() {
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => disableMutation.mutate()}
-                disabled={disableMutation.isPending}
+                onClick={() => setShowDisableDialog(true)}
               >
                 Disable 2FA
               </Button>

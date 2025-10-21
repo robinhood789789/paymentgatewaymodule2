@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { Plus, Copy, ExternalLink, Link as LinkIcon, QrCode, XCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 import QRCode from "qrcode";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 interface PaymentLink {
   id: string;
@@ -36,6 +38,7 @@ const Links = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   
   const [formData, setFormData] = useState({
     amount: "",
@@ -122,13 +125,15 @@ const Links = () => {
 
     const amountInCents = Math.round(parseFloat(formData.amount) * 100);
 
-    createLinkMutation.mutate({
-      amount: amountInCents,
-      currency: formData.currency,
-      reference: formData.reference || null,
-      expiresAt: formData.expiresAt || null,
-      usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
-    });
+    checkAndChallenge(() => 
+      createLinkMutation.mutate({
+        amount: amountInCents,
+        currency: formData.currency,
+        reference: formData.reference || null,
+        expiresAt: formData.expiresAt || null,
+        usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
+      })
+    );
   };
 
   const handleCopyLink = (slug: string) => {
@@ -404,6 +409,7 @@ const Links = () => {
           </div>
         )}
       </div>
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </DashboardLayout>
   );
 };

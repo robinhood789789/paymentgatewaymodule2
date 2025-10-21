@@ -29,12 +29,15 @@ import { Badge } from "@/components/ui/badge";
 import { Key, Copy, Trash2, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { PermissionGate } from "../PermissionGate";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 
 export const ApiKeysManager = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [keyName, setKeyName] = useState("");
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   const { data: apiKeys, isLoading } = useQuery({
     queryKey: ["api-keys"],
@@ -98,7 +101,11 @@ export const ApiKeysManager = () => {
       toast.error("Please enter a key name");
       return;
     }
-    createKeyMutation.mutate(keyName);
+    checkAndChallenge(() => createKeyMutation.mutate(keyName));
+  };
+
+  const handleRevokeKey = (keyId: string) => {
+    checkAndChallenge(() => revokeKeyMutation.mutate(keyId));
   };
 
   const handleCopyKey = (key: string) => {
@@ -267,7 +274,7 @@ export const ApiKeysManager = () => {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => revokeKeyMutation.mutate(key.id)}
+                          onClick={() => handleRevokeKey(key.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Revoke Key
@@ -287,6 +294,7 @@ export const ApiKeysManager = () => {
           )}
         </CardContent>
       </Card>
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </PermissionGate>
   );
 };

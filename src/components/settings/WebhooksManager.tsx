@@ -30,11 +30,14 @@ import { Badge } from "@/components/ui/badge";
 import { Webhook, Plus, Trash2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PermissionGate } from "../PermissionGate";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 
 export const WebhooksManager = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
   const queryClient = useQueryClient();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   const { data: webhooks, isLoading } = useQuery({
     queryKey: ["webhooks"],
@@ -155,7 +158,15 @@ export const WebhooksManager = () => {
       return;
     }
 
-    createWebhookMutation.mutate(webhookUrl);
+    checkAndChallenge(() => createWebhookMutation.mutate(webhookUrl));
+  };
+
+  const handleTestWebhook = (webhookId: string) => {
+    checkAndChallenge(() => testWebhookMutation.mutate(webhookId));
+  };
+
+  const handleDeleteWebhook = (webhookId: string) => {
+    checkAndChallenge(() => deleteWebhookMutation.mutate(webhookId));
   };
 
   return (
@@ -263,7 +274,7 @@ export const WebhooksManager = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => testWebhookMutation.mutate(webhook.id)}
+                      onClick={() => handleTestWebhook(webhook.id)}
                       disabled={!webhook.enabled || testWebhookMutation.isPending}
                       className="gap-2"
                     >
@@ -294,7 +305,7 @@ export const WebhooksManager = () => {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => deleteWebhookMutation.mutate(webhook.id)}
+                            onClick={() => handleDeleteWebhook(webhook.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete
@@ -315,6 +326,7 @@ export const WebhooksManager = () => {
           )}
         </CardContent>
       </Card>
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </PermissionGate>
   );
 };
