@@ -13,6 +13,7 @@ import TenantManagement from "./pages/admin/TenantManagement";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import TwoFactorVerification from "./pages/TwoFactorVerification";
+import MfaChallenge from "./pages/MfaChallenge";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
@@ -53,6 +54,7 @@ function AppContent() {
       <Route path="/auth/sign-in" element={<SignIn />} />
       <Route path="/auth/sign-up" element={<SignUp />} />
       <Route path="/auth/two-factor" element={<TwoFactorVerification />} />
+      <Route path="/auth/mfa-challenge" element={<MfaChallenge />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
       
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />

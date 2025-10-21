@@ -12,11 +12,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
 import { useI18n } from "@/lib/i18n";
 import { Link } from "react-router-dom";
+import { useMfaGuard } from "@/hooks/useMfaGuard";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const { t } = useI18n();
+  
+  // Enforce MFA for dashboard access
+  useMfaGuard({ required: true });
 
   // Wallet balance
   const { data: wallet } = useQuery({

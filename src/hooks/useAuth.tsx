@@ -122,19 +122,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      // Check if user has 2FA enabled
-      const { data: profile, error: profileError } = await supabase
+      // Fetch user profile and role info
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("totp_enabled, id")
+        .select("totp_enabled, id, is_super_admin")
         .eq("id", data.user?.id)
         .single();
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
+      // Fetch membership to get role and tenant
+      const { data: membership } = await supabase
+        .from("memberships")
+        .select("role_id, tenant_id, roles(name)")
+        .eq("user_id", data.user?.id)
+        .maybeSingle();
+
+      const role = membership?.roles?.name;
+      const tenantId = membership?.tenant_id;
+      const isSuperAdmin = profile?.is_super_admin || false;
+
+      // Check if MFA is required
+      let mfaRequired = false;
+
+      if (isSuperAdmin) {
+        // Super admin always requires MFA
+        mfaRequired = true;
+      } else if (tenantId && (role === 'owner' || role === 'admin')) {
+        // Check tenant security policy
+        const { data: policy } = await supabase
+          .from("tenant_security_policy")
+          .select("require_2fa_for_owner, require_2fa_for_admin")
+          .eq("tenant_id", tenantId)
+          .single();
+
+        if (policy) {
+          if (role === 'owner' && policy.require_2fa_for_owner) {
+            mfaRequired = true;
+          } else if (role === 'admin' && policy.require_2fa_for_admin) {
+            mfaRequired = true;
+          }
+        }
       }
 
+      // Handle MFA flow
+      if (mfaRequired) {
+        if (!profile?.totp_enabled) {
+          // MFA required but not enrolled, redirect to settings
+          toast.info("Two-Factor Authentication is required for your role. Please enable it.");
+          navigate("/settings", { state: { tab: 'security' } });
+          return { error: null };
+        }
+
+        // MFA enabled, redirect to challenge
+        toast.info("กรุณายืนยันตัวตนด้วย 2FA");
+        navigate("/auth/mfa-challenge", { 
+          state: { 
+            returnTo: "/dashboard" 
+          } 
+        });
+        return { error: null };
+      }
+
+      // Check if user has 2FA enabled (optional MFA)
       if (profile?.totp_enabled) {
-        // User has 2FA enabled, redirect to verification page
         toast.info("กรุณายืนยันตัวตนด้วย 2FA");
         navigate("/auth/two-factor", { 
           state: { 
@@ -143,7 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } 
         });
       } else {
-        // No 2FA, proceed to dashboard
+        // No MFA, proceed to dashboard
         toast.success("Sign in successful!");
         navigate("/dashboard");
       }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,21 @@ import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
+  const location = useLocation();
   const [isUpdating, setIsUpdating] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [defaultTab, setDefaultTab] = useState("profile");
+
+  // Handle location state for redirects (e.g., from MFA guard)
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.tab) {
+      setDefaultTab(state.tab);
+    }
+    if (state?.message) {
+      toast.info(state.message);
+    }
+  }, [location.state]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -83,7 +97,7 @@ const Settings = () => {
           </div>
         )}
 
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
