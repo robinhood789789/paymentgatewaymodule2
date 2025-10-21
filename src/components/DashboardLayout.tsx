@@ -196,15 +196,15 @@ const DashboardSidebar = () => {
                       to={item.url}
                       className={({ isActive }) =>
                         isActive
-                          ? "bg-primary text-primary-foreground font-medium"
-                          : "hover:bg-primary/10 border-l-2 border-primary/50"
+                          ? "bg-primary text-primary-foreground font-bold shadow-md border-l-4 border-primary"
+                          : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-primary shadow-sm hover:shadow-md transition-all"
                       }
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="mr-2 h-5 w-5" />
                       {!isCollapsed && (
                         <span className="flex items-center gap-2">
                           {item.title}
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">Owner</Badge>
+                          <Badge variant="default" className="text-xs px-1.5 py-0 bg-primary/20 text-primary-foreground border border-primary/40">Owner</Badge>
                         </span>
                       )}
                     </NavLink>
