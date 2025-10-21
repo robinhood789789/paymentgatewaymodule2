@@ -49,17 +49,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUserRole(null);
           setTenantId(null);
           setTenantName(null);
+          setLoading(false);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id);
       }
       setLoading(false);
     });
@@ -69,16 +70,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log("Fetching user role for:", userId);
+      
       // Check if user is super admin first
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("is_super_admin")
+        .select("is_super_admin, email, full_name")
         .eq("id", userId)
         .maybeSingle();
+
+      console.log("Profile data:", profileData);
+      console.log("Profile error:", profileError);
 
       if (profileError) throw profileError;
 
       const isSuperAdminUser = profileData?.is_super_admin || false;
+      console.log("Is super admin:", isSuperAdminUser);
       setIsSuperAdmin(isSuperAdminUser);
 
       // Fetch user membership and role info
