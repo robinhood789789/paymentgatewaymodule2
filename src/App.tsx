@@ -251,18 +251,10 @@ function AppContent() {
                 </SuperAdminRoute>
               }
             />
-            <Route
-              path="/admin/users"
-              element={
-                <SuperAdminRoute>
-                  <AdminUsers />
-                </SuperAdminRoute>
-              }
-            />
       <Route
         path="/admin/users"
         element={
-          <ProtectedRoute requireAdmin>
+          <ProtectedRoute>
             <AdminUsers />
           </ProtectedRoute>
         }

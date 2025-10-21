@@ -19,30 +19,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, UserPlus, Shield, User } from "lucide-react";
+import { Search, Shield, User } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CreateUserDialog } from "@/components/CreateUserDialog";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
+  const { activeTenantId } = useTenantSwitcher();
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", activeTenantId],
     queryFn: async () => {
+      if (!activeTenantId) return [];
+
+      // Get memberships for current tenant only
+      const { data: memberships, error: membershipsError } = await supabase
+        .from("memberships")
+        .select("user_id, tenant_id, role_id, roles(name), tenants(name)")
+        .eq("tenant_id", activeTenantId);
+
+      if (membershipsError) throw membershipsError;
+
+      const userIds = memberships.map((m) => m.user_id);
+      if (userIds.length === 0) return [];
+
+      // Get profiles only for users in current tenant
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
+        .in("id", userIds)
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
-
-      const { data: memberships, error: membershipsError } = await supabase
-        .from("memberships")
-        .select("user_id, tenant_id, role_id, roles(name), tenants(name)");
-
-      if (membershipsError) throw membershipsError;
 
       return profiles.map((profile) => {
         const membership = memberships.find((m) => m.user_id === profile.id);
@@ -56,40 +68,36 @@ const AdminUsers = () => {
         };
       });
     },
+    enabled: !!activeTenantId,
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRoleName }: { userId: string; newRoleName: string }) => {
-      // Find the role by name
+      if (!activeTenantId) throw new Error("No active tenant");
+
+      // Find the role by name in current tenant
       const { data: roleData, error: roleError } = await supabase
         .from("roles")
         .select("id, tenant_id")
         .eq("name", newRoleName)
+        .eq("tenant_id", activeTenantId)
         .eq("is_system", true)
         .maybeSingle();
 
       if (roleError) throw roleError;
       if (!roleData) throw new Error(`Role ${newRoleName} not found`);
 
-      // Get user's current membership
-      const { data: currentMembership, error: getMembershipError } = await supabase
-        .from("memberships")
-        .select("id, tenant_id")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (getMembershipError) throw getMembershipError;
-
       // Update the membership role
       const { error: updateError } = await supabase
         .from("memberships")
         .update({ role_id: roleData.id })
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .eq("tenant_id", activeTenantId);
 
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
       toast.success("อัพเดทสิทธิ์ผู้ใช้สำเร็จ!");
     },
     onError: (error: any) => {
@@ -112,10 +120,7 @@ const AdminUsers = () => {
             <h1 className="text-3xl font-bold text-foreground">จัดการผู้ใช้</h1>
             <p className="text-muted-foreground">จัดการบัญชีผู้ใช้และสิทธิ์การเข้าถึง</p>
           </div>
-          <Button variant="gradient" className="gap-2">
-            <UserPlus className="w-4 h-4" />
-            เพิ่มผู้ใช้
-          </Button>
+          <CreateUserDialog />
         </div>
 
         <Card>
