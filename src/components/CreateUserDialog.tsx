@@ -69,6 +69,10 @@ export const CreateUserDialog = () => {
 
       if (!membership) throw new Error("ไม่พบข้อมูล workspace");
 
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("ไม่พบ session");
+
       // Call edge function to create user
       const { data: result, error } = await supabase.functions.invoke("create-admin-user", {
         body: {
@@ -78,9 +82,13 @@ export const CreateUserDialog = () => {
           role: data.role,
           tenant_id: membership.tenant_id,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
       return result;
     },
     onSuccess: () => {
