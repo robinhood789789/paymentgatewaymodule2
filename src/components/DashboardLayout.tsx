@@ -116,6 +116,7 @@ const DashboardSidebar = () => {
   const goLiveItems = isOwner ? [
     { title: 'Go Live', url: "/go-live", icon: Rocket },
     { title: 'Controls Test', url: "/go-live/controls", icon: Shield },
+    { title: 'Gap Report', url: "/reports/gap", icon: FileCheck },
     { title: 'Pyramid Model', url: "/pyramid-authority", icon: Shield },
     { title: 'Alerts', url: "/alerts", icon: AlertCircle },
   ] : [];
