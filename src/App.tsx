@@ -62,8 +62,9 @@ function AppContent() {
       
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
       
-      <Route path="/status" element={<Status />} />
-      <Route path="/workbench" element={<Workbench />} />
+            <Route path="/status" element={<Status />} />
+            <Route path="/workbench" element={<Workbench />} />
+            <Route path="/approvals" element={<Approvals />} />
       
       <Route path="/pay/:slug" element={<PayLink />} />
       <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />

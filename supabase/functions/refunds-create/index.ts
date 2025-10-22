@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
+import { evaluateGuardrails, createApprovalRequest } from "../_shared/guardrails.ts";
 
 // Rate limiting: Critical endpoint - strict rate limits recommended
 // Recommended: 5 requests per minute per tenant
@@ -142,6 +143,50 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Refund amount exceeds payment amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check guardrails
+    const guardrailCheck = await evaluateGuardrails(supabase, {
+      action: 'refund',
+      amount: refundAmount,
+      currency: payment.currency,
+      userId: user.id,
+      tenantId,
+      metadata: { payment_created_at: payment.created_at }
+    });
+
+    if (guardrailCheck.blocked) {
+      return new Response(
+        JSON.stringify({ error: 'Action blocked by guardrail', reason: guardrailCheck.reason }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (guardrailCheck.requiresApproval) {
+      const approvalResult = await createApprovalRequest(supabase, {
+        tenantId,
+        requestedBy: user.id,
+        actionType: 'refund',
+        actionData: { paymentId, amount: refundAmount, reason },
+        amount: refundAmount,
+        reason: guardrailCheck.reason || 'Refund requires approval'
+      });
+
+      if ('error' in approvalResult) {
+        return new Response(
+          JSON.stringify({ error: approvalResult.error }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          requiresApproval: true, 
+          approvalId: approvalResult.approvalId,
+          message: 'Refund requires approval. An owner or admin must approve this request.'
+        }),
+        { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
