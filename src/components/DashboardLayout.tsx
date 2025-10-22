@@ -72,11 +72,6 @@ const DashboardSidebar = () => {
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
   ];
 
-  // Owner-only menu items
-  const ownerMenuItems = isOwner ? [
-    { title: t('dashboard.summaryReport'), url: "/summary-report", icon: PieChart },
-  ] : [];
-
   // Transaction menu items
   const transactionMenuItems = [
     { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine },
@@ -89,8 +84,16 @@ const DashboardSidebar = () => {
     { title: "เติมเงินเข้าระบบ", url: "/system-deposit", icon: Wallet },
   ] : [];
 
+  // Owner menu items (tenant-level management)
+  const ownerMenuItems = isOwner ? [
+    { title: "Members", url: "/admin/users", icon: Users },
+    { title: "Roles & Permissions", url: "/roles-permissions", icon: KeyRound },
+    { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
+  ] : [];
+
   // Management menu items
   const managementMenuItems = [
+    { title: "Workbench", url: "/workbench", icon: Activity },
     { title: "Products", url: "/products", icon: Package },
     { title: "Payment Methods", url: "/payment-methods", icon: CreditCard },
     { title: "Reconciliation", url: "/reconciliation", icon: FileCheck },
@@ -98,10 +101,8 @@ const DashboardSidebar = () => {
     { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck },
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
     { title: t('customers.title'), url: "/customers", icon: UserCircle },
-    { title: t('dashboard.manageAdmins'), url: "/roles-permissions", icon: KeyRound },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook },
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign },
-    { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
   ];
 
   // Settings menu items
@@ -215,9 +216,37 @@ const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Owner Menu (Tenant Management) */}
+        {ownerMenuItems.length > 0 && (
+          <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-accent font-semibold">Organization</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ownerMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Management Menu */}
         <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupLabel className="text-warning font-semibold">จัดการ</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-warning font-semibold">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementMenuItems.map((item) => (

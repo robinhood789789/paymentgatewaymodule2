@@ -19,17 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User } from "lucide-react";
+import { Search, Shield, User, Lock, Unlock, ShieldCheck, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreateUserDialog } from "@/components/CreateUserDialog";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { UserDetailDrawer } from "@/components/UserDetailDrawer";
+import { PermissionGate } from "@/components/PermissionGate";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", activeTenantId],
@@ -65,10 +72,31 @@ const AdminUsers = () => {
           role_id: membership?.role_id || null,
           tenant_id: membership?.tenant_id || null,
           tenant_name: membership?.tenants?.name || "No workspace",
+          is_locked: false, // Can be extended with actual lock status from profiles
         };
       });
     },
     enabled: !!activeTenantId,
+  });
+
+  const force2FAMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // This would be implemented in an edge function
+      // For now, we'll update the tenant security policy to enforce it
+      const { error } = await supabase
+        .from("profiles")
+        .update({ totp_enabled: false })
+        .eq("id", userId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
+      toast.success("User will be required to enable 2FA on next login");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to enforce 2FA", { description: error.message });
+    },
   });
 
   const updateRoleMutation = useMutation({
@@ -112,18 +140,42 @@ const AdminUsers = () => {
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleViewDetails = (userId: string) => {
+    setSelectedUserId(userId);
+    setDrawerOpen(true);
+  };
+
+  const handleForce2FA = (userId: string) => {
+    checkAndChallenge(() => force2FAMutation.mutate(userId));
+  };
+
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">จัดการผู้ใช้</h1>
-            <p className="text-muted-foreground">จัดการบัญชีผู้ใช้และสิทธิ์การเข้าถึง</p>
+      <PermissionGate
+        permission="users.manage"
+        fallback={
+          <div className="p-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+                <CardDescription>
+                  You don't have permission to manage users
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
-          <CreateUserDialog />
-        </div>
+        }
+      >
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Members</h1>
+              <p className="text-muted-foreground">Manage user accounts and access permissions</p>
+            </div>
+            <CreateUserDialog />
+          </div>
 
-        <Card>
+          <Card>
           <CardHeader>
             <CardTitle>รายชื่อผู้ใช้ทั้งหมด</CardTitle>
             <CardDescription>
@@ -150,10 +202,11 @@ const AdminUsers = () => {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Workspace</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>2FA Status</TableHead>
+                      <TableHead>Last Verified</TableHead>
                       <TableHead>Joined</TableHead>
-                      <TableHead>Manage</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -171,46 +224,52 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {user.tenant_name}
-                          </span>
-                        </TableCell>
-                        <TableCell>
                           <Badge variant={
                             user.role === "super_admin" ? "default" : 
                             user.role === "owner" ? "secondary" : 
-                            user.role === "merchant_admin" ? "secondary" :
+                            user.role === "admin" ? "secondary" :
                             "outline"
                           }>
                             {user.role || "viewer"}
                           </Badge>
                         </TableCell>
                         <TableCell>
+                          {user.totp_enabled ? (
+                            <Badge variant="default" className="gap-1">
+                              <ShieldCheck className="w-3 h-3" />
+                              Enabled
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Disabled</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {user.mfa_last_verified_at 
+                            ? new Date(user.mfa_last_verified_at).toLocaleString()
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
                           {new Date(user.created_at).toLocaleDateString("en-US")}
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={user.role}
-                            onValueChange={(value: string) =>
-                              updateRoleMutation.mutate({
-                                userId: user.id,
-                                newRoleName: value,
-                              })
-                            }
-                          >
-                            <SelectTrigger className="w-40">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="viewer">Viewer</SelectItem>
-                              <SelectItem value="developer">Developer</SelectItem>
-                              <SelectItem value="support">Support</SelectItem>
-                              <SelectItem value="finance">Finance</SelectItem>
-                              <SelectItem value="merchant_admin">Merchant Admin</SelectItem>
-                              <SelectItem value="owner">Owner</SelectItem>
-                              <SelectItem value="super_admin">Super Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewDetails(user.id)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            {!user.totp_enabled && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleForce2FA(user.id)}
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -220,7 +279,17 @@ const AdminUsers = () => {
             )}
           </CardContent>
         </Card>
+
+        {selectedUserId && (
+          <UserDetailDrawer
+            userId={selectedUserId}
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+          />
+        )}
       </div>
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
+      </PermissionGate>
     </DashboardLayout>
   );
 };

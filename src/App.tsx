@@ -26,6 +26,7 @@ import Links from "./pages/Links";
 import Reports from "./pages/Reports";
 import AdminUsers from "./pages/AdminUsers";
 import Status from "./pages/Status";
+import Workbench from "./pages/Workbench";
 import NotFound from "./pages/NotFound";
 import PayLink from "./pages/PayLink";
 import PayLinkSuccess from "./pages/PayLinkSuccess";
@@ -62,6 +63,7 @@ function AppContent() {
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
       
       <Route path="/status" element={<Status />} />
+      <Route path="/workbench" element={<Workbench />} />
       
       <Route path="/pay/:slug" element={<PayLink />} />
       <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />
