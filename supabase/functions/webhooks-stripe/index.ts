@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { 
+  verifyWebhookSignature, 
+  isEventProcessed, 
+  storeProviderEvent,
+  enqueueWebhookEvents 
+} from "../_shared/webhook-security.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -145,35 +151,22 @@ async function processPaymentEvent(
     after: { ...session, status: paymentStatus },
   });
 
-  // Enqueue webhook events for tenant webhooks
-  const { data: webhooks } = await supabase
-    .from("webhooks")
-    .select("*")
-    .eq("tenant_id", tenantId)
-    .eq("enabled", true);
-
-  if (webhooks && webhooks.length > 0) {
-    const webhookEventPayload = {
-      event_type: eventType,
-      provider: "stripe",
-      checkout_session: session,
-      payment: payment,
-      raw_event: data,
-    };
-
-    for (const webhook of webhooks) {
-      await supabase.from("webhook_events").insert({
-        tenant_id: tenantId,
-        event_type: eventType,
-        provider: "stripe",
-        payload: webhookEventPayload,
-        status: "queued",
-        attempts: 0,
-      });
+    // Enqueue webhook events using shared library
+    if (tenantId) {
+      await enqueueWebhookEvents(
+        supabase,
+        tenantId,
+        event.type,
+        'stripe',
+        {
+          event_type: event.type,
+          provider: "stripe",
+          checkout_session: session,
+          payment: payment,
+          raw_event: data,
+        }
+      );
     }
-
-    console.log(`Enqueued ${webhooks.length} webhook events for tenant ${tenantId}`);
-  }
 }
 
 serve(async (req) => {
@@ -186,15 +179,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const signature = req.headers.get("stripe-signature");
-    if (!signature) {
-      return new Response(
-        JSON.stringify({ error: "Missing stripe-signature header" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Get raw payload for signature verification
     const payload = await req.text();
+    const signature = req.headers.get("stripe-signature");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     
     if (!webhookSecret) {
@@ -205,26 +192,26 @@ serve(async (req) => {
       );
     }
 
-    // Verify signature
-    const event = await verifyStripeSignature(payload, signature, webhookSecret);
-    if (!event) {
+    // Verify signature using shared library
+    const verifyResult = await verifyWebhookSignature('stripe', payload, signature, webhookSecret);
+    if (!verifyResult.valid) {
+      console.error('[Stripe Webhook] Signature verification failed:', verifyResult.error);
       return new Response(
-        JSON.stringify({ error: "Invalid signature" }),
+        JSON.stringify({ error: verifyResult.error || 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Parse Stripe event from payload
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
+    const event = stripe.webhooks.constructEvent(payload, signature!, webhookSecret);
+
     console.log("Verified Stripe webhook event:", event.type, event.id);
 
-    // Check for duplicate event (idempotency)
-    const { data: existingEvent } = await supabase
-      .from("provider_events")
-      .select("id")
-      .eq("event_id", event.id)
-      .eq("provider", "stripe")
-      .single();
-
-    if (existingEvent) {
+    // Check for duplicate event using shared library
+    if (await isEventProcessed(supabase, 'stripe', event.id)) {
       console.log("Event already processed:", event.id);
       return new Response(
         JSON.stringify({ received: true, message: "Event already processed" }),
@@ -232,13 +219,8 @@ serve(async (req) => {
       );
     }
 
-    // Store provider event
-    await supabase.from("provider_events").insert({
-      event_id: event.id,
-      provider: "stripe",
-      type: event.type,
-      payload: event,
-    });
+    // Store event using shared library
+    await storeProviderEvent(supabase, 'stripe', event.id, event.type, event);
 
     // Extract tenant_id from metadata
     const data = event.data.object as any;

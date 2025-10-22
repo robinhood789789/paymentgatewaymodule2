@@ -2,9 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 import { evaluateGuardrails, createApprovalRequest } from "../_shared/guardrails.ts";
+import { checkRefundConcurrency, checkRateLimit } from "../_shared/concurrency.ts";
 
-// Rate limiting: Critical endpoint - strict rate limits recommended
-// Recommended: 5 requests per minute per tenant
+// Rate limiting: Critical endpoint - strict rate limits enforced
+// 5 requests per minute per tenant
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,6 +104,25 @@ Deno.serve(async (req) => {
       return createMfaError(mfaCheck.code!, mfaCheck.message!);
     }
 
+    // Rate limiting
+    const rateLimit = checkRateLimit(`refund:${tenantId}:${user.id}`, 5, 60000);
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded', 
+          retryAfter: Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000))
+          } 
+        }
+      );
+    }
+
     // Parse request body
     const body: RefundRequest = await req.json();
     const { paymentId, amount, reason } = body;
@@ -143,6 +163,15 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Refund amount exceeds payment amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Concurrency check - prevent double refunds
+    const concurrencyCheck = await checkRefundConcurrency(supabase, paymentId, refundAmount);
+    if (!concurrencyCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: concurrencyCheck.error }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -193,10 +222,11 @@ Deno.serve(async (req) => {
     // Get payment provider
     const provider = await getPaymentProvider(supabase, tenantId);
 
-    // Secure logging - no PII
-    console.log(`[Refund] Processing for payment ${paymentId}, amount: ${refundAmount} ${payment.currency}`);
+    // Secure logging - no PII, with request ID
+    const requestId = crypto.randomUUID();
+    console.log(`[Refund:${requestId}] Processing for payment ${paymentId.substring(0, 8)}..., amount: ${refundAmount} ${payment.currency}`);
 
-    // Create refund record with pending status
+    // Create refund record with processing status (prevents concurrent refunds)
     const { data: refund, error: refundInsertError } = await supabase
       .from('refunds')
       .insert({
@@ -204,7 +234,7 @@ Deno.serve(async (req) => {
         tenant_id: tenantId,
         amount: refundAmount,
         reason: reason || null,
-        status: 'pending'
+        status: 'processing'
       })
       .select()
       .single();
@@ -234,7 +264,12 @@ Deno.serve(async (req) => {
         })
         .eq('id', refund.id);
 
-      // Create audit log
+      // Create audit log with full metadata
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                       req.headers.get('cf-connecting-ip') || 
+                       'unknown';
+      const userAgent = req.headers.get('user-agent')?.substring(0, 255) || null;
+
       await supabase
         .from('audit_logs')
         .insert({
@@ -242,14 +277,19 @@ Deno.serve(async (req) => {
           actor_user_id: user.id,
           action: 'refund.created',
           target: `payment:${paymentId}`,
-          before: { payment_status: payment.status },
+          before: { 
+            payment_status: payment.status,
+            payment_amount: payment.amount 
+          },
           after: { 
             refund_id: refund.id,
             refund_amount: refundAmount,
-            refund_status: refundResponse.status
+            refund_status: refundResponse.status,
+            provider_refund_id: refundResponse.refundId,
+            request_id: requestId
           },
-          ip: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || null,
-          user_agent: req.headers.get('user-agent') || null
+          ip: clientIp.substring(0, 45), // IPv6 max length
+          user_agent: userAgent
         });
 
       console.log(`[Refund] Created successfully: ${refund.id}`);

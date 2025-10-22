@@ -10,7 +10,7 @@ interface RequireStepUpOptions {
   supabase: any;
   userId: string;
   tenantId?: string;
-  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts';
+  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts' | 'reconciliation' | 'export-large';
   userRole?: string;
   isSuperAdmin?: boolean;
 }
