@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -14,8 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
 export default function PlatformSecurity() {
-  const { isSuperAdmin, loading } = useAuth();
+  const { user, isSuperAdmin, loading } = useAuth();
   const queryClient = useQueryClient();
+  const [force2faSuperAdmin, setForce2faSuperAdmin] = useState(true);
   const [defaultRequire2faOwner, setDefaultRequire2faOwner] = useState(true);
   const [defaultRequire2faAdmin, setDefaultRequire2faAdmin] = useState(true);
   const [defaultStepupWindow, setDefaultStepupWindow] = useState("300");
@@ -24,15 +25,23 @@ export default function PlatformSecurity() {
     queryKey: ["platform-security-policy"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tenant_security_policy")
+        .from("platform_security_policy")
         .select("*")
-        .limit(1)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
   });
+
+  useEffect(() => {
+    if (policy) {
+      setForce2faSuperAdmin(policy.force_2fa_for_super_admin ?? true);
+      setDefaultRequire2faOwner(policy.default_require_2fa_for_owner ?? true);
+      setDefaultRequire2faAdmin(policy.default_require_2fa_for_admin ?? true);
+      setDefaultStepupWindow(String(policy.default_stepup_window_seconds ?? 300));
+    }
+  }, [policy]);
 
   const savePolicyMutation = useMutation({
     mutationFn: async () => {
@@ -42,40 +51,45 @@ export default function PlatformSecurity() {
         throw new Error("Step-up window must be between 120 and 900 seconds");
       }
 
-      // For platform defaults, we'd typically store these in a separate table
-      // For now, we'll use a special tenant_id or create a dedicated table
-      // Here we're just validating and showing the concept
-      
-      // In a real implementation, you'd have a platform_security_policy table
-      // with a singleton row for platform defaults
-      
-      return {
+      const policyData = {
+        force_2fa_for_super_admin: force2faSuperAdmin,
         default_require_2fa_for_owner: defaultRequire2faOwner,
         default_require_2fa_for_admin: defaultRequire2faAdmin,
         default_stepup_window_seconds: stepupSeconds,
       };
-    },
-    onSuccess: async () => {
-      // Log audit event
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      await supabase.from("audit_logs").insert({
-        actor_user_id: user?.id,
+
+      if (policy) {
+        // Update existing policy
+        const { error } = await supabase
+          .from("platform_security_policy")
+          .update(policyData)
+          .eq("id", policy.id);
+
+        if (error) throw error;
+      } else {
+        // Create new policy
+        const { error } = await supabase
+          .from("platform_security_policy")
+          .insert(policyData);
+
+        if (error) throw error;
+      }
+
+      // Log admin activity
+      await supabase.from("admin_activity").insert({
+        admin_user_id: user?.id,
         action: "platform.security_policy.updated",
-        target: "platform:security_policy",
-        tenant_id: null,
-        after: {
-          default_require_2fa_for_owner: defaultRequire2faOwner,
-          default_require_2fa_for_admin: defaultRequire2faAdmin,
-          default_stepup_window_seconds: parseInt(defaultStepupWindow),
-        },
+        details: { before: policy, after: policyData },
       });
 
+      return policyData;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform-security-policy"] });
-      toast.success("Platform security defaults updated");
+      toast.success("Platform security policy updated successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to update platform security defaults", {
+      toast.error("Failed to update platform security policy", {
         description: error.message,
       });
     },
