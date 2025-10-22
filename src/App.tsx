@@ -45,6 +45,7 @@ import Disputes from "./pages/Disputes";
 import KYCVerification from "./pages/KYCVerification";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 import TwoFactorChecklist from "./pages/TwoFactorChecklist";
+import Approvals from "./pages/Approvals";
 
 const queryClient = new QueryClient();
 
