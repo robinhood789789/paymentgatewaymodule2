@@ -185,9 +185,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if user has 2FA enabled (optional MFA)
       if (profile?.totp_enabled) {
         toast.info("กรุณายืนยันตัวตนด้วย 2FA");
-        navigate("/auth/two-factor", { 
+        navigate("/auth/mfa-challenge", { 
           state: { 
-            userId: profile.id,
             returnTo: "/dashboard" 
           } 
         });

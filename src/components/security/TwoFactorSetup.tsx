@@ -18,7 +18,7 @@ export function TwoFactorSetup() {
   const { user } = useAuth();
   const { t } = useI18n();
   const queryClient = useQueryClient();
-  const [setupStep, setSetupStep] = useState<'initial' | 'setup' | 'verify'>('initial');
+  const [setupStep, setSetupStep] = useState<'initial' | 'setup' | 'verify' | 'recovery-codes'>('initial');
   const [secret, setSecret] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -122,7 +122,8 @@ export function TwoFactorSetup() {
       queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
       toast.success('Two-factor authentication enabled successfully');
       
-      // Don't close setup yet, show recovery codes
+      // Move to recovery codes step
+      setSetupStep('recovery-codes');
     } catch (error: any) {
       toast.error(error.message || 'Invalid verification code');
     }
@@ -179,11 +180,85 @@ export function TwoFactorSetup() {
     },
     onSuccess: (newCodes) => {
       setBackupCodes(newCodes);
-      setSetupStep('setup'); // Show codes modal
+      setSetupStep('recovery-codes'); // Show codes modal
       queryClient.invalidateQueries({ queryKey: ['profile-2fa'] });
       toast.success('Recovery codes regenerated');
     },
   });
+
+  // Recovery codes display after successful verification
+  if (setupStep === 'recovery-codes') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-success" />
+            Two-Factor Authentication Enabled
+          </CardTitle>
+          <CardDescription>
+            Save these recovery codes - you'll only see them once
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Important:</strong> Save these recovery codes now. Each code can only be used once and you won't be able to see them again.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
+              {backupCodes.map((code, i) => (
+                <code key={i} className="text-sm font-mono">
+                  {code}
+                </code>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyToClipboard(backupCodes.join('\n'))}
+                className="flex-1"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadRecoveryCodes}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={printRecoveryCodes}
+                className="flex-1"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </Button>
+            </div>
+          </div>
+
+          <Button onClick={() => {
+            setSetupStep('initial');
+            setBackupCodes([]);
+            setVerificationCode('');
+            setSecret('');
+            setQrCodeUrl('');
+          }} className="w-full">
+            I've Saved My Recovery Codes
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (setupStep === 'setup') {
     return (
@@ -221,48 +296,9 @@ export function TwoFactorSetup() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Save these backup codes in a secure location. You can use them to access your account if you lose your authenticator device.
+              After verification, you'll receive recovery codes. Save them in a secure location.
             </AlertDescription>
           </Alert>
-
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
-              {backupCodes.map((code, i) => (
-                <code key={i} className="text-xs font-mono">
-                  {code}
-                </code>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(backupCodes.join('\n'))}
-                className="flex-1"
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copy All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadRecoveryCodes}
-                className="flex-1"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={printRecoveryCodes}
-                className="flex-1"
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-            </div>
-          </div>
 
           <div className="space-y-2">
             <Label>Enter verification code from your app</Label>
@@ -272,11 +308,17 @@ export function TwoFactorSetup() {
               placeholder="000000"
               maxLength={6}
               className="text-center text-lg font-mono tracking-widest"
+              autoFocus
             />
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={() => setSetupStep('initial')} variant="outline" className="flex-1">
+            <Button onClick={() => {
+              setSetupStep('initial');
+              setVerificationCode('');
+              setSecret('');
+              setQrCodeUrl('');
+            }} variant="outline" className="flex-1">
               Cancel
             </Button>
             <Button onClick={verifyAndEnable} className="flex-1" disabled={verificationCode.length !== 6}>
