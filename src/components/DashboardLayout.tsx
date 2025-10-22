@@ -115,12 +115,14 @@ const DashboardSidebar = () => {
   // Go-Live for owners
   const goLiveItems = isOwner ? [
     { title: 'Go Live', url: "/go-live", icon: Rocket },
+    { title: 'Controls Test', url: "/go-live/controls", icon: Shield },
   ] : [];
 
   const superAdminMenuItems = [
     { title: "Super Admin Console", url: "/admin", icon: Shield },
     { title: "Tenant Management", url: "/admin/tenants", icon: Users },
-    { title: "User Management", url: "/admin/users", icon: UserCircle },
+    { title: "Platform Audit", url: "/platform/audit", icon: Activity },
+    { title: "Platform Security", url: "/platform/security", icon: Shield },
   ];
 
   return (

@@ -46,6 +46,8 @@ import KYCVerification from "./pages/KYCVerification";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 import TwoFactorChecklist from "./pages/TwoFactorChecklist";
 import Approvals from "./pages/Approvals";
+import PlatformAudit from "./pages/admin/PlatformAudit";
+import GoLiveControls from "./pages/GoLiveControls";
 
 const queryClient = new QueryClient();
 
@@ -63,9 +65,10 @@ function AppContent() {
       
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
       
-            <Route path="/status" element={<Status />} />
-            <Route path="/workbench" element={<Workbench />} />
-            <Route path="/approvals" element={<Approvals />} />
+      <Route path="/status" element={<Status />} />
+      <Route path="/workbench" element={<Workbench />} />
+      <Route path="/approvals" element={<Approvals />} />
+      <Route path="/go-live/controls" element={<GoLiveControls />} />
       
       <Route path="/pay/:slug" element={<PayLink />} />
       <Route path="/pay/:slug/success" element={<PayLinkSuccess />} />
@@ -275,6 +278,14 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformSecurity />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/audit"
+              element={
+                <SuperAdminRoute>
+                  <PlatformAudit />
                 </SuperAdminRoute>
               }
             />

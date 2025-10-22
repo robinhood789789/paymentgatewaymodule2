@@ -33,11 +33,13 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
   const [dateFromFilter, setDateFromFilter] = useState<string>('');
   const [dateToFilter, setDateToFilter] = useState<string>('');
   const [actorFilter, setActorFilter] = useState<string>('');
+  const [ipFilter, setIpFilter] = useState<string>('');
+  const [targetFilter, setTargetFilter] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const { data: logs, isLoading, refetch } = useQuery<AuditLog[]>({
-    queryKey: ['audit-logs', tenantId, actionFilter, dateFromFilter, dateToFilter, actorFilter],
+    queryKey: ['audit-logs', tenantId, actionFilter, dateFromFilter, dateToFilter, actorFilter, ipFilter, targetFilter],
     queryFn: async () => {
       let query = supabase
         .from('audit_logs')
@@ -52,6 +54,14 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
 
       if (actorFilter) {
         query = query.ilike('actor_user_id', `%${actorFilter}%`);
+      }
+
+      if (ipFilter) {
+        query = query.ilike('ip', `%${ipFilter}%`);
+      }
+
+      if (targetFilter) {
+        query = query.ilike('target', `%${targetFilter}%`);
       }
 
       if (dateFromFilter) {
@@ -80,7 +90,7 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
     return 'outline';
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!logs || logs.length === 0) {
       toast({
         title: t('activityLog.noDataToExport'),
@@ -89,6 +99,7 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
       return;
     }
 
+    // For large exports, show checksum
     const csv = [
       ['Action', 'Target', 'Actor ID', 'IP Address', 'User Agent', 'Date'].join(','),
       ...logs.map(log => [
@@ -96,22 +107,36 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
         log.target || '-',
         log.actor_user_id || 'System',
         log.ip || '-',
-        log.user_agent || '-',
+        `"${log.user_agent?.replace(/"/g, '""') || '-'}"`,
         new Date(log.created_at).toISOString()
       ].join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
+    
+    // Generate checksum for large exports
+    if (logs.length > 1000) {
+      const checksum = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+      const checksumHex = Array.from(new Uint8Array(checksum))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      toast({
+        title: t('activityLog.exportSuccess'),
+        description: `SHA-256: ${checksumHex.slice(0, 16)}...`,
+      });
+    } else {
+      toast({
+        title: t('activityLog.exportSuccess'),
+      });
+    }
+
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `activity-log-${new Date().toISOString()}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-
-    toast({
-      title: t('activityLog.exportSuccess'),
-    });
   };
 
   const handleViewDetails = (log: AuditLog) => {
@@ -124,6 +149,8 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
     setDateFromFilter('');
     setDateToFilter('');
     setActorFilter('');
+    setIpFilter('');
+    setTargetFilter('');
   };
 
   return (
@@ -161,7 +188,7 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="space-y-2">
               <Label>{t('activityLog.action')}</Label>
               <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -211,9 +238,27 @@ export function ActivityLog({ tenantId }: { tenantId: string }) {
                 onChange={(e) => setActorFilter(e.target.value)}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>IP Address</Label>
+              <Input
+                placeholder="Filter by IP..."
+                value={ipFilter}
+                onChange={(e) => setIpFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Target</Label>
+              <Input
+                placeholder="Filter by target..."
+                value={targetFilter}
+                onChange={(e) => setTargetFilter(e.target.value)}
+              />
+            </div>
           </div>
 
-          {(actionFilter !== 'all' || dateFromFilter || dateToFilter || actorFilter) && (
+          {(actionFilter !== 'all' || dateFromFilter || dateToFilter || actorFilter || ipFilter || targetFilter) && (
             <div className="flex justify-end">
               <Button
                 variant="ghost"
