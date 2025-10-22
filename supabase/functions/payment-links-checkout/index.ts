@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
 
+// Public endpoint - no MFA required, but rate limiting recommended
+// Recommended: 3 requests per minute per IP
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -130,7 +133,8 @@ serve(async (req) => {
       .update({ used_count: link.used_count + 1 })
       .eq('id', link.id);
 
-    console.log(`Checkout created for payment link: ${slug}`);
+    // Secure logging - no PII
+    console.log(`[PayLink] Checkout created for link: ${slug}, amount: ${link.amount} ${link.currency}`);
 
     return new Response(JSON.stringify({
       sessionId: checkoutSession.id,
@@ -142,8 +146,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    // Secure error logging - no sensitive data
+    console.error('[PayLink] Error:', (error as Error).message);
+    return new Response(JSON.stringify({ error: 'Failed to create checkout session' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

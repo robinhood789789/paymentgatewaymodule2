@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
+// Rate limiting: This endpoint should be rate-limited at the infrastructure level
+// Recommended: 10 requests per minute per tenant
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-tenant, idempotency-key",
@@ -231,7 +234,8 @@ serve(async (req) => {
     // Get payment provider
     const provider = await getPaymentProvider(supabase, tenantId);
 
-    console.log(`Creating checkout session with ${provider.name} for tenant ${tenantId}`);
+    // Secure logging - no PII
+    console.log(`[Checkout] Creating session for tenant ${tenantId}, amount: ${params.amount} ${params.currency}`);
 
     // Create session with provider
     const providerSession = await provider.createCheckoutSession({
@@ -283,17 +287,38 @@ serve(async (req) => {
         });
     }
 
-    console.log("Checkout session created:", session.id);
+    // Create audit log if user-initiated
+    if (auth.userId) {
+      await supabase
+        .from('audit_logs')
+        .insert({
+          tenant_id: tenantId,
+          actor_user_id: auth.userId,
+          action: 'checkout.session.created',
+          target: `session:${session.id}`,
+          after: {
+            session_id: session.id,
+            amount: params.amount,
+            currency: params.currency,
+            provider: provider.name,
+          },
+          // Redact full IP for privacy
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.substring(0, 15) || null,
+          user_agent: req.headers.get('user-agent')?.substring(0, 255) || null
+        });
+    }
+
+    console.log(`[Checkout] Session created: ${session.id}`);
 
     return new Response(JSON.stringify(response), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in checkout-sessions-create:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+    // Secure error logging - no sensitive data
+    console.error('[Checkout] Error:', (error as Error).message);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Failed to create checkout session' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

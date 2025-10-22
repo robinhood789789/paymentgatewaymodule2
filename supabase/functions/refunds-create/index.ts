@@ -2,6 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getPaymentProvider } from "../_shared/providerFactory.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
+// Rate limiting: Critical endpoint - strict rate limits recommended
+// Recommended: 5 requests per minute per tenant
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tenant',
@@ -145,7 +148,8 @@ Deno.serve(async (req) => {
     // Get payment provider
     const provider = await getPaymentProvider(supabase, tenantId);
 
-    console.log(`Processing refund for payment ${paymentId}, amount: ${refundAmount}`);
+    // Secure logging - no PII
+    console.log(`[Refund] Processing for payment ${paymentId}, amount: ${refundAmount} ${payment.currency}`);
 
     // Create refund record with pending status
     const { data: refund, error: refundInsertError } = await supabase
@@ -203,7 +207,7 @@ Deno.serve(async (req) => {
           user_agent: req.headers.get('user-agent') || null
         });
 
-      console.log(`Refund created successfully: ${refund.id}`);
+      console.log(`[Refund] Created successfully: ${refund.id}`);
 
       return new Response(
         JSON.stringify({
@@ -249,9 +253,10 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Refund endpoint error:', error);
+    // Secure error logging - no sensitive data
+    console.error('[Refund] Error:', (error as Error).message);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: (error as Error).message }),
+      JSON.stringify({ error: 'Failed to process refund' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
