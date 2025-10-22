@@ -79,8 +79,8 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
   ];
 
-  // Owner transaction items - System Deposit (Owner only)
-  const ownerTransactionItems = isOwner ? [
+  // Owner transaction items - System Deposit (Owner only, NOT for Super Admin)
+  const ownerTransactionItems = (isOwner && !isSuperAdmin) ? [
     { title: "เติมเงินเข้าระบบ", url: "/system-deposit", icon: Wallet },
   ] : [];
 
