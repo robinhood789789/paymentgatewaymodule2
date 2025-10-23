@@ -36,7 +36,7 @@ export const useTenantSwitcher = () => {
       // Step 1: Get memberships
       const { data: membershipData, error: membershipError } = await supabase
         .from("memberships")
-        .select("id, tenant_id, role_id, user_id, created_at")
+        .select("id, tenant_id, role_id")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -61,11 +61,15 @@ export const useTenantSwitcher = () => {
       const rolesMap = new Map(rolesData?.map(r => [r.id, r]) || []);
       const tenantsMap = new Map(tenantsData?.map(t => [t.id, t]) || []);
 
-      return membershipData.map(m => ({
-        ...m,
+      const result = membershipData.map(m => ({
+        id: m.id,
+        tenant_id: m.tenant_id,
+        role_id: m.role_id,
         roles: rolesMap.get(m.role_id) || { name: 'viewer' },
         tenants: tenantsMap.get(m.tenant_id) || { id: m.tenant_id, name: 'Unknown', status: 'active' }
-      })) as Membership[];
+      }));
+
+      return result as Membership[];
     },
     enabled: !!user?.id,
   });
