@@ -36,6 +36,8 @@ Deno.serve(async (req) => {
       throw new Error('ข้อมูลไม่ครบถ้วน');
     }
 
+    console.log('Creating admin user:', { email, role, tenant_id });
+
     // Verify user has permission in the tenant
     const { data: membership } = await supabaseClient
       .from('memberships')
@@ -53,22 +55,57 @@ Deno.serve(async (req) => {
       throw new Error('คุณไม่มีสิทธิ์สร้างผู้ใช้');
     }
 
-    // Create the new user
-    const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-      },
-    });
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find((u) => u.email === email);
 
-    if (createError) {
-      throw createError;
-    }
+    let userId: string;
 
-    if (!newUser.user) {
-      throw new Error('ไม่สามารถสร้างผู้ใช้ได้');
+    if (existingUser) {
+      console.log('User already exists, adding to tenant:', existingUser.id);
+      userId = existingUser.id;
+
+      // Check if user already has membership in this tenant
+      const { data: existingMembership } = await supabaseClient
+        .from('memberships')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('tenant_id', tenant_id)
+        .maybeSingle();
+
+      if (existingMembership) {
+        throw new Error('ผู้ใช้นี้มีอยู่ในเทนนันต์นี้แล้ว');
+      }
+
+      // Update user's full_name if provided
+      if (full_name && (!existingUser.user_metadata?.full_name || existingUser.user_metadata.full_name === '')) {
+        await supabaseClient.auth.admin.updateUserById(userId, {
+          user_metadata: { full_name }
+        });
+      }
+    } else {
+      // Create the new user
+      console.log('Creating new user');
+      const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name,
+        },
+      });
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        throw createError;
+      }
+
+      if (!newUser.user) {
+        throw new Error('ไม่สามารถสร้างผู้ใช้ได้');
+      }
+
+      userId = newUser.user.id;
+      console.log('New user created:', userId);
     }
 
     // Get the role ID for the specified role in this tenant
@@ -80,36 +117,49 @@ Deno.serve(async (req) => {
       .eq('is_system', true)
       .single();
 
+    console.log('Role lookup:', { role, roleData, roleError });
+
     if (roleError || !roleData) {
-      // Clean up: delete the created user if role assignment fails
-      await supabaseClient.auth.admin.deleteUser(newUser.user.id);
+      // Clean up: delete the created user if role assignment fails (only if we just created them)
+      if (!existingUser) {
+        console.log('Cleaning up newly created user due to role error');
+        await supabaseClient.auth.admin.deleteUser(userId);
+      }
       throw new Error(`ไม่พบบทบาท ${role} ในระบบ`);
     }
 
-    // Create membership for the new user
+    // Create membership for the user
     const { error: membershipError } = await supabaseClient
       .from('memberships')
       .insert({
-        user_id: newUser.user.id,
+        user_id: userId,
         tenant_id: tenant_id,
         role_id: roleData.id,
       });
 
+    console.log('Membership creation:', { membershipError });
+
     if (membershipError) {
-      // Clean up: delete the created user if membership creation fails
-      await supabaseClient.auth.admin.deleteUser(newUser.user.id);
+      // Clean up: delete the created user if membership creation fails (only if we just created them)
+      if (!existingUser) {
+        console.log('Cleaning up newly created user due to membership error');
+        await supabaseClient.auth.admin.deleteUser(userId);
+      }
       throw membershipError;
     }
+
+    console.log('Admin user created/added successfully:', userId);
 
     return new Response(
       JSON.stringify({
         success: true,
         user: {
-          id: newUser.user.id,
-          email: newUser.user.email,
+          id: userId,
+          email: email,
           full_name,
           role,
         },
+        message: existingUser ? 'เพิ่มผู้ใช้เข้าเทนนันต์สำเร็จ' : 'สร้างผู้ใช้สำเร็จ',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

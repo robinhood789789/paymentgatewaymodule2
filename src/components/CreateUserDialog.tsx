@@ -89,10 +89,11 @@ export const CreateUserDialog = () => {
       if (result?.error) throw new Error(result.error);
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      toast.success("สร้างบัญชีผู้ใช้สำเร็จ!");
+      const message = result?.message || "สร้างบัญชีผู้ใช้สำเร็จ!";
+      toast.success(message);
       setOpen(false);
       form.reset();
     },
