@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, Lock, Unlock, ShieldCheck, Eye } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,11 +32,30 @@ import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
+
+  // Fetch available roles for filtering
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return [];
+      const { data, error } = await supabase
+        .from("roles")
+        .select("id, name")
+        .eq("tenant_id", activeTenantId)
+        .eq("is_system", true)
+        .order("name");
+      
+      if (error) throw error;
+      return data as { id: string; name: string }[];
+    },
+    enabled: !!activeTenantId,
+  });
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", activeTenantId],
@@ -152,10 +171,14 @@ const AdminUsers = () => {
     },
   });
 
-  const filteredUsers = users?.filter((user) =>
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users?.filter((user) => {
+    const matchesSearch = user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = selectedRole === "all" || user.role === selectedRole;
+    
+    return matchesSearch && matchesRole;
+  });
 
   const handleViewDetails = (userId: string) => {
     setSelectedUserId(userId);
@@ -204,18 +227,33 @@ const AdminUsers = () => {
           <CardHeader>
             <CardTitle>รายชื่อผู้ใช้ทั้งหมด</CardTitle>
             <CardDescription>
-              จำนวนผู้ใช้: {users?.length || 0} คน
+              จำนวนผู้ใช้: {filteredUsers?.length || 0} / {users?.length || 0} คน
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="ค้นหาด้วยอีเมลหรือชื่อ..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="ค้นหาด้วยอีเมลหรือชื่อ..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="กรองตาม Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">ทั้งหมด</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {isLoading ? (
@@ -231,7 +269,7 @@ const AdminUsers = () => {
                       <TableHead>2FA Status</TableHead>
                       <TableHead>Last Verified</TableHead>
                       <TableHead>Joined</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -249,14 +287,35 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={
-                            user.role === "super_admin" ? "default" : 
-                            user.role === "owner" ? "secondary" : 
-                            user.role === "admin" ? "secondary" :
-                            "outline"
-                          }>
-                            {user.role || "viewer"}
-                          </Badge>
+                          <PermissionGate 
+                            allowOwner={true}
+                            fallback={
+                              <Badge variant={
+                                user.role === "super_admin" ? "default" : 
+                                user.role === "owner" ? "secondary" : 
+                                user.role === "admin" ? "secondary" :
+                                "outline"
+                              }>
+                                {user.role || "viewer"}
+                              </Badge>
+                            }
+                          >
+                            <Select
+                              value={user.role || "viewer"}
+                              onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                            >
+                              <SelectTrigger className="w-[130px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {roles.map((role) => (
+                                  <SelectItem key={role.id} value={role.name}>
+                                    {role.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </PermissionGate>
                         </TableCell>
                         <TableCell>
                           {user.totp_enabled ? (
@@ -277,11 +336,12 @@ const AdminUsers = () => {
                           {new Date(user.created_at).toLocaleDateString("en-US")}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleViewDetails(user.id)}
+                              title="ดูรายละเอียด"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -291,7 +351,7 @@ const AdminUsers = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleForce2FA(user.id)}
-                                  title="Force 2FA (Owner only)"
+                                  title="บังคับใช้ 2FA"
                                 >
                                   <ShieldCheck className="w-4 h-4" />
                                 </Button>
