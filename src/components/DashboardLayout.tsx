@@ -63,15 +63,9 @@ const DashboardSidebar = () => {
   const { memberships, activeTenantId } = useTenantSwitcher();
   const isOwner = React.useMemo(() => {
     if (!memberships || !activeTenantId) {
-      console.log("isOwner check: Missing data", { memberships, activeTenantId });
       return false;
     }
     const membership = memberships.find((m: any) => m.tenant_id === activeTenantId);
-    console.log("isOwner check:", { 
-      membership, 
-      roleName: membership?.roles?.name,
-      isOwner: membership?.roles?.name === 'owner'
-    });
     return membership?.roles?.name === 'owner';
   }, [memberships, activeTenantId]);
 

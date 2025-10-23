@@ -70,8 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      console.log("Fetching user role for:", userId);
-      
       // Check if user is super admin first
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -79,13 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("id", userId)
         .maybeSingle();
 
-      console.log("Profile data:", profileData);
-      console.log("Profile error:", profileError);
-
       if (profileError) throw profileError;
 
       const isSuperAdminUser = profileData?.is_super_admin || false;
-      console.log("Is super admin:", isSuperAdminUser);
       setIsSuperAdmin(isSuperAdminUser);
 
       // Get active tenant from localStorage (same as useTenantSwitcher)
@@ -98,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId);
 
       if (membershipError && !isSuperAdminUser) {
-        console.error("Membership error:", membershipError);
         if (!isSuperAdminUser) throw membershipError;
       }
 
@@ -134,19 +127,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
         setTenantName(tenantData?.name || null);
-        
-        console.log("Role fetched successfully:", {
-          roleName,
-          tenantName: tenantData?.name,
-          isAdmin: isSuperAdminUser || roleName === "admin" || roleName === "owner",
-          isSuperAdmin: isSuperAdminUser,
-          activeTenantId
-        });
       } else if (isSuperAdminUser) {
         // Super admin doesn't need membership
         setUserRole("super_admin");
         setIsAdmin(true);
-        console.log("Super admin detected, no membership required");
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
