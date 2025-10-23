@@ -129,6 +129,11 @@ const DashboardSidebar = () => {
     { title: "Platform Security", url: "/platform/security", icon: Shield },
   ];
 
+  // Debug menu - always available
+  const debugMenuItems = [
+    { title: "🔍 Auth Status Test", url: "/auth-status", icon: Activity },
+  ];
+
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon" scrollWithContent>
       <SidebarContent>
@@ -328,6 +333,32 @@ const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Debug Menu - Available for testing */}
+        <SidebarGroup className="border-l-[6px] border-yellow-500 bg-yellow-500/5 pl-3 py-2 rounded-r-lg">
+          <SidebarGroupLabel className="text-yellow-600 font-semibold">Debug</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {debugMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         <div className="mt-auto p-4 border-t border-sidebar-border space-y-3">
           {!isCollapsed && (

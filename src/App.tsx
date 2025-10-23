@@ -52,6 +52,7 @@ import ProvisionMerchant from "./pages/admin/ProvisionMerchant";
 import PyramidAuthority from "./pages/PyramidAuthority";
 import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
+import AuthStatus from "./pages/AuthStatus";
 
 const queryClient = new QueryClient();
 
@@ -312,6 +313,10 @@ function AppContent() {
       <Route path="/pyramid-authority" element={<ProtectedRoute><PyramidAuthority /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertManagement /></ProtectedRoute>} />
       <Route path="/reports/gap" element={<ProtectedRoute><GapReport /></ProtectedRoute>} />
+      
+      {/* Auth Status Test Page */}
+      <Route path="/auth-status" element={<ProtectedRoute><AuthStatus /></ProtectedRoute>} />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
