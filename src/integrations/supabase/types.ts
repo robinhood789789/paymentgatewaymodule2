@@ -21,7 +21,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           target_tenant_id: string | null
           target_user_id: string | null
           user_agent: string | null
@@ -32,7 +32,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           target_tenant_id?: string | null
           target_user_id?: string | null
           user_agent?: string | null
@@ -43,7 +43,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           target_tenant_id?: string | null
           target_user_id?: string | null
           user_agent?: string | null
@@ -644,7 +644,7 @@ export type Database = {
           created_at: string
           document_id: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_status:
             | Database["public"]["Enums"]["kyc_verification_status"]
             | null
@@ -661,7 +661,7 @@ export type Database = {
           created_at?: string
           document_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status?:
             | Database["public"]["Enums"]["kyc_verification_status"]
             | null
@@ -678,7 +678,7 @@ export type Database = {
           created_at?: string
           document_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_status?:
             | Database["public"]["Enums"]["kyc_verification_status"]
             | null
@@ -1681,22 +1681,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_tenant_id: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
-      is_member_of_tenant: {
-        Args: { tenant_uuid: string }
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      request_tenant: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
+      is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean }
+      is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
+      request_tenant: { Args: never; Returns: string }
       user_has_role_in_tenant: {
         Args: { role_name: string; tenant_uuid: string; user_uuid: string }
         Returns: boolean
