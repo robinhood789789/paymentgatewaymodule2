@@ -88,16 +88,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Is super admin:", isSuperAdminUser);
       setIsSuperAdmin(isSuperAdminUser);
 
-      // Fetch user membership info
-      const { data: membershipData, error: membershipError } = await supabase
+      // Get active tenant from localStorage (same as useTenantSwitcher)
+      const activeTenantId = localStorage.getItem("active_tenant_id");
+
+      // Fetch user membership info - get ALL memberships first
+      const { data: allMemberships, error: membershipError } = await supabase
         .from("memberships")
         .select("tenant_id, role_id")
-        .eq("user_id", userId)
-        .maybeSingle();
+        .eq("user_id", userId);
 
       if (membershipError && !isSuperAdminUser) {
         console.error("Membership error:", membershipError);
         if (!isSuperAdminUser) throw membershipError;
+      }
+
+      // Select membership for active tenant, or first one if no active tenant
+      let membershipData = null;
+      if (allMemberships && allMemberships.length > 0) {
+        if (activeTenantId) {
+          membershipData = allMemberships.find(m => m.tenant_id === activeTenantId);
+        }
+        // Fallback to first membership if no active tenant or not found
+        if (!membershipData) {
+          membershipData = allMemberships[0];
+        }
       }
 
       if (membershipData) {
@@ -106,14 +120,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from("roles")
           .select("name")
           .eq("id", membershipData.role_id)
-          .single();
+          .maybeSingle();
 
         // Fetch tenant name separately
         const { data: tenantData } = await supabase
           .from("tenants")
           .select("name")
           .eq("id", membershipData.tenant_id)
-          .single();
+          .maybeSingle();
 
         const roleName = roleData?.name || null;
         setUserRole(roleName);
@@ -125,7 +139,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           roleName,
           tenantName: tenantData?.name,
           isAdmin: isSuperAdminUser || roleName === "admin" || roleName === "owner",
-          isSuperAdmin: isSuperAdminUser
+          isSuperAdmin: isSuperAdminUser,
+          activeTenantId
         });
       } else if (isSuperAdminUser) {
         // Super admin doesn't need membership
@@ -154,14 +169,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("id", data.user?.id)
         .single();
 
-      // Fetch membership to get role and tenant
-      const { data: membership } = await supabase
+      // Fetch membership to get role and tenant - get ALL memberships
+      const { data: allMemberships } = await supabase
         .from("memberships")
-        .select("role_id, tenant_id, roles(name)")
-        .eq("user_id", data.user?.id)
-        .maybeSingle();
+        .select("role_id, tenant_id")
+        .eq("user_id", data.user?.id);
 
-      const role = membership?.roles?.name;
+      // Get active tenant or use first membership
+      const activeTenantId = localStorage.getItem("active_tenant_id");
+      let membership = null;
+      
+      if (allMemberships && allMemberships.length > 0) {
+        if (activeTenantId) {
+          membership = allMemberships.find(m => m.tenant_id === activeTenantId);
+        }
+        if (!membership) {
+          membership = allMemberships[0];
+        }
+      }
+
+      // Get role name if membership exists
+      let role = null;
+      if (membership?.role_id) {
+        const { data: roleData } = await supabase
+          .from("roles")
+          .select("name")
+          .eq("id", membership.role_id)
+          .maybeSingle();
+        role = roleData?.name;
+      }
+
       const tenantId = membership?.tenant_id;
       const isSuperAdmin = profile?.is_super_admin || false;
 
