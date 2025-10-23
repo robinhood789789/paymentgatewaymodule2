@@ -31,6 +31,7 @@ import { UserPlus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 const createUserSchema = z.object({
   email: z.string().email("กรุณาใส่อีเมลที่ถูกต้อง"),
@@ -44,6 +45,7 @@ type CreateUserFormData = z.infer<typeof createUserSchema>;
 export const CreateUserDialog = () => {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { activeTenantId } = useTenantSwitcher();
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -61,13 +63,9 @@ export const CreateUserDialog = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("ไม่พบข้อมูลผู้ใช้");
 
-      const { data: membership } = await supabase
-        .from("memberships")
-        .select("tenant_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!membership) throw new Error("ไม่พบข้อมูล workspace");
+      if (!activeTenantId) {
+        throw new Error("กรุณาเลือก Workspace ก่อนสร้างผู้ใช้");
+      }
 
       // Get current session for authorization
       const { data: { session } } = await supabase.auth.getSession();
@@ -80,7 +78,7 @@ export const CreateUserDialog = () => {
           password: data.password,
           full_name: data.full_name,
           role: data.role,
-          tenant_id: membership.tenant_id,
+          tenant_id: activeTenantId,
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -92,6 +90,7 @@ export const CreateUserDialog = () => {
       return result;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("สร้างบัญชีผู้ใช้สำเร็จ!");
       setOpen(false);
