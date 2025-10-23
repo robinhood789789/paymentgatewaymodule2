@@ -33,14 +33,39 @@ export const useTenantSwitcher = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      // Step 1: Get memberships
+      const { data: membershipData, error: membershipError } = await supabase
         .from("memberships")
-        .select("id, tenant_id, role_id, roles(name), tenants(id, name, status)")
+        .select("id, tenant_id, role_id, user_id, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Membership[];
+      if (membershipError) throw membershipError;
+      if (!membershipData || membershipData.length === 0) return [];
+
+      // Step 2: Get role names for these memberships
+      const roleIds = [...new Set(membershipData.map(m => m.role_id))];
+      const { data: rolesData } = await supabase
+        .from("roles")
+        .select("id, name")
+        .in("id", roleIds);
+
+      // Step 3: Get tenant details for these memberships
+      const tenantIds = [...new Set(membershipData.map(m => m.tenant_id))];
+      const { data: tenantsData } = await supabase
+        .from("tenants")
+        .select("id, name, status")
+        .in("id", tenantIds);
+
+      // Step 4: Combine the data
+      const rolesMap = new Map(rolesData?.map(r => [r.id, r]) || []);
+      const tenantsMap = new Map(tenantsData?.map(t => [t.id, t]) || []);
+
+      return membershipData.map(m => ({
+        ...m,
+        roles: rolesMap.get(m.role_id) || { name: 'viewer' },
+        tenants: tenantsMap.get(m.tenant_id) || { id: m.tenant_id, name: 'Unknown', status: 'active' }
+      })) as Membership[];
     },
     enabled: !!user?.id,
   });

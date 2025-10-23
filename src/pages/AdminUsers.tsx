@@ -153,6 +153,8 @@ const AdminUsers = () => {
     <DashboardLayout>
       <PermissionGate
         permission="users.manage"
+        allowOwner={true}
+        allowAdmin={true}
         fallback={
           <div className="p-6">
             <Card>
