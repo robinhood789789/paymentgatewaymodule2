@@ -41,7 +41,12 @@ const AdminUsers = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", activeTenantId],
     queryFn: async () => {
-      if (!activeTenantId) return [];
+      if (!activeTenantId) {
+        console.log("❌ No activeTenantId");
+        return [];
+      }
+
+      console.log("🔍 Fetching users for tenant:", activeTenantId);
 
       // Get memberships for current tenant only
       const { data: memberships, error: membershipsError } = await supabase
@@ -49,10 +54,17 @@ const AdminUsers = () => {
         .select("user_id, tenant_id, role_id, roles(name), tenants(name)")
         .eq("tenant_id", activeTenantId);
 
+      console.log("📊 Memberships fetched:", { count: memberships?.length, memberships, error: membershipsError });
+
       if (membershipsError) throw membershipsError;
 
       const userIds = memberships.map((m) => m.user_id);
-      if (userIds.length === 0) return [];
+      if (userIds.length === 0) {
+        console.log("⚠️ No users found in memberships");
+        return [];
+      }
+
+      console.log("👥 User IDs to fetch:", userIds);
 
       // Get profiles only for users in current tenant
       const { data: profiles, error: profilesError } = await supabase
@@ -61,9 +73,11 @@ const AdminUsers = () => {
         .in("id", userIds)
         .order("created_at", { ascending: false });
 
+      console.log("👤 Profiles fetched:", { count: profiles?.length, profiles, error: profilesError });
+
       if (profilesError) throw profilesError;
 
-      return profiles.map((profile) => {
+      const result = profiles.map((profile) => {
         const membership = memberships.find((m) => m.user_id === profile.id);
         
         return {
@@ -75,6 +89,9 @@ const AdminUsers = () => {
           is_locked: false, // Can be extended with actual lock status from profiles
         };
       });
+
+      console.log("✅ Final users data:", result);
+      return result;
     },
     enabled: !!activeTenantId,
   });
