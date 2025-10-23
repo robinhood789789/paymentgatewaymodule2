@@ -166,10 +166,14 @@ const AdminUsers = () => {
     checkAndChallenge(() => force2FAMutation.mutate(userId));
   };
 
+  const handleRoleChange = (userId: string, newRole: string) => {
+    checkAndChallenge(() => updateRoleMutation.mutate({ userId, newRoleName: newRole }));
+  };
+
   return (
     <DashboardLayout>
       <PermissionGate
-        permission="users.manage"
+        permission="users.view"
         allowOwner={true}
         allowAdmin={true}
         fallback={
@@ -191,7 +195,9 @@ const AdminUsers = () => {
               <h1 className="text-3xl font-bold text-foreground">Members</h1>
               <p className="text-muted-foreground">Manage user accounts and access permissions</p>
             </div>
-            <CreateUserDialog />
+            <PermissionGate allowOwner={true}>
+              <CreateUserDialog />
+            </PermissionGate>
           </div>
 
           <Card>
@@ -279,15 +285,18 @@ const AdminUsers = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!user.totp_enabled && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleForce2FA(user.id)}
-                              >
-                                <ShieldCheck className="w-4 h-4" />
-                              </Button>
-                            )}
+                            <PermissionGate allowOwner={true}>
+                              {!user.totp_enabled && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleForce2FA(user.id)}
+                                  title="Force 2FA (Owner only)"
+                                >
+                                  <ShieldCheck className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </PermissionGate>
                           </div>
                         </TableCell>
                       </TableRow>

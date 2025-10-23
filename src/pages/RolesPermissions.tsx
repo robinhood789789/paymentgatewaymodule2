@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { RequireTenant } from "@/components/RequireTenant";
-// ... keep existing code
+import { PermissionGate } from "@/components/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,13 +228,15 @@ const RolesPermissions = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button
-                          onClick={() => setIsAddDialogOpen(true)}
-                          className="gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          เพิ่มแอดมิน
-                        </Button>
+                        <PermissionGate allowOwner={true}>
+                          <Button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            เพิ่มแอดมิน
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </div>
 
