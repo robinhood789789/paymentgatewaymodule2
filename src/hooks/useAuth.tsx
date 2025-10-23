@@ -88,25 +88,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Is super admin:", isSuperAdminUser);
       setIsSuperAdmin(isSuperAdminUser);
 
-      // Fetch user membership and role info
+      // Fetch user membership info
       const { data: membershipData, error: membershipError } = await supabase
         .from("memberships")
-        .select("tenant_id, role_id, roles(name), tenants(name)")
+        .select("tenant_id, role_id")
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (membershipError && !isSuperAdminUser) throw membershipError;
+      if (membershipError && !isSuperAdminUser) {
+        console.error("Membership error:", membershipError);
+        if (!isSuperAdminUser) throw membershipError;
+      }
 
       if (membershipData) {
-        const roleName = membershipData.roles?.name || null;
+        // Fetch role name separately
+        const { data: roleData } = await supabase
+          .from("roles")
+          .select("name")
+          .eq("id", membershipData.role_id)
+          .single();
+
+        // Fetch tenant name separately
+        const { data: tenantData } = await supabase
+          .from("tenants")
+          .select("name")
+          .eq("id", membershipData.tenant_id)
+          .single();
+
+        const roleName = roleData?.name || null;
         setUserRole(roleName);
         setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
-        setTenantName(membershipData.tenants?.name || null);
+        setTenantName(tenantData?.name || null);
+        
+        console.log("Role fetched successfully:", {
+          roleName,
+          tenantName: tenantData?.name,
+          isAdmin: isSuperAdminUser || roleName === "admin" || roleName === "owner",
+          isSuperAdmin: isSuperAdminUser
+        });
       } else if (isSuperAdminUser) {
         // Super admin doesn't need membership
         setUserRole("super_admin");
         setIsAdmin(true);
+        console.log("Super admin detected, no membership required");
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
