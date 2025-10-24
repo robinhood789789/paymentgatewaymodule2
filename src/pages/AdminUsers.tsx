@@ -19,7 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, ShieldCheck, Eye } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +45,8 @@ const AdminUsers = () => {
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; email: string } | null>(null);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
@@ -191,6 +203,52 @@ const AdminUsers = () => {
 
   const handleRoleChange = (userId: string, newRole: string) => {
     checkAndChallenge(() => updateRoleMutation.mutate({ userId, newRoleName: newRole }));
+  };
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!activeTenantId) throw new Error("No active tenant");
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userId, tenant_id: activeTenantId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
+      toast.success("ลบผู้ใช้สำเร็จ!");
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error("เกิดข้อผิดพลาด", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDeleteClick = (user: any) => {
+    setUserToDelete({
+      id: user.id,
+      name: user.full_name || "ไม่ระบุชื่อ",
+      email: user.email,
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (userToDelete) {
+      checkAndChallenge(() => deleteUserMutation.mutate(userToDelete.id));
+    }
   };
 
   return (
@@ -356,6 +414,15 @@ const AdminUsers = () => {
                                   <ShieldCheck className="w-4 h-4" />
                                 </Button>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteClick(user)}
+                                title="ลบผู้ใช้"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </PermissionGate>
                           </div>
                         </TableCell>
@@ -375,6 +442,36 @@ const AdminUsers = () => {
             onOpenChange={setDrawerOpen}
           />
         )}
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>ยืนยันการลบผู้ใช้</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ต่อไปนี้ออกจากระบบ?</p>
+                {userToDelete && (
+                  <div className="bg-muted p-3 rounded-md mt-2">
+                    <p className="font-medium">{userToDelete.name}</p>
+                    <p className="text-sm text-muted-foreground">{userToDelete.email}</p>
+                  </div>
+                )}
+                <p className="text-destructive text-sm font-medium mt-2">
+                  การกระทำนี้ไม่สามารถย้อนกลับได้
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={deleteUserMutation.isPending}
+              >
+                {deleteUserMutation.isPending ? "กำลังลบ..." : "ยืนยันการลบ"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
       </PermissionGate>
