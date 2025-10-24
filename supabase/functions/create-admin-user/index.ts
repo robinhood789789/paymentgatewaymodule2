@@ -108,21 +108,62 @@ Deno.serve(async (req) => {
       console.log('New user created:', userId);
     }
 
-    // Get the role ID for the specified role in this tenant
+    // Get or create the role ID for the specified role in this tenant
+    let roleId: string | null = null;
     const { data: roleData, error: roleError } = await supabaseClient
       .from('roles')
       .select('id')
       .eq('name', role)
       .eq('tenant_id', tenant_id)
       .eq('is_system', true)
-      .single();
+      .maybeSingle();
 
-    console.log('Role lookup:', { role, roleData, roleError });
+    console.log('Role lookup (system only):', { role, roleData, roleError });
 
-    if (roleError || !roleData) {
-      // Clean up: delete the created user if role assignment fails (only if we just created them)
+    if (roleData?.id) {
+      roleId = roleData.id;
+    } else {
+      // Fallback: try without is_system in case roles were created differently
+      const { data: fallbackRole, error: fallbackError } = await supabaseClient
+        .from('roles')
+        .select('id, is_system')
+        .eq('name', role)
+        .eq('tenant_id', tenant_id)
+        .maybeSingle();
+
+      console.log('Role fallback lookup (any):', { fallbackRole, fallbackError });
+
+      if (fallbackRole?.id) {
+        roleId = fallbackRole.id;
+      } else {
+        // Auto-create the missing system role for this tenant
+        console.log(`Creating missing system role '${role}' for tenant ${tenant_id}`);
+        const { data: createdRole, error: createRoleError } = await supabaseClient
+          .from('roles')
+          .insert({
+            tenant_id: tenant_id,
+            name: role,
+            description: `${role} role (auto-created)`,
+            is_system: true,
+          })
+          .select('id')
+          .single();
+
+        if (createRoleError || !createdRole) {
+          if (!existingUser) {
+            console.log('Cleaning up newly created user due to role creation error');
+            await supabaseClient.auth.admin.deleteUser(userId);
+          }
+          throw new Error(`ไม่สามารถสร้างบทบาท ${role} สำหรับเทนนันต์นี้ได้`);
+        }
+
+        roleId = createdRole.id;
+      }
+    }
+
+    if (!roleId) {
       if (!existingUser) {
-        console.log('Cleaning up newly created user due to role error');
+        console.log('Cleaning up newly created user due to missing roleId');
         await supabaseClient.auth.admin.deleteUser(userId);
       }
       throw new Error(`ไม่พบบทบาท ${role} ในระบบ`);
@@ -134,7 +175,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: userId,
         tenant_id: tenant_id,
-        role_id: roleData.id,
+        role_id: roleId as string,
       });
 
     console.log('Membership creation:', { membershipError });
