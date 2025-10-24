@@ -27,8 +27,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserPlus } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
@@ -44,6 +46,7 @@ type CreateUserFormData = z.infer<typeof createUserSchema>;
 
 export const CreateUserDialog = () => {
   const [open, setOpen] = useState(false);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
 
@@ -54,6 +57,20 @@ export const CreateUserDialog = () => {
       password: "",
       full_name: "",
       role: "admin",
+    },
+  });
+
+  // Fetch all available permissions
+  const { data: permissions = [] } = useQuery({
+    queryKey: ["permissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("permissions")
+        .select("id, name, description")
+        .order("name");
+      
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -79,6 +96,7 @@ export const CreateUserDialog = () => {
           full_name: data.full_name,
           role: data.role,
           tenant_id: activeTenantId,
+          permissions: selectedPermissions, // Send selected permissions
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -96,6 +114,7 @@ export const CreateUserDialog = () => {
       toast.success(message);
       setOpen(false);
       form.reset();
+      setSelectedPermissions([]); // Reset permissions
     },
     onError: (error: any) => {
       toast.error("เกิดข้อผิดพลาด", {
@@ -187,6 +206,49 @@ export const CreateUserDialog = () => {
                 </FormItem>
               )}
             />
+            
+            {/* Permissions Selection */}
+            <div className="space-y-3">
+              <FormLabel>สิทธิ์การเข้าถึง</FormLabel>
+              <ScrollArea className="h-[200px] rounded-md border p-4">
+                <div className="space-y-3">
+                  {permissions.map((permission) => (
+                    <div key={permission.id} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={permission.id}
+                        checked={selectedPermissions.includes(permission.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedPermissions([...selectedPermissions, permission.id]);
+                          } else {
+                            setSelectedPermissions(
+                              selectedPermissions.filter((id) => id !== permission.id)
+                            );
+                          }
+                        }}
+                      />
+                      <div className="grid gap-1.5 leading-none">
+                        <label
+                          htmlFor={permission.id}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {permission.name}
+                        </label>
+                        {permission.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {permission.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              <p className="text-xs text-muted-foreground">
+                เลือกสิทธิ์ที่ต้องการให้กับผู้ใช้ใหม่ ({selectedPermissions.length} รายการ)
+              </p>
+            </div>
+
             <div className="flex justify-end gap-3 pt-4">
               <Button
                 type="button"

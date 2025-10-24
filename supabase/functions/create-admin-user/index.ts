@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       throw new Error('ไม่ได้รับอนุญาต');
     }
 
-    const { email, password, full_name, role, tenant_id } = await req.json();
+    const { email, password, full_name, role, tenant_id, permissions } = await req.json();
 
     if (!email || !password || !full_name || !role || !tenant_id) {
       throw new Error('ข้อมูลไม่ครบถ้วน');
@@ -159,76 +159,95 @@ Deno.serve(async (req) => {
 
         roleId = createdRole.id;
 
-        // Assign permissions to the newly created role based on role type
-        console.log(`Assigning permissions to new ${role} role`);
+        // Assign permissions from the request
+        console.log(`Assigning custom permissions to new ${role} role`);
         
-        if (role === 'admin') {
-          // Admin: all permissions except sensitive settings and user management
-          const { data: permissions } = await supabaseClient
-            .from('permissions')
-            .select('id')
-            .not('name', 'in', '("settings.manage","users.manage")');
+        if (permissions && Array.isArray(permissions) && permissions.length > 0) {
+          // Use custom permissions selected by owner
+          const rolePermissions = permissions.map((permissionId: string) => ({
+            role_id: roleId,
+            permission_id: permissionId
+          }));
           
-          if (permissions && permissions.length > 0) {
-            const rolePermissions = permissions.map(p => ({
-              role_id: roleId,
-              permission_id: p.id
-            }));
-            
-            await supabaseClient
-              .from('role_permissions')
-              .insert(rolePermissions);
+          const { error: permError } = await supabaseClient
+            .from('role_permissions')
+            .insert(rolePermissions);
+          
+          if (permError) {
+            console.error('Error assigning permissions:', permError);
           }
-        } else if (role === 'developer') {
-          // Developer: API and webhook management
-          const { data: permissions } = await supabaseClient
-            .from('permissions')
-            .select('id')
-            .in('name', ['payments.view', 'customers.view', 'api_keys.view', 'api_keys.manage', 'webhooks.view', 'webhooks.manage', 'settings.view']);
+        } else {
+          // Fallback to default permissions based on role type if no custom permissions provided
+          console.log(`No custom permissions provided, using default permissions for ${role}`);
           
-          if (permissions && permissions.length > 0) {
-            const rolePermissions = permissions.map(p => ({
-              role_id: roleId,
-              permission_id: p.id
-            }));
+          if (role === 'admin') {
+            // Admin: all permissions except sensitive settings and user management
+            const { data: defaultPermissions } = await supabaseClient
+              .from('permissions')
+              .select('id')
+              .not('name', 'in', '("settings.manage","users.manage")');
             
-            await supabaseClient
-              .from('role_permissions')
-              .insert(rolePermissions);
-          }
-        } else if (role === 'finance') {
-          // Finance: payment and settlement related
-          const { data: permissions } = await supabaseClient
-            .from('permissions')
-            .select('id')
-            .in('name', ['payments.view', 'payments.create', 'payments.refund', 'customers.view', 'settlements.view', 'reports.view']);
-          
-          if (permissions && permissions.length > 0) {
-            const rolePermissions = permissions.map(p => ({
-              role_id: roleId,
-              permission_id: p.id
-            }));
+            if (defaultPermissions && defaultPermissions.length > 0) {
+              const rolePermissions = defaultPermissions.map(p => ({
+                role_id: roleId,
+                permission_id: p.id
+              }));
+              
+              await supabaseClient
+                .from('role_permissions')
+                .insert(rolePermissions);
+            }
+          } else if (role === 'developer') {
+            // Developer: API and webhook management
+            const { data: defaultPermissions } = await supabaseClient
+              .from('permissions')
+              .select('id')
+              .in('name', ['payments.view', 'customers.view', 'api_keys.view', 'api_keys.manage', 'webhooks.view', 'webhooks.manage', 'settings.view']);
             
-            await supabaseClient
-              .from('role_permissions')
-              .insert(rolePermissions);
-          }
-        } else if (role === 'viewer') {
-          // Viewer: read-only access
-          const { data: permissions } = await supabaseClient
-            .from('permissions')
-            .select('id')
-            .like('name', '%.view');
-          
-          if (permissions && permissions.length > 0) {
-            const rolePermissions = permissions.map(p => ({
-              role_id: roleId,
-              permission_id: p.id
-            }));
+            if (defaultPermissions && defaultPermissions.length > 0) {
+              const rolePermissions = defaultPermissions.map(p => ({
+                role_id: roleId,
+                permission_id: p.id
+              }));
+              
+              await supabaseClient
+                .from('role_permissions')
+                .insert(rolePermissions);
+            }
+          } else if (role === 'finance') {
+            // Finance: payment and settlement related
+            const { data: defaultPermissions } = await supabaseClient
+              .from('permissions')
+              .select('id')
+              .in('name', ['payments.view', 'payments.create', 'payments.refund', 'customers.view', 'settlements.view', 'reports.view']);
             
-            await supabaseClient
-              .from('role_permissions')
-              .insert(rolePermissions);
+            if (defaultPermissions && defaultPermissions.length > 0) {
+              const rolePermissions = defaultPermissions.map(p => ({
+                role_id: roleId,
+                permission_id: p.id
+              }));
+              
+              await supabaseClient
+                .from('role_permissions')
+                .insert(rolePermissions);
+            }
+          } else if (role === 'viewer') {
+            // Viewer: read-only access
+            const { data: defaultPermissions } = await supabaseClient
+              .from('permissions')
+              .select('id')
+              .like('name', '%.view');
+            
+            if (defaultPermissions && defaultPermissions.length > 0) {
+              const rolePermissions = defaultPermissions.map(p => ({
+                role_id: roleId,
+                permission_id: p.id
+              }));
+              
+              await supabaseClient
+                .from('role_permissions')
+                .insert(rolePermissions);
+            }
           }
         }
         // owner role gets all permissions by default in handle_new_user trigger
