@@ -92,6 +92,12 @@ export const CreateUserDialog = () => {
       name: "สิทธิรายการชำระเงิน",
       description: "สิทธิ์ในการดู สร้าง และคืนเงินให้ลูกค้า",
       permissions: ["payments.view", "payments.create", "payments.refund"]
+    },
+    {
+      id: "api_keys",
+      name: "สิทธิการจัดการ API",
+      description: "สิทธิ์ในการดูและจัดการ API Keys สำหรับการเชื่อมต่อระบบ",
+      permissions: ["api_keys.view", "api_keys.manage"]
     }
   ];
 
