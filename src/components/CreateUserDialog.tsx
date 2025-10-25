@@ -75,28 +75,52 @@ export const CreateUserDialog = () => {
 
   // Map Thai permission names to database permission names
   const permissionMapping: Record<string, string> = {
-    "เติมเงิน": "system_deposit.view",
-    "ถอนเงิน": "withdrawals.view", 
-    "รายการชำระเงิน": "payments.view",
+    "ดูรายการเติมเงิน": "deposits.view",
+    "สร้างคำขอเติมเงิน": "deposits.create",
+    "ดูรายการถอนเงิน": "withdrawals.view", 
+    "สร้างคำขอถอนเงิน": "withdrawals.create",
+    "ดูรายการชำระเงิน": "payments.view",
+    "สร้างคำขอชำระเงิน": "payments.create",
+    "คืนเงิน": "payments.refund",
     "จัดการ API": "api_keys.manage"
   };
 
-  // Define available permissions for admin users (4 permissions now)
+  // Define available permissions for admin users
   const availablePermissions = [
     { 
-      id: allPermissions.find(p => p.name === permissionMapping["เติมเงิน"])?.id || "",
-      name: "เติมเงิน", 
-      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นเติมเงิน" 
+      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการเติมเงิน"])?.id || "",
+      name: "ดูรายการเติมเงิน", 
+      description: "สิทธิ์ในการดูรายการฝากเงินในระบบ" 
     },
     { 
-      id: allPermissions.find(p => p.name === permissionMapping["ถอนเงิน"])?.id || "",
-      name: "ถอนเงิน", 
-      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นถอนเงิน" 
+      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอเติมเงิน"])?.id || "",
+      name: "สร้างคำขอเติมเงิน", 
+      description: "สิทธิ์ในการสร้างคำขอฝากเงินเข้าระบบ" 
     },
     { 
-      id: allPermissions.find(p => p.name === permissionMapping["รายการชำระเงิน"])?.id || "",
-      name: "รายการชำระเงิน", 
-      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นรายการชำระเงิน" 
+      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการถอนเงิน"])?.id || "",
+      name: "ดูรายการถอนเงิน", 
+      description: "สิทธิ์ในการดูรายการถอนเงินในระบบ" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอถอนเงิน"])?.id || "",
+      name: "สร้างคำขอถอนเงิน", 
+      description: "สิทธิ์ในการสร้างคำขอถอนเงินออกจากระบบ" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการชำระเงิน"])?.id || "",
+      name: "ดูรายการชำระเงิน", 
+      description: "สิทธิ์ในการดูรายการชำระเงินของลูกค้า" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอชำระเงิน"])?.id || "",
+      name: "สร้างคำขอชำระเงิน", 
+      description: "สิทธิ์ในการสร้างคำขอชำระเงินใหม่" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["คืนเงิน"])?.id || "",
+      name: "คืนเงิน", 
+      description: "สิทธิ์ในการคืนเงินให้กับลูกค้า" 
     },
     { 
       id: allPermissions.find(p => p.name === permissionMapping["จัดการ API"])?.id || "",
