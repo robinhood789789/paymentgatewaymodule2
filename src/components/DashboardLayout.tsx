@@ -70,15 +70,18 @@ const DashboardSidebar = () => {
 
   // Limited role gating: admin/manager users see only a minimal, compliance-approved menu
   const isLimitedRole = (isAdmin || isManager) && !isOwner && !isSuperAdmin;
-  const showOverviewGroup = !isLimitedRole; // Hide overview for admin/manager
+  const showOverviewGroup = true; // Always show overview for dashboard access
   const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
-  const showSettingsDocsGroup = isOwner || isSuperAdmin;
-  const showDebugGroup = !isLimitedRole;
+  const showSettingsDocsGroup = isOwner || isSuperAdmin; // Only owner and super admin see settings
+  const showDebugGroup = isOwner || isSuperAdmin; // Only owner and super admin see debug
 
-  const userMenuItems = [
-    { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
-    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
-  ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
+  // Admin gets only dashboard, no reports
+  const userMenuItems = isLimitedRole 
+    ? [{ title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }]
+    : [
+        { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null },
+        { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
+      ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
 
   // Transaction menu items - filtered by permissions
   const allTransactionItems = [
