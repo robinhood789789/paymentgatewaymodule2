@@ -6,6 +6,7 @@ import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -59,6 +60,7 @@ const DashboardSidebar = () => {
   const { signOut, isAdmin, isSuperAdmin, user } = useAuth();
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
+  const { hasPermission } = usePermissions();
 
   const { memberships, activeTenantId } = useTenantSwitcher();
   const isOwner = React.useMemo(() => {
@@ -70,16 +72,20 @@ const DashboardSidebar = () => {
   }, [memberships, activeTenantId]);
 
   const userMenuItems = [
-    { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard },
-    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3 },
-  ];
+    { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
+    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
+  ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
 
-  // Transaction menu items
-  const transactionMenuItems = [
-    { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine },
-    { title: t('dashboard.withdrawal'), url: "/withdrawal-list", icon: ArrowUpFromLine },
-    { title: t('dashboard.payments'), url: "/payments", icon: CreditCard },
+  // Transaction menu items - filtered by permissions
+  const allTransactionItems = [
+    { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine, permission: "payments.view" },
+    { title: t('dashboard.withdrawal'), url: "/withdrawal-list", icon: ArrowUpFromLine, permission: "payments.view" },
+    { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
+  
+  const transactionMenuItems = allTransactionItems.filter(item => 
+    !item.permission || hasPermission(item.permission) || isOwner
+  );
 
   // Owner transaction items - System Deposit (Owner only, NOT for Super Admin)
   const ownerTransactionItems = (isOwner && !isSuperAdmin) ? [
@@ -93,25 +99,33 @@ const DashboardSidebar = () => {
     { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
   ] : [];
 
-  // Management menu items
-  const managementMenuItems = [
-    { title: "Workbench", url: "/workbench", icon: Activity },
-    { title: "Products", url: "/products", icon: Package },
-    { title: "Payment Methods", url: "/payment-methods", icon: CreditCard },
-    { title: "Reconciliation", url: "/reconciliation", icon: FileCheck },
-    { title: "Disputes", url: "/disputes", icon: AlertCircle },
-    { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck },
-    { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt },
-    { title: t('customers.title'), url: "/customers", icon: UserCircle },
-    { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook },
-    { title: t('settlements.title'), url: "/settlements", icon: DollarSign },
+  // Management menu items - filtered by permissions
+  const allManagementItems = [
+    { title: "Workbench", url: "/workbench", icon: Activity, permission: null }, // Always visible
+    { title: "Products", url: "/products", icon: Package, permission: "products.view" },
+    { title: "Payment Methods", url: "/payment-methods", icon: CreditCard, permission: "payment_methods.manage" },
+    { title: "Reconciliation", url: "/reconciliation", icon: FileCheck, permission: "reconciliation.manage" },
+    { title: "Disputes", url: "/disputes", icon: AlertCircle, permission: "disputes.view" },
+    { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck, permission: "kyc.view" },
+    { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt, permission: "reports.view" },
+    { title: t('customers.title'), url: "/customers", icon: UserCircle, permission: "customers.view" },
+    { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook, permission: "webhooks.view" },
+    { title: t('settlements.title'), url: "/settlements", icon: DollarSign, permission: "settlements.view" },
   ];
+  
+  const managementMenuItems = allManagementItems.filter(item => 
+    !item.permission || hasPermission(item.permission) || isOwner
+  );
 
-  // Settings menu items
-  const settingsMenuItems = [
-    { title: t('dashboard.settings'), url: "/settings", icon: Settings },
-    { title: 'API Docs', url: "/docs", icon: Book },
+  // Settings menu items - filtered by permissions
+  const allSettingsItems = [
+    { title: t('dashboard.settings'), url: "/settings", icon: Settings, permission: "settings.view" },
+    { title: 'API Docs', url: "/docs", icon: Book, permission: null }, // Always visible
   ];
+  
+  const settingsMenuItems = allSettingsItems.filter(item => 
+    !item.permission || hasPermission(item.permission) || isOwner
+  );
 
   // Go-Live for owners
   const goLiveItems = isOwner ? [
@@ -257,56 +271,60 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Management Menu */}
-        <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupLabel className="text-warning font-semibold">Management</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {managementMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Management Menu - Only show if user has any management permissions */}
+        {managementMenuItems.length > 0 && (
+          <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-warning font-semibold">Management</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {managementMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Settings & Docs */}
-        <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {[...settingsMenuItems, ...goLiveItems].map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Settings & Docs - Only show if user has settings access or if there's API docs */}
+        {(settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
+          <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {[...settingsMenuItems, ...goLiveItems].map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {isSuperAdmin && (
           <SidebarGroup className="border-l-[6px] border-destructive bg-destructive/5 pl-3 py-2 rounded-r-lg">
