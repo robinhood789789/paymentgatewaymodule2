@@ -100,7 +100,7 @@ const DashboardSidebar = () => {
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
     { title: t('dashboard.staffMembers'), url: "/admin/users", icon: Users },
-    { title: "Approvals", url: "/approvals", icon: Shield },
+    { title: t('dashboard.approvals'), url: "/approvals", icon: Shield },
     { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
   ] : [];
 

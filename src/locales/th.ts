@@ -83,6 +83,7 @@ export const thTranslations = {
     searchAdminPhone: 'ชื่อแอดมิน, เบอร์โทร',
     adminList: 'รายชื่อ แอดมินร้านค้า',
     staffMembers: 'ทีมงาน',
+    approvals: 'รายการอนุมัติ',
   },
   activityLog: {
     title: 'ประวัติการใช้งาน',

@@ -71,6 +71,7 @@ export const enTranslations = {
     rolesPermissions: 'Roles & Permissions',
     activityHistory: 'Activity History',
     staffMembers: 'Staff Members',
+    approvals: 'Approvals',
   },
   activityLog: {
     title: 'Activity History',
