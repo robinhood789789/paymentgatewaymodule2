@@ -7,6 +7,7 @@ import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
 
 import { usePermissions } from "@/hooks/usePermissions";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -62,8 +63,9 @@ const DashboardSidebar = () => {
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
+  const { activeTenant } = useTenantSwitcher();
 
-  const isOwner = userRole === 'owner';
+  const isOwner = activeTenant?.roles?.name === 'owner';
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
