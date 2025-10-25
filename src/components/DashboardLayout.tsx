@@ -87,9 +87,9 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
   
-  // For Admin/Manager (non-owner, non-super-admin): show ONLY these 3 transactions
+  // For Admin/Manager (non-owner, non-super-admin): show ONLY deposits and withdrawals
   let transactionMenuItems = isLimitedRole 
-    ? allTransactionItems // Admin/Manager gets all 3 transaction items
+    ? allTransactionItems.filter(item => item.url === "/deposit-list" || item.url === "/withdrawal-list")
     : allTransactionItems.filter(item => 
         !item.permission || hasPermission(item.permission) || isOwner
       );
