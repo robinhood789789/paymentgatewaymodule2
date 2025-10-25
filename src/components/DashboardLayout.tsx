@@ -69,8 +69,8 @@ const DashboardSidebar = () => {
 
   // Strict admin gating: admin users see only a minimal, compliance-approved menu
   const isTenantAdminOnly = isAdmin && !isOwner && !isSuperAdmin;
-  const showOverviewGroup = !isTenantAdminOnly;
-  const showTransactionGroup = isOwner || isSuperAdmin;
+  const showOverviewGroup = !isTenantAdminOnly; // Hide overview for admin
+  const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
   const showSettingsDocsGroup = isOwner || isSuperAdmin;
   const showDebugGroup = !isTenantAdminOnly;
 
@@ -86,12 +86,15 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
   
-  const transactionMenuItems = allTransactionItems.filter(item => 
-    !item.permission || hasPermission(item.permission) || isOwner
-  );
+  // For Admin (non-owner, non-super-admin): show ONLY these 3 transactions
+  let transactionMenuItems = isTenantAdminOnly 
+    ? allTransactionItems // Admin gets all 3 transaction items
+    : allTransactionItems.filter(item => 
+        !item.permission || hasPermission(item.permission) || isOwner
+      );
 
-  // Owner-only System Deposit button (NOT shown to admin or super admin)
-  const showSystemDeposit = isOwner && !isSuperAdmin;
+  // System Deposit button - show for Admin (non-owner, non-super-admin) AND Owner
+  const showSystemDeposit = (isTenantAdminOnly || isOwner) && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
@@ -118,16 +121,9 @@ const DashboardSidebar = () => {
     (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
 
-  // For Admin (non-owner, non-super-admin), strictly allow only specific items
-  if (isAdmin && !isOwner && !isSuperAdmin) {
-    const allowedAdminUrls = new Set([
-      "/products",
-      "/payment-methods",
-      "/disputes",
-      "/customers",
-      "/webhook-events",
-    ]);
-    managementMenuItems = allManagementItems.filter((item: any) => allowedAdminUrls.has(item.url));
+  // For Admin (non-owner, non-super-admin): NO management items
+  if (isTenantAdminOnly) {
+    managementMenuItems = [];
   }
 
   // Settings menu items - filtered by permissions
@@ -232,7 +228,7 @@ const DashboardSidebar = () => {
                   </SidebarMenuItem>
                 ))}
                 
-                {/* Owner Only: System Deposit - ONLY visible to owner role */}
+                {/* System Deposit - visible to Admin and Owner */}
                 {showSystemDeposit && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
@@ -248,7 +244,8 @@ const DashboardSidebar = () => {
                         {!isCollapsed && (
                           <span className="flex items-center gap-2">
                             เติมเงินเข้าระบบ
-                            <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>
+                            {isOwner && <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>}
+                            {isTenantAdminOnly && <Badge variant="default" className="text-xs px-1.5 py-0 bg-blue-700 text-white border border-blue-800">Admin</Badge>}
                           </span>
                         )}
                       </NavLink>
