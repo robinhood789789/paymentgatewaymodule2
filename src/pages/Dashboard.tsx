@@ -22,6 +22,7 @@ const Dashboard = () => {
   // Redirect limited roles (admin/manager) to deposit list
   const limitedRole = !isSuperAdmin && userRole !== 'owner' && (userRole === 'admin' || userRole === 'manager');
   if (limitedRole) {
+    console.debug("Dashboard redirecting limited role", { userRole, isSuperAdmin });
     return <Navigate to="/deposit-list" replace />;
   }
   

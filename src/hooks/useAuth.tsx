@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("id", membershipData.tenant_id)
           .maybeSingle();
 
-        const roleName = roleData?.name || null;
+        const roleName = roleData?.name?.toLowerCase() || null;
         setUserRole(roleName);
         setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
@@ -183,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .select("name")
           .eq("id", membership.role_id)
           .maybeSingle();
-        role = roleData?.name;
+        role = roleData?.name?.toLowerCase();
       }
 
       const tenantId = membership?.tenant_id;

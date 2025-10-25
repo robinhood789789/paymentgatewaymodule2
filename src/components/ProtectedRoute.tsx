@@ -29,10 +29,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   // Limited role guard: tenant admin/manager can ONLY access deposit/withdrawal pages
-  const limitedRole = !isSuperAdmin && userRole !== 'owner' && (userRole === 'admin' || userRole === 'manager');
+  const roleLower = (userRole || '').toLowerCase();
+  const limitedRole = !isSuperAdmin && roleLower !== 'owner' && (roleLower === 'admin' || roleLower === 'manager');
   if (limitedRole) {
-    const allowedPaths = ["/deposit-list", "/withdrawal-list"]; // strictly allowed
-    if (!allowedPaths.includes(location.pathname)) {
+    const allowedPrefixes = ["/deposit-list", "/withdrawal-list"]; // strictly allowed
+    const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p));
+    if (!isAllowed) {
+      console.debug("ProtectedRoute redirecting limited role", { userRole, isSuperAdmin, path: location.pathname });
       return <Navigate to="/deposit-list" replace />;
     }
   }
