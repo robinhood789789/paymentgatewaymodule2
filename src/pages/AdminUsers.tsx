@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX, Edit } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -441,27 +441,41 @@ const AdminUsers = () => {
                                 user.role === "super_admin" ? "default" : 
                                 user.role === "owner" ? "secondary" : 
                                 user.role === "admin" ? "secondary" :
+                                user.role === "manager" ? "secondary" :
                                 "outline"
                               }>
                                 {user.role || "viewer"}
                               </Badge>
                             }
                           >
-                            <Select
-                              value={user.role || "viewer"}
-                              onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                            >
-                              <SelectTrigger className="w-[130px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {roles.map((role) => (
-                                  <SelectItem key={role.id} value={role.name}>
-                                    {role.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={user.role || "viewer"}
+                                onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                              >
+                                <SelectTrigger className="w-[150px] border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors">
+                                  <div className="flex items-center gap-2">
+                                    <Edit className="w-3.5 h-3.5 text-primary" />
+                                    <SelectValue />
+                                  </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {roles.map((role) => (
+                                    <SelectItem key={role.id} value={role.name}>
+                                      <div className="flex items-center gap-2">
+                                        {role.name === "owner" && <Shield className="w-4 h-4 text-green-600" />}
+                                        {role.name === "admin" && <ShieldCheck className="w-4 h-4 text-blue-600" />}
+                                        {role.name === "manager" && <ShieldCheck className="w-4 h-4 text-purple-600" />}
+                                        <span className="capitalize">{role.name}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Badge variant="outline" className="text-xs">
+                                Owner can edit
+                              </Badge>
+                            </div>
                           </PermissionGate>
                         </TableCell>
                         <TableCell>
