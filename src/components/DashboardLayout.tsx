@@ -42,7 +42,7 @@ import {
   PieChart,
   ArrowDownToLine,
   ArrowUpFromLine,
-  Building2,
+  
   Receipt,
   KeyRound,
   Activity,
@@ -67,22 +67,18 @@ const DashboardSidebar = () => {
 
   const isOwner = activeTenant?.roles?.name === 'owner';
   const isManager = activeTenant?.roles?.name === 'manager';
-  const isTenantAdmin = activeTenant?.roles?.name === 'admin';
 
-  // Limited role gating: tenant admin/manager see only a minimal, compliance-approved menu
-  const isLimitedRole = (!isOwner && !isSuperAdmin) && (isTenantAdmin || isManager || isAdmin);
-  const showOverviewGroup = !isLimitedRole; // Hide overview for admin/manager preview
+  // Limited role gating: admin/manager users see only a minimal, compliance-approved menu
+  const isLimitedRole = (isAdmin || isManager) && !isOwner && !isSuperAdmin;
+  const showOverviewGroup = !isLimitedRole; // Hide overview for admin/manager
   const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
-  const showSettingsDocsGroup = isOwner || isSuperAdmin; // Only owner and super admin see settings
-  const showDebugGroup = isOwner || isSuperAdmin; // Only owner and super admin see debug
+  const showSettingsDocsGroup = isOwner || isSuperAdmin;
+  const showDebugGroup = !isLimitedRole;
 
-  // Admin gets only dashboard, no reports
-  const userMenuItems = isLimitedRole 
-    ? [{ title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }]
-    : [
-        { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null },
-        { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
-      ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
+  const userMenuItems = [
+    { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
+    { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
+  ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
 
   // Transaction menu items - filtered by permissions
   const allTransactionItems = [
@@ -91,15 +87,15 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
   
-  // For Admin/Manager (non-owner, non-super-admin): show ONLY deposits and withdrawals
+  // For Admin/Manager (non-owner, non-super-admin): show ONLY these 3 transactions
   let transactionMenuItems = isLimitedRole 
-    ? allTransactionItems.filter(item => item.url === "/deposit-list" || item.url === "/withdrawal-list")
+    ? allTransactionItems // Admin/Manager gets all 3 transaction items
     : allTransactionItems.filter(item => 
         !item.permission || hasPermission(item.permission) || isOwner
       );
 
-  // System Deposit button - Owner only
-  const showSystemDeposit = isOwner && !isSuperAdmin;
+  // System Deposit button - show for Admin/Manager (non-owner, non-super-admin) AND Owner
+  const showSystemDeposit = (isLimitedRole || isOwner) && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
@@ -154,7 +150,6 @@ const DashboardSidebar = () => {
     { title: "Super Admin Console", url: "/admin", icon: Shield },
     { title: "Provision Merchant", url: "/admin/provision-merchant", icon: Users },
     { title: "Tenant Management", url: "/admin/tenants", icon: Users },
-    { title: "Platform Providers", url: "/platform/providers", icon: Building2 },
     { title: "Platform Audit", url: "/platform/audit", icon: Activity },
     { title: "Platform Security", url: "/platform/security", icon: Shield },
   ];

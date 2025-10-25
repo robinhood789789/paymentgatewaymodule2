@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Mail, Shield, Key, Webhook, Building2 } from "lucide-react";
+import { User, Mail, Shield, Key, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,6 @@ import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy";
-import { ProviderDisplay } from "@/components/settings/ProviderDisplay";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
@@ -111,7 +110,7 @@ const Settings = () => {
             </TabsTrigger>
             <TabsTrigger value="api-keys" className="gap-2">
               <Key className="w-4 h-4" />
-              Developers
+              API Keys
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-2">
               <Webhook className="w-4 h-4" />
@@ -186,31 +185,10 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">
-            {/* Read-only provider info */}
-            <ProviderDisplay />
-            <Separator className="my-6" />
-            <div className="mb-4 p-4 bg-warning/10 rounded-lg border border-warning">
-              <p className="text-sm">
-                <strong>Developer Tools (เครื่องมือนักพัฒนา)</strong>
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                These API keys are for calling <strong>your store's API</strong>. 
-                Payment provider credentials (Stripe, OPN, 2C2P, KBank) are managed exclusively by the platform administrator.
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                ผู้ให้บริการรับชำระเงิน (Provider) ถูกจัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น
-              </p>
-            </div>
             <ApiKeysManager />
           </TabsContent>
 
           <TabsContent value="webhooks" className="space-y-4">
-            <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
-              <p className="text-sm text-muted-foreground">
-                <strong>Outbound Webhooks:</strong> Configure webhook endpoints to receive events from this system. 
-                These are different from payment provider webhooks, which are managed at the platform level.
-              </p>
-            </div>
             <WebhooksManager />
           </TabsContent>
         </Tabs>

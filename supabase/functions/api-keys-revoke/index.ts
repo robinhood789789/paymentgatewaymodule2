@@ -107,22 +107,6 @@ serve(async (req) => {
 
     console.log('Revoking API key:', api_key_id);
 
-    // Get key info before revoking for audit log
-    const { data: keyBefore } = await supabase
-      .from('api_keys')
-      .select('id, name, prefix, created_at, last_used_at')
-      .eq('id', api_key_id)
-      .eq('tenant_id', tenantId)
-      .is('revoked_at', null)
-      .single();
-
-    if (!keyBefore) {
-      return new Response(
-        JSON.stringify({ error: 'API key not found or already revoked' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Revoke the API key
     const { data: revokedKey, error: revokeError } = await supabase
       .from('api_keys')
@@ -144,27 +128,16 @@ serve(async (req) => {
       );
     }
 
-    // Log to audit_logs with before/after states
-    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    // Log to audit_logs
     await supabase.from('audit_logs').insert({
       tenant_id: tenantId,
       actor_user_id: user.id,
       action: 'api_key.revoked',
       target: `api_key:${revokedKey.id}`,
-      ip: clientIp,
       before: {
-        api_key_id: keyBefore.id,
-        name: keyBefore.name,
-        prefix: keyBefore.prefix,
-        created_at: keyBefore.created_at,
-        last_used_at: keyBefore.last_used_at,
-        revoked_at: null
-      },
-      after: {
         api_key_id: revokedKey.id,
         name: revokedKey.name,
-        prefix: revokedKey.prefix,
-        revoked_at: new Date().toISOString()
+        prefix: revokedKey.prefix
       }
     });
 

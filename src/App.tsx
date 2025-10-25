@@ -54,8 +54,6 @@ import PyramidAuthority from "./pages/PyramidAuthority";
 import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
-import PlatformProviders from "./pages/admin/PlatformProviders";
-import ProviderRedirect from "./pages/ProviderRedirect";
 
 const queryClient = new QueryClient();
 
@@ -284,14 +282,6 @@ function AppContent() {
               }
             />
             <Route
-              path="/platform/providers"
-              element={
-                <SuperAdminRoute>
-                  <PlatformProviders />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
               path="/platform/audit"
               element={
                 <SuperAdminRoute>
@@ -318,11 +308,6 @@ function AppContent() {
       <Route path="/pyramid-authority" element={<ProtectedRoute><PyramidAuthority /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertManagement /></ProtectedRoute>} />
       <Route path="/reports/gap" element={<ProtectedRoute><GapReport /></ProtectedRoute>} />
-      
-      {/* Provider Redirect - Tenant users trying to access provider settings */}
-      <Route path="/settings/providers" element={<ProtectedRoute><ProviderRedirect /></ProtectedRoute>} />
-      <Route path="/providers" element={<ProtectedRoute><ProviderRedirect /></ProtectedRoute>} />
-      <Route path="/settings/provider" element={<ProtectedRoute><ProviderRedirect /></ProtectedRoute>} />
       
       {/* Auth Status Test Page */}
       <Route path="/auth-status" element={<ProtectedRoute><AuthStatus /></ProtectedRoute>} />

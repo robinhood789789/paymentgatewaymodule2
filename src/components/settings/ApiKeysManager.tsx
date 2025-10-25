@@ -139,10 +139,10 @@ export const ApiKeysManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Key className="w-5 h-5" />
-                API Keys (for this store)
+                API Keys
               </CardTitle>
               <CardDescription>
-                These keys are for calling <strong>your store's API</strong> and are different from payment provider credentials, which are managed by the platform operator.
+                Manage your API keys for programmatic access
               </CardDescription>
             </div>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

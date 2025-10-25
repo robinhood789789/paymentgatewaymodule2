@@ -44,15 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             fetchUserRole(session.user.id);
           }, 0);
         } else {
-          // Clear all state and localStorage when user signs out
           setIsAdmin(false);
           setIsSuperAdmin(false);
           setUserRole(null);
           setTenantId(null);
           setTenantName(null);
           setLoading(false);
-          // Ensure localStorage is cleared
-          try { localStorage.removeItem("active_tenant_id"); } catch {}
         }
       }
     );
@@ -125,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("id", membershipData.tenant_id)
           .maybeSingle();
 
-        const roleName = roleData?.name?.toLowerCase() || null;
+        const roleName = roleData?.name || null;
         setUserRole(roleName);
         setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
@@ -183,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .select("name")
           .eq("id", membership.role_id)
           .maybeSingle();
-        role = roleData?.name?.toLowerCase();
+        role = roleData?.name;
       }
 
       const tenantId = membership?.tenant_id;
@@ -240,10 +237,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } 
         });
       } else {
-        // No MFA, proceed to appropriate landing page
-        const dest = isSuperAdmin ? "/dashboard" : (role === 'admin' || role === 'manager') ? "/deposit-list" : "/dashboard";
+        // No MFA, proceed to dashboard
         toast.success("Sign in successful!");
-        navigate(dest);
+        navigate("/dashboard");
       }
       
       return { error: null };
@@ -285,41 +281,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear all localStorage items first to prevent re-fetching
-      try { 
-        localStorage.removeItem("active_tenant_id");
-        localStorage.removeItem("sb-xbbxgzccxudmnrmqkwzg-auth-token");
-      } catch {}
-      
-      // Clear all local state immediately
-      setUser(null);
-      setSession(null);
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-      setUserRole(null);
-      setTenantId(null);
-      setTenantName(null);
-      
-      // Sign out from Supabase - this will trigger onAuthStateChange
-      await supabase.auth.signOut();
-      
-      // Show success message
-      toast.success("Signed out successfully");
-      
-      // Navigate immediately
-      navigate("/auth/sign-in", { replace: true });
-    } catch (error) {
-      console.error("Sign out error:", error);
-      // Clear state even on error
-      setUser(null);
-      setSession(null);
+      // Clear local state first
       setIsAdmin(false);
       setIsSuperAdmin(false);
       setUserRole(null);
       setTenantId(null);
       setTenantName(null);
       try { localStorage.removeItem("active_tenant_id"); } catch {}
-      navigate("/auth/sign-in", { replace: true });
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Show success message
+      toast.success("Signed out successfully");
+      
+      // Navigate after a short delay to ensure state is cleared
+      setTimeout(() => {
+        navigate("/auth/sign-in");
+      }, 100);
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Even if there's an error, navigate to sign in
+      navigate("/auth/sign-in");
     }
   };
 

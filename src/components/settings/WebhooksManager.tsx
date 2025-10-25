@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Webhook, Plus, Trash2, Send, Loader2, RefreshCw, Copy, AlertTriangle } from "lucide-react";
+import { Webhook, Plus, Trash2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PermissionGate } from "../PermissionGate";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
@@ -36,8 +36,6 @@ import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 export const WebhooksManager = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
-  const [rotatedSecret, setRotatedSecret] = useState<string | null>(null);
-  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
@@ -56,44 +54,20 @@ export const WebhooksManager = () => {
 
   const createWebhookMutation = useMutation({
     mutationFn: async (url: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       // Generate webhook secret using browser crypto
       const secret = crypto.randomUUID();
       
-      const { data: tenantData } = await supabase
-        .from('memberships')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (!tenantData) throw new Error('No tenant found');
-
       const { data, error } = await supabase
         .from("webhooks")
         .insert({
           url: url.trim(),
           secret: secret,
           enabled: true,
-          tenant_id: tenantData.tenant_id,
         })
         .select()
         .single();
 
       if (error) throw error;
-
-      // Create audit log
-      await supabase
-        .from('audit_logs')
-        .insert({
-          actor_user_id: user.id,
-          action: 'webhook.created',
-          target: `webhook:${data.id}`,
-          tenant_id: tenantData.tenant_id,
-          after: { url: url.trim(), enabled: true },
-        });
-
       return data;
     },
     onSuccess: () => {
@@ -111,35 +85,12 @@ export const WebhooksManager = () => {
 
   const deleteWebhookMutation = useMutation({
     mutationFn: async (webhookId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Get webhook before deletion for audit log
-      const { data: webhook } = await supabase
-        .from("webhooks")
-        .select("*")
-        .eq("id", webhookId)
-        .single();
-
       const { error } = await supabase
         .from("webhooks")
         .delete()
         .eq("id", webhookId);
 
       if (error) throw error;
-
-      // Create audit log
-      if (webhook) {
-        await supabase
-          .from('audit_logs')
-          .insert({
-            actor_user_id: user.id,
-            action: 'webhook.deleted',
-            target: `webhook:${webhookId}`,
-            tenant_id: webhook.tenant_id,
-            before: { url: webhook.url, enabled: webhook.enabled },
-          });
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
@@ -194,29 +145,6 @@ export const WebhooksManager = () => {
     },
   });
 
-  const rotateSecretMutation = useMutation({
-    mutationFn: async (webhookId: string) => {
-      const { data, error } = await invokeFunctionWithTenant("webhooks-rotate-secret", {
-        body: { webhook_id: webhookId },
-      });
-
-      if (error) throw new Error(error.message);
-      if (data.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      setRotatedSecret(data.new_secret);
-      setRotateDialogOpen(true);
-      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
-      toast.success("Webhook secret rotated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to rotate webhook secret", {
-        description: error.message,
-      });
-    },
-  });
-
   const handleCreateWebhook = () => {
     if (!webhookUrl.trim()) {
       toast.error("Please enter a webhook URL");
@@ -241,20 +169,6 @@ export const WebhooksManager = () => {
     checkAndChallenge(() => deleteWebhookMutation.mutate(webhookId));
   };
 
-  const handleRotateSecret = (webhookId: string) => {
-    checkAndChallenge(() => rotateSecretMutation.mutate(webhookId));
-  };
-
-  const handleCopySecret = (secret: string) => {
-    navigator.clipboard.writeText(secret);
-    toast.success("Secret copied to clipboard");
-  };
-
-  const handleCloseRotateDialog = () => {
-    setRotatedSecret(null);
-    setRotateDialogOpen(false);
-  };
-
   return (
     <PermissionGate
       permission="webhooks:manage"
@@ -275,10 +189,10 @@ export const WebhooksManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Webhook className="w-5 h-5" />
-                Outbound Webhook Signing Secret
+                Webhooks
               </CardTitle>
               <CardDescription>
-                These signing secrets are for webhooks sent from <strong>this system</strong> to your endpoints. They are different from payment provider credentials, which are managed by the platform operator.
+                Receive real-time notifications about events in your account
               </CardDescription>
             </div>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -360,21 +274,6 @@ export const WebhooksManager = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRotateSecret(webhook.id)}
-                      disabled={rotateSecretMutation.isPending}
-                      className="gap-2"
-                    >
-                      {rotateSecretMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4" />
-                      )}
-                      Rotate
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => handleTestWebhook(webhook.id)}
                       disabled={!webhook.enabled || testWebhookMutation.isPending}
                       className="gap-2"
@@ -427,56 +326,6 @@ export const WebhooksManager = () => {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={rotateDialogOpen} onOpenChange={setRotateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Webhook Secret</DialogTitle>
-            <DialogDescription>
-              Your webhook secret has been rotated
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-warning/10 border border-warning rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-warning">Save this secret now!</p>
-                  <p className="text-muted-foreground mt-1">
-                    You won't be able to see it again. Update your webhook endpoint with this new secret.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {rotatedSecret && (
-              <div className="space-y-2">
-                <Label>New Signing Secret</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={rotatedSecret}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => handleCopySecret(rotatedSecret)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            <Button onClick={handleCloseRotateDialog} className="w-full">
-              Done
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </PermissionGate>
   );
