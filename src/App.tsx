@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useCSRF } from "@/hooks/useCSRF";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SuperAdminRoute from "@/components/SuperAdminRoute";
+import { PermissionGate } from "@/components/PermissionGate";
 import Index from "./pages/Index";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
@@ -186,7 +187,9 @@ function AppContent() {
         path="/system-deposit"
         element={
           <ProtectedRoute>
-            <SystemDeposit />
+            <PermissionGate allowOwner fallback={<Navigate to="/dashboard" replace />}> 
+              <SystemDeposit />
+            </PermissionGate>
           </ProtectedRoute>
         }
       />

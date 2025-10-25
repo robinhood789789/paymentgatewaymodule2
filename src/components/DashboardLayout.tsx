@@ -62,14 +62,8 @@ const DashboardSidebar = () => {
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
 
-  const { memberships, activeTenantId } = useTenantSwitcher();
-  const isOwner = React.useMemo(() => {
-    if (!memberships || !activeTenantId) {
-      return false;
-    }
-    const membership = memberships.find((m: any) => m.tenant_id === activeTenantId);
-    return membership?.roles?.name === 'owner';
-  }, [memberships, activeTenantId]);
+  const { memberships, activeTenantId, activeTenant } = useTenantSwitcher();
+  const isOwner = activeTenant?.roles?.name === 'owner';
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
