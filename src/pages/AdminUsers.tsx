@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, ShieldCheck, Eye, Trash2 } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +47,9 @@ const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
@@ -251,6 +254,64 @@ const AdminUsers = () => {
     }
   };
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const { data, error } = await supabase.functions.invoke("admin-delete-users-completely", {
+        body: { user_ids: userIds },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
+      const successCount = data?.results?.filter((r: any) => r.success).length || 0;
+      toast.success(`ลบบัญชีสำเร็จ ${successCount} บัญชี`);
+      setBulkDeleteDialogOpen(false);
+      setSelectedUserIds([]);
+    },
+    onError: (error: any) => {
+      toast.error("เกิดข้อผิดพลาด", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleBulkDeleteClick = () => {
+    if (selectedUserIds.length === 0) {
+      toast.error("กรุณาเลือกบัญชีที่ต้องการลบ");
+      return;
+    }
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    checkAndChallenge(() => bulkDeleteMutation.mutate(selectedUserIds));
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUserIds.length === filteredUsers?.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(filteredUsers?.map((u) => u.id) || []);
+    }
+  };
+
   return (
     <DashboardLayout>
       <PermissionGate
@@ -312,6 +373,16 @@ const AdminUsers = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <PermissionGate allowOwner={true}>
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDeleteClick}
+                  disabled={selectedUserIds.length === 0}
+                >
+                  <UserX className="w-4 h-4 mr-2" />
+                  ลบที่เลือก ({selectedUserIds.length})
+                </Button>
+              </PermissionGate>
             </div>
 
             {isLoading ? (
@@ -321,6 +392,14 @@ const AdminUsers = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <PermissionGate allowOwner={true}>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedUserIds.length === filteredUsers?.length && filteredUsers?.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
+                      </PermissionGate>
                       <TableHead>User</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
@@ -333,6 +412,14 @@ const AdminUsers = () => {
                   <TableBody>
                     {filteredUsers?.map((user) => (
                       <TableRow key={user.id}>
+                        <PermissionGate allowOwner={true}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedUserIds.includes(user.id)}
+                              onCheckedChange={() => toggleUserSelection(user.id)}
+                            />
+                          </TableCell>
+                        </PermissionGate>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {user.role === "admin" ? (
@@ -468,6 +555,39 @@ const AdminUsers = () => {
                 disabled={deleteUserMutation.isPending}
               >
                 {deleteUserMutation.isPending ? "กำลังลบ..." : "ยืนยันการลบ"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>ยืนยันการลบบัญชีหลายบัญชี</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีทั้งหมด {selectedUserIds.length} บัญชีที่เลือก?</p>
+                <div className="bg-muted p-3 rounded-md mt-2 max-h-48 overflow-y-auto">
+                  <p className="font-semibold mb-2">บัญชีที่จะถูกลบ:</p>
+                  <ul className="text-sm space-y-1">
+                    {filteredUsers
+                      ?.filter((u) => selectedUserIds.includes(u.id))
+                      .map((u) => (
+                        <li key={u.id}>• {u.full_name || "ไม่ระบุชื่อ"} ({u.email})</li>
+                      ))}
+                  </ul>
+                </div>
+                <p className="text-destructive font-medium">
+                  การดำเนินการนี้ไม่สามารถย้อนกลับได้!
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmBulkDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                ยืนยันการลบทั้งหมด
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
