@@ -55,8 +55,8 @@ serve(async (req) => {
     }
 
     const requestingRole = (requestingMembership.roles as any)?.name;
-    if (requestingRole !== 'owner' && requestingRole !== 'admin') {
-      throw new Error('Insufficient permissions. Only owners and admins can delete users.');
+    if (requestingRole !== 'owner') {
+      throw new Error('Insufficient permissions. Only owners can delete users.');
     }
 
     console.log('✅ Requesting user role:', requestingRole);

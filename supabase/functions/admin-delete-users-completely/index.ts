@@ -58,7 +58,7 @@ serve(async (req) => {
     const isSuperAdmin = profile?.is_super_admin || false;
 
     if (!isSuperAdmin) {
-      // Check if user is owner or admin in the tenant
+      // Check if user is owner in the tenant
       const { data: membership, error: membershipError } = await supabase
         .from('memberships')
         .select('role_id, roles!inner(name)')
@@ -71,11 +71,11 @@ serve(async (req) => {
       }
 
       const role = (membership.roles as any)?.name;
-      if (role !== 'owner' && role !== 'admin') {
-        throw new Error('Only owners and admins can delete users');
+      if (role !== 'owner') {
+        throw new Error('Only owners can delete users');
       }
 
-      console.log('✅ Owner/Admin verified:', requestingUser.id, 'role:', role);
+      console.log('✅ Owner verified:', requestingUser.id);
     } else {
       console.log('✅ Super admin verified:', requestingUser.id);
     }
