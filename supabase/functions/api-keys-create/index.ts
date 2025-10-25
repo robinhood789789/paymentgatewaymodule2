@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
@@ -23,13 +24,10 @@ const generateApiKey = (): { prefix: string; secret: string; fullKey: string } =
   };
 };
 
-// Hash the secret for storage
+// Hash the secret for storage using bcrypt
 const hashSecret = async (secret: string): Promise<string> => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(secret);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const salt = await bcrypt.genSalt(12);
+  return await bcrypt.hash(secret, salt);
 };
 
 serve(async (req) => {
@@ -156,20 +154,23 @@ serve(async (req) => {
       );
     }
 
-    // Log to audit_logs
+    // Log to audit_logs with IP address
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     await supabase.from('audit_logs').insert({
       tenant_id: tenantId,
       actor_user_id: user.id,
       action: 'api_key.created',
       target: `api_key:${apiKey.id}`,
+      ip: clientIp,
       after: {
         api_key_id: apiKey.id,
         name: apiKey.name,
-        prefix: apiKey.prefix
+        prefix: apiKey.prefix,
+        created_at: apiKey.created_at
       }
     });
 
-    console.log('API key created successfully:', apiKey.id);
+    console.log('API key created successfully (no plaintext logged):', apiKey.id);
 
     return new Response(
       JSON.stringify({

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { requireStepUp } from "../_shared/mfa-guards.ts";
+import { encrypt, generateSecret } from "../_shared/encryption.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -122,14 +123,15 @@ serve(async (req) => {
       throw new Error('Webhook not found or access denied');
     }
 
-    // Generate new secret
-    const newSecret = crypto.randomUUID();
+    // Generate new secret and encrypt it
+    const newSecret = generateSecret(32);
+    const encryptedSecret = await encrypt(newSecret);
 
-    // Update webhook with new secret
+    // Update webhook with new encrypted secret
     const { error: updateError } = await supabase
       .from('webhooks')
       .update({ 
-        secret: newSecret,
+        secret: encryptedSecret,
         updated_at: new Date().toISOString()
       })
       .eq('id', webhook_id);
@@ -139,7 +141,7 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // Create audit log
+    // Create audit log (never log plaintext secrets)
     await supabase
       .from('audit_logs')
       .insert({
@@ -147,8 +149,17 @@ serve(async (req) => {
         action: 'webhook.secret_rotated',
         target: `webhook:${webhook_id}`,
         tenant_id: tenantId,
-        before: { url: webhook.url, secret_prefix: webhook.secret.substring(0, 8) },
-        after: { url: webhook.url, secret_prefix: newSecret.substring(0, 8) },
+        before: { 
+          webhook_id: webhook.id,
+          url: webhook.url, 
+          enabled: webhook.enabled,
+          created_at: webhook.created_at
+        },
+        after: { 
+          webhook_id: webhook.id,
+          url: webhook.url, 
+          rotated_at: new Date().toISOString() 
+        },
         ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
         user_agent: req.headers.get('user-agent'),
       });
@@ -158,8 +169,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        new_secret: newSecret,
-        message: 'Webhook secret rotated successfully'
+        new_secret: newSecret, // Plain text for user to save (only time visible)
+        message: 'Webhook secret rotated successfully',
+        warning: 'Save this secret now. It is encrypted at rest and cannot be retrieved later.'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
