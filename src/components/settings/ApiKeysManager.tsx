@@ -26,8 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Key, Copy, Trash2, Plus, AlertTriangle, RotateCw } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Key, Copy, Trash2, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { PermissionGate } from "../PermissionGate";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
@@ -36,10 +35,7 @@ import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 export const ApiKeysManager = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [keyName, setKeyName] = useState("");
-  const [keyEnv, setKeyEnv] = useState<"sandbox" | "production">("sandbox");
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
-  const [rotatingKeyId, setRotatingKeyId] = useState<string | null>(null);
-  const [rotatedKey, setRotatedKey] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
@@ -58,9 +54,9 @@ export const ApiKeysManager = () => {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (name: string) => {
       const { data, error } = await invokeFunctionWithTenant("api-keys-create", {
-        body: { name: keyName, env: keyEnv },
+        body: { name },
       });
 
       if (error) throw new Error(error.message);
@@ -69,36 +65,11 @@ export const ApiKeysManager = () => {
     },
     onSuccess: (data) => {
       setNewApiKey(data.api_key.secret);
-      setKeyName("");
-      setKeyEnv("sandbox");
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       toast.success("API key created successfully");
     },
     onError: (error: Error) => {
       toast.error("Failed to create API key", {
-        description: error.message,
-      });
-    },
-  });
-
-  const rotateKeyMutation = useMutation({
-    mutationFn: async (keyId: string) => {
-      const { data, error } = await invokeFunctionWithTenant("api-keys-rotate", {
-        body: { api_key_id: keyId },
-      });
-
-      if (error) throw new Error(error.message);
-      if (data.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      setRotatedKey(data.secret);
-      setRotatingKeyId(null);
-      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
-      toast.success("API key rotated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to rotate API key", {
         description: error.message,
       });
     },
@@ -130,12 +101,7 @@ export const ApiKeysManager = () => {
       toast.error("Please enter a key name");
       return;
     }
-    checkAndChallenge(() => createKeyMutation.mutate());
-  };
-
-  const handleRotateKey = (keyId: string) => {
-    setRotatingKeyId(keyId);
-    checkAndChallenge(() => rotateKeyMutation.mutate(keyId));
+    checkAndChallenge(() => createKeyMutation.mutate(keyName));
   };
 
   const handleRevokeKey = (keyId: string) => {
@@ -206,18 +172,6 @@ export const ApiKeysManager = () => {
                         disabled={createKeyMutation.isPending}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="keyEnv">Environment</Label>
-                      <Select value={keyEnv} onValueChange={(v: any) => setKeyEnv(v)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
-                          <SelectItem value="production">Production (Live)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                     <Button
                       onClick={handleCreateKey}
                       disabled={createKeyMutation.isPending}
@@ -278,47 +232,38 @@ export const ApiKeysManager = () => {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-sm">{key.prefix}...</span>
-                    <span className="text-xs text-muted-foreground">{key.name}</span>
-                    {key.env && (
-                      <Badge variant={key.env === 'production' ? 'destructive' : 'secondary'}>
-                        {key.env}
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{key.name}</p>
+                      <Badge variant="secondary" className="text-xs">
+                        Active
                       </Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
-                    {key.last_used_at && (
-                      <span>Last used: {new Date(key.last_used_at).toLocaleDateString()}</span>
-                    )}
-                    {key.expires_at && (
-                      <span>Expires: {new Date(key.expires_at).toLocaleDateString()}</span>
-                    )}
-                  </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                      <p className="text-sm font-mono text-muted-foreground">
+                        {key.prefix}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Created {new Date(key.created_at).toLocaleDateString()}
+                      </p>
+                      {key.last_used_at && (
+                        <p className="text-xs text-muted-foreground">
+                          Last used {new Date(key.last_used_at).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => handleRotateKey(key.id)}
-                    >
-                      <RotateCw className="w-4 h-4" />
-                      Rotate
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Revoke
-                        </Button>
-                      </AlertDialogTrigger>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Revoke
+                      </Button>
+                    </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
@@ -335,9 +280,8 @@ export const ApiKeysManager = () => {
                           Revoke Key
                         </AlertDialogAction>
                       </AlertDialogFooter>
-                     </AlertDialogContent>
-                   </AlertDialog>
-                  </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>
@@ -350,54 +294,6 @@ export const ApiKeysManager = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Rotated Key Dialog */}
-      {rotatedKey && (
-        <Dialog open={!!rotatedKey} onOpenChange={() => setRotatedKey(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>API Key Rotated Successfully</DialogTitle>
-              <DialogDescription className="text-destructive font-semibold">
-                ⚠️ Save this new secret now - it will only be shown once!
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>New API Secret</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={rotatedKey}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => handleCopyKey(rotatedKey)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="p-4 bg-warning/10 border border-warning rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-warning">Important!</p>
-                    <p className="text-muted-foreground mt-1">
-                      The old secret has been invalidated. Update all systems using this API key with the new secret.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Button onClick={() => setRotatedKey(null)} className="w-full">
-              I've Saved the New Secret
-            </Button>
-          </DialogContent>
-        </Dialog>
-      )}
-
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </PermissionGate>
   );

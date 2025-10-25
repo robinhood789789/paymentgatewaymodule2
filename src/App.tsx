@@ -55,7 +55,6 @@ import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
 import PlatformProviders from "./pages/admin/PlatformProviders";
-import PlatformProvisioning from "./pages/admin/PlatformProvisioning";
 import ProviderRedirect from "./pages/ProviderRedirect";
 
 const queryClient = new QueryClient();
@@ -289,14 +288,6 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformProviders />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
-              path="/platform/provisioning"
-              element={
-                <SuperAdminRoute>
-                  <PlatformProvisioning />
                 </SuperAdminRoute>
               }
             />
