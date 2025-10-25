@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
-import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   Sidebar,
@@ -57,13 +57,12 @@ interface DashboardLayoutProps {
 
 const DashboardSidebar = () => {
   const { state } = useSidebar();
-  const { signOut, isAdmin, isSuperAdmin, user } = useAuth();
+  const { signOut, isAdmin, isSuperAdmin, user, userRole } = useAuth();
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
 
-  const { memberships, activeTenantId, activeTenant } = useTenantSwitcher();
-  const isOwner = activeTenant?.roles?.name === 'owner';
+  const isOwner = userRole === 'owner';
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
