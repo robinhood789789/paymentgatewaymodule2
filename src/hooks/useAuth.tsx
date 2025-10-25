@@ -240,9 +240,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } 
         });
       } else {
-        // No MFA, proceed to dashboard
+        // No MFA, proceed to appropriate landing page
+        const dest = isSuperAdmin ? "/dashboard" : (role === 'admin' || role === 'manager') ? "/deposit-list" : "/dashboard";
         toast.success("Sign in successful!");
-        navigate("/dashboard");
+        navigate(dest);
       }
       
       return { error: null };
