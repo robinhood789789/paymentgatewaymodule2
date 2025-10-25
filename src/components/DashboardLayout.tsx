@@ -96,13 +96,13 @@ const DashboardSidebar = () => {
     { title: "Workbench", url: "/workbench", icon: Activity, ownerOnly: true }, // Owner only
     { title: "Products", url: "/products", icon: Package, permission: "products.view" },
     { title: "Payment Methods", url: "/payment-methods", icon: CreditCard, permission: "payment_methods.manage" },
-    { title: "Reconciliation", url: "/reconciliation", icon: FileCheck, permission: "reconciliation.manage" },
+    { title: "Reconciliation", url: "/reconciliation", icon: FileCheck, ownerOnly: true }, // Owner only - sensitive financial data
     { title: "Disputes", url: "/disputes", icon: AlertCircle, permission: "disputes.view" },
-    { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck, permission: "kyc.view" },
+    { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck, ownerOnly: true }, // Owner only - sensitive compliance data
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt, ownerOnly: true }, // Owner only
     { title: t('customers.title'), url: "/customers", icon: UserCircle, permission: "customers.view" },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook, permission: "webhooks.view" },
-    { title: t('settlements.title'), url: "/settlements", icon: DollarSign, permission: "settlements.view" },
+    { title: t('settlements.title'), url: "/settlements", icon: DollarSign, ownerOnly: true }, // Owner only - sensitive financial data
   ];
   
   const managementMenuItems = allManagementItems.filter((item: any) =>
