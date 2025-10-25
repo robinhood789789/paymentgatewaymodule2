@@ -100,7 +100,7 @@ const Settings = () => {
         )}
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
@@ -109,13 +109,9 @@ const Settings = () => {
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
-            <TabsTrigger value="provider" className="gap-2">
-              <Building2 className="w-4 h-4" />
-              Provider
-            </TabsTrigger>
             <TabsTrigger value="api-keys" className="gap-2">
               <Key className="w-4 h-4" />
-              API Keys
+              Developers
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-2">
               <Webhook className="w-4 h-4" />
@@ -189,16 +185,20 @@ const Settings = () => {
             <TenantSecurityPolicy />
           </TabsContent>
 
-          <TabsContent value="provider" className="space-y-4">
-            <ProviderDisplay />
-          </TabsContent>
-
           <TabsContent value="api-keys" className="space-y-4">
-            <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
-              <p className="text-sm text-muted-foreground">
-                <strong>Developer Tools:</strong> These API keys are for calling your store's API. 
-                For payment provider configuration, contact your platform administrator or visit{" "}
-                <a href="/platform/providers" className="text-primary hover:underline">Platform Providers</a> if you're a Super Admin.
+            {/* Read-only provider info */}
+            <ProviderDisplay />
+            <Separator className="my-6" />
+            <div className="mb-4 p-4 bg-warning/10 rounded-lg border border-warning">
+              <p className="text-sm">
+                <strong>Developer Tools (เครื่องมือนักพัฒนา)</strong>
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                These API keys are for calling <strong>your store's API</strong>. 
+                Payment provider credentials (Stripe, OPN, 2C2P, KBank) are managed exclusively by the platform administrator.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                ผู้ให้บริการรับชำระเงิน (Provider) ถูกจัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น
               </p>
             </div>
             <ApiKeysManager />
