@@ -70,7 +70,7 @@ const DashboardSidebar = () => {
   const isTenantAdmin = activeTenant?.roles?.name === 'admin';
 
   // Limited role gating: tenant admin/manager see only a minimal, compliance-approved menu
-  const isLimitedRole = (isTenantAdmin || isManager) && !isOwner && !isSuperAdmin;
+  const isLimitedRole = (!isOwner && !isSuperAdmin) && (isTenantAdmin || isManager || isAdmin);
   const showOverviewGroup = true; // Always show overview for dashboard access
   const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
   const showSettingsDocsGroup = isOwner || isSuperAdmin; // Only owner and super admin see settings
