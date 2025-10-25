@@ -70,6 +70,7 @@ export const enTranslations = {
     mdr: 'MDR',
     rolesPermissions: 'Roles & Permissions',
     activityHistory: 'Activity History',
+    staffMembers: 'Staff Members',
   },
   activityLog: {
     title: 'Activity History',

@@ -82,6 +82,7 @@ export const thTranslations = {
     createMemberAccount: 'สร้างบัญชีสมาชิก',
     searchAdminPhone: 'ชื่อแอดมิน, เบอร์โทร',
     adminList: 'รายชื่อ แอดมินร้านค้า',
+    staffMembers: 'ทีมงาน',
   },
   activityLog: {
     title: 'ประวัติการใช้งาน',
