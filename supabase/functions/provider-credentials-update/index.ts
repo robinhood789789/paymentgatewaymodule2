@@ -101,44 +101,25 @@ serve(async (req) => {
       });
     }
 
-    // Store credentials securely in tenant metadata
-    // Note: In production, consider using a dedicated secrets management service
-    // For now, we'll store in a JSON column with proper RLS policies
-    
-    // Get current provider credentials
-    const { data: existingCreds } = await supabase
-      .from("tenants")
-      .select("metadata")
-      .eq("id", tenantId)
-      .single();
+    // Upsert credentials to database
+    const { error: upsertError } = await supabase
+      .from("provider_credentials")
+      .upsert(
+        {
+          tenant_id: tenantId,
+          provider,
+          mode,
+          public_key: credentials[`${mode}_public_key`] || null,
+          secret_key: credentials[`${mode}_secret_key`] || null,
+          merchant_id: credentials[`${mode}_merchant_id`] || null,
+        },
+        {
+          onConflict: "tenant_id,provider,mode",
+        }
+      );
 
-    const metadata = (existingCreds?.metadata as any) || {};
-    const providerCreds = metadata.provider_credentials || {};
-    const currentProviderCreds = providerCreds[provider] || {};
-
-    // Merge with new credentials
-    const updatedProviderCreds = {
-      ...currentProviderCreds,
-      ...credentials,
-      updated_at: new Date().toISOString(),
-    };
-
-    const updatedMetadata = {
-      ...metadata,
-      provider_credentials: {
-        ...providerCreds,
-        [provider]: updatedProviderCreds,
-      },
-    };
-
-    // Save to database
-    const { error: updateError } = await supabase
-      .from("tenants")
-      .update({ metadata: updatedMetadata })
-      .eq("id", tenantId);
-
-    if (updateError) {
-      throw updateError;
+    if (upsertError) {
+      throw upsertError;
     }
 
     // Log the action

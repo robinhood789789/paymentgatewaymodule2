@@ -59,28 +59,34 @@ export const PaymentProvidersConfig = () => {
     twoc2p: {},
   });
 
-  const { data: tenantConfig, isLoading } = useQuery({
-    queryKey: ["tenant-config", tenantId],
+  const { data: providerCredentials, isLoading } = useQuery({
+    queryKey: ["provider-credentials", tenantId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tenants")
-        .select("metadata")
-        .eq("id", tenantId)
-        .single();
+        .from("provider_credentials")
+        .select("*")
+        .eq("tenant_id", tenantId);
 
       if (error) throw error;
 
-      const metadata = (data?.metadata as any) || {};
-      const providerCreds = metadata.provider_credentials || {};
-      
-      setCredentials({
-        stripe: providerCreds.stripe || {},
-        kbank: providerCreds.kbank || {},
-        opn: providerCreds.opn || {},
-        twoc2p: providerCreds.twoc2p || {},
+      const creds: ProviderCredentials = {
+        stripe: {},
+        kbank: {},
+        opn: {},
+        twoc2p: {},
+      };
+
+      data?.forEach((cred) => {
+        const provider = cred.provider as keyof ProviderCredentials;
+        const mode = cred.mode as "test" | "live";
+        if (!creds[provider]) creds[provider] = {};
+        (creds[provider] as any)[`${mode}_public_key`] = cred.public_key || "";
+        (creds[provider] as any)[`${mode}_secret_key`] = cred.secret_key || "";
+        (creds[provider] as any)[`${mode}_merchant_id`] = cred.merchant_id || "";
       });
 
-      return data;
+      setCredentials(creds);
+      return creds;
     },
     enabled: !!tenantId,
   });
@@ -109,7 +115,7 @@ export const PaymentProvidersConfig = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tenant-config", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["provider-credentials", tenantId] });
       toast.success(t("settings.credentialsUpdated"));
     },
     onError: (error: any) => {

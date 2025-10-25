@@ -1100,6 +1100,50 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_credentials: {
+        Row: {
+          created_at: string | null
+          id: string
+          merchant_id: string | null
+          mode: string
+          provider: string
+          public_key: string | null
+          secret_key: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          mode: string
+          provider: string
+          public_key?: string | null
+          secret_key?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          mode?: string
+          provider?: string
+          public_key?: string | null
+          secret_key?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_credentials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_events: {
         Row: {
           event_id: string
