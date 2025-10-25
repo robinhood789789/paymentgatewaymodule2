@@ -18,14 +18,9 @@ import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy";
-import { PaymentProvidersConfig } from "@/components/settings/PaymentProvidersConfig";
-import { useI18n } from "@/lib/i18n";
-import { PermissionGate } from "@/components/PermissionGate";
-import { CreditCard } from "lucide-react";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
-  const { t } = useI18n();
   const location = useLocation();
   const [isUpdating, setIsUpdating] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -104,7 +99,7 @@ const Settings = () => {
         )}
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
@@ -113,12 +108,6 @@ const Settings = () => {
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
-            <PermissionGate allowOwner={true}>
-              <TabsTrigger value="providers" className="gap-2">
-                <CreditCard className="w-4 h-4" />
-                {t('settings.paymentProviders')}
-              </TabsTrigger>
-            </PermissionGate>
             <TabsTrigger value="api-keys" className="gap-2">
               <Key className="w-4 h-4" />
               API Keys
@@ -193,24 +182,6 @@ const Settings = () => {
           <TabsContent value="security" className="space-y-4">
             <TwoFactorSetup />
             <TenantSecurityPolicy />
-          </TabsContent>
-
-          <TabsContent value="providers" className="space-y-4">
-            <PermissionGate 
-              allowOwner={true}
-              fallback={
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Access Denied</CardTitle>
-                    <CardDescription>
-                      Only owners can manage payment provider credentials
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              }
-            >
-              <PaymentProvidersConfig />
-            </PermissionGate>
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">
