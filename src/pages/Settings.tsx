@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Mail, Shield, Key, Webhook, CreditCard } from "lucide-react";
+import { User, Mail, Shield, Key, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -18,14 +18,10 @@ import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy";
-import { PaymentProvidersConfig } from "@/components/settings/PaymentProvidersConfig";
-import { PermissionGate } from "@/components/PermissionGate";
-import { useI18n } from "@/lib/i18n";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
   const location = useLocation();
-  const { t } = useI18n();
   const [isUpdating, setIsUpdating] = useState(false);
   const [fullName, setFullName] = useState("");
   const [defaultTab, setDefaultTab] = useState("profile");
@@ -103,7 +99,7 @@ const Settings = () => {
         )}
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
@@ -120,12 +116,6 @@ const Settings = () => {
               <Webhook className="w-4 h-4" />
               Webhooks
             </TabsTrigger>
-            <PermissionGate permission="settings.manage">
-              <TabsTrigger value="payment-providers" className="gap-2">
-                <CreditCard className="w-4 h-4" />
-                {t("settings.paymentProviders")}
-              </TabsTrigger>
-            </PermissionGate>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-4">
@@ -200,12 +190,6 @@ const Settings = () => {
 
           <TabsContent value="webhooks" className="space-y-4">
             <WebhooksManager />
-          </TabsContent>
-
-          <TabsContent value="payment-providers" className="space-y-4">
-            <PermissionGate permission="settings.manage">
-              <PaymentProvidersConfig />
-            </PermissionGate>
           </TabsContent>
         </Tabs>
       </div>
