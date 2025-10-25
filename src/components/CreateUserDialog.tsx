@@ -46,7 +46,7 @@ type CreateUserFormData = z.infer<typeof createUserSchema>;
 
 export const CreateUserDialog = () => {
   const [open, setOpen] = useState(false);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedPermissionGroups, setSelectedPermissionGroups] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
 
@@ -73,61 +73,27 @@ export const CreateUserDialog = () => {
     },
   });
 
-  // Map Thai permission names to database permission names
-  const permissionMapping: Record<string, string> = {
-    "ดูรายการเติมเงิน": "deposits.view",
-    "สร้างคำขอเติมเงิน": "deposits.create",
-    "ดูรายการถอนเงิน": "withdrawals.view", 
-    "สร้างคำขอถอนเงิน": "withdrawals.create",
-    "ดูรายการชำระเงิน": "payments.view",
-    "สร้างคำขอชำระเงิน": "payments.create",
-    "คืนเงิน": "payments.refund",
-    "จัดการ API": "api_keys.manage"
-  };
-
-  // Define available permissions for admin users
-  const availablePermissions = [
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการเติมเงิน"])?.id || "",
-      name: "ดูรายการเติมเงิน", 
-      description: "สิทธิ์ในการดูรายการฝากเงินในระบบ" 
+  // Group permissions - each selection will grant multiple permissions
+  const permissionGroups = [
+    {
+      id: "deposits",
+      name: "สิทธิการเติมเงิน",
+      description: "สิทธิ์ในการดูและสร้างคำขอฝากเงิน",
+      permissions: ["deposits.view", "deposits.create"]
     },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอเติมเงิน"])?.id || "",
-      name: "สร้างคำขอเติมเงิน", 
-      description: "สิทธิ์ในการสร้างคำขอฝากเงินเข้าระบบ" 
+    {
+      id: "withdrawals",
+      name: "สิทธิการถอนเงิน",
+      description: "สิทธิ์ในการดูและสร้างคำขอถอนเงิน",
+      permissions: ["withdrawals.view", "withdrawals.create"]
     },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการถอนเงิน"])?.id || "",
-      name: "ดูรายการถอนเงิน", 
-      description: "สิทธิ์ในการดูรายการถอนเงินในระบบ" 
-    },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอถอนเงิน"])?.id || "",
-      name: "สร้างคำขอถอนเงิน", 
-      description: "สิทธิ์ในการสร้างคำขอถอนเงินออกจากระบบ" 
-    },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["ดูรายการชำระเงิน"])?.id || "",
-      name: "ดูรายการชำระเงิน", 
-      description: "สิทธิ์ในการดูรายการชำระเงินของลูกค้า" 
-    },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["สร้างคำขอชำระเงิน"])?.id || "",
-      name: "สร้างคำขอชำระเงิน", 
-      description: "สิทธิ์ในการสร้างคำขอชำระเงินใหม่" 
-    },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["คืนเงิน"])?.id || "",
-      name: "คืนเงิน", 
-      description: "สิทธิ์ในการคืนเงินให้กับลูกค้า" 
-    },
-    { 
-      id: allPermissions.find(p => p.name === permissionMapping["จัดการ API"])?.id || "",
-      name: "จัดการ API", 
-      description: "สิทธิ์ในการสร้างและจัดการ API Keys สำหรับการเชื่อมต่อระบบ" 
-    },
-  ].filter(p => p.id); // Filter out any that don't have IDs
+    {
+      id: "payments",
+      name: "สิทธิรายการชำระเงิน",
+      description: "สิทธิ์ในการดู สร้าง และคืนเงินให้ลูกค้า",
+      permissions: ["payments.view", "payments.create", "payments.refund"]
+    }
+  ];
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
@@ -143,6 +109,17 @@ export const CreateUserDialog = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("ไม่พบ session");
 
+      // Convert selected groups to individual permission IDs
+      const selectedPermissionNames = selectedPermissionGroups.flatMap(groupId => {
+        const group = permissionGroups.find(g => g.id === groupId);
+        return group ? group.permissions : [];
+      });
+
+      // Get permission IDs from names
+      const permissionIds = selectedPermissionNames
+        .map(name => allPermissions.find(p => p.name === name)?.id)
+        .filter(Boolean) as string[];
+
       // Call edge function to create user
       const { data: result, error } = await supabase.functions.invoke("create-admin-user", {
         body: {
@@ -151,7 +128,7 @@ export const CreateUserDialog = () => {
           full_name: data.full_name,
           role: data.role,
           tenant_id: activeTenantId,
-          permissions: selectedPermissions, // Send selected permissions
+          permissions: permissionIds, // Send selected permission IDs
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -169,7 +146,7 @@ export const CreateUserDialog = () => {
       toast.success(message);
       setOpen(false);
       form.reset();
-      setSelectedPermissions([]); // Reset permissions
+      setSelectedPermissionGroups([]); // Reset permission groups
     },
     onError: (error: any) => {
       toast.error("เกิดข้อผิดพลาด", {
@@ -262,41 +239,41 @@ export const CreateUserDialog = () => {
                 )}
               />
               
-              {/* Permissions Selection - 4 permissions now */}
+              {/* Permission Groups Selection - 3 groups */}
               <div className="space-y-2">
                 <FormLabel>สิทธิ์การเข้าถึง</FormLabel>
                 <div className="rounded-md border p-3 space-y-3">
-                  {availablePermissions.map((permission) => (
-                    <div key={permission.id} className="flex items-start space-x-2">
+                  {permissionGroups.map((group) => (
+                    <div key={group.id} className="flex items-start space-x-2">
                       <Checkbox
-                        id={permission.id}
-                        checked={selectedPermissions.includes(permission.id)}
+                        id={group.id}
+                        checked={selectedPermissionGroups.includes(group.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setSelectedPermissions([...selectedPermissions, permission.id]);
+                            setSelectedPermissionGroups([...selectedPermissionGroups, group.id]);
                           } else {
-                            setSelectedPermissions(
-                              selectedPermissions.filter((id) => id !== permission.id)
+                            setSelectedPermissionGroups(
+                              selectedPermissionGroups.filter((id) => id !== group.id)
                             );
                           }
                         }}
                       />
                       <div className="grid gap-0.5 leading-none">
                         <label
-                          htmlFor={permission.id}
+                          htmlFor={group.id}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                         >
-                          {permission.name}
+                          {group.name}
                         </label>
                         <p className="text-xs text-muted-foreground">
-                          {permission.description}
+                          {group.description}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  เลือกสิทธิ์ ({selectedPermissions.length} จาก {availablePermissions.length} รายการ)
+                  เลือกสิทธิ์ ({selectedPermissionGroups.length} จาก {permissionGroups.length} รายการ)
                 </p>
               </div>
             </div>
