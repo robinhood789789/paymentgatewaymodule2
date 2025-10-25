@@ -60,19 +60,12 @@ export const CreateUserDialog = () => {
     },
   });
 
-  // Fetch all available permissions
-  const { data: permissions = [] } = useQuery({
-    queryKey: ["permissions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("permissions")
-        .select("id, name, description")
-        .order("name");
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Define available permissions for admin users (3 permissions only)
+  const availablePermissions = [
+    { id: "deposit", name: "เติมเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นเติมเงิน" },
+    { id: "withdrawal", name: "ถอนเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นถอนเงิน" },
+    { id: "payments", name: "รายการชำระเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นรายการชำระเงิน" },
+  ];
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
@@ -208,13 +201,12 @@ export const CreateUserDialog = () => {
                 )}
               />
               
-              {/* Permissions Selection */}
+              {/* Permissions Selection - 3 permissions only */}
               <div className="space-y-2">
                 <FormLabel>สิทธิ์การเข้าถึง</FormLabel>
-                <ScrollArea className="h-[120px] rounded-md border p-3">
-                  <div className="space-y-2">
-                    {permissions.map((permission) => (
-                      <div key={permission.id} className="flex items-start space-x-2">
+                <div className="rounded-md border p-3 space-y-3">
+                  {availablePermissions.map((permission) => (
+                    <div key={permission.id} className="flex items-start space-x-2">
                       <Checkbox
                         id={permission.id}
                         checked={selectedPermissions.includes(permission.id)}
@@ -228,25 +220,22 @@ export const CreateUserDialog = () => {
                           }
                         }}
                       />
-                        <div className="grid gap-0.5 leading-none">
-                          <label
-                            htmlFor={permission.id}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            {permission.name}
-                          </label>
-                          {permission.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                              {permission.description}
-                            </p>
-                          )}
-                        </div>
+                      <div className="grid gap-0.5 leading-none">
+                        <label
+                          htmlFor={permission.id}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {permission.name}
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                          {permission.description}
+                        </p>
+                      </div>
                     </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                  ))}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  เลือกสิทธิ์ ({selectedPermissions.length} รายการ)
+                  เลือกสิทธิ์ ({selectedPermissions.length} จาก {availablePermissions.length} รายการ)
                 </p>
               </div>
             </div>
