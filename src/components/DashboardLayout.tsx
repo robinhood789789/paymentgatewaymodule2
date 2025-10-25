@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PermissionGate } from "@/components/PermissionGate";
 import {
   LayoutDashboard,
   Settings,
@@ -122,8 +123,8 @@ const DashboardSidebar = () => {
   const goLiveItems = isOwner ? [
     { title: 'Go Live', url: "/go-live", icon: Rocket },
     { title: 'Controls Test', url: "/go-live/controls", icon: Shield },
-    { title: 'Gap Report', url: "/reports/gap", icon: FileCheck },
-    { title: 'Pyramid Model', url: "/pyramid-authority", icon: Shield },
+    { title: 'Gap Report', url: "/reports/gap", icon: FileCheck, ownerOnly: true },
+    { title: 'Pyramid Model', url: "/pyramid-authority", icon: Shield, ownerOnly: true },
     { title: 'Alerts', url: "/alerts", icon: AlertCircle },
   ] : [];
 
@@ -295,23 +296,28 @@ const DashboardSidebar = () => {
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupContent>
               <SidebarMenu>
-                {[...settingsMenuItems, ...goLiveItems].map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) =>
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "hover:bg-sidebar-accent/50"
-                        }
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {[...settingsMenuItems, ...goLiveItems].map((item) => {
+                  const node = (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) =>
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              : "hover:bg-sidebar-accent/50"
+                          }
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {!isCollapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                  return (item as any).ownerOnly ? (
+                    <PermissionGate allowOwner key={item.title}>{node}</PermissionGate>
+                  ) : node;
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
