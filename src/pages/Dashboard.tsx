@@ -11,13 +11,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
 import { useI18n } from "@/lib/i18n";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useMfaGuard } from "@/hooks/useMfaGuard";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin, userRole } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const { t } = useI18n();
+  
+  // Redirect limited roles (admin/manager) to deposit list
+  const limitedRole = !isSuperAdmin && userRole !== 'owner' && (userRole === 'admin' || userRole === 'manager');
+  if (limitedRole) {
+    return <Navigate to="/deposit-list" replace />;
+  }
   
   // Enforce MFA for dashboard access
   useMfaGuard({ required: true });
