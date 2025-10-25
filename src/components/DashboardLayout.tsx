@@ -67,6 +67,13 @@ const DashboardSidebar = () => {
 
   const isOwner = activeTenant?.roles?.name === 'owner';
 
+  // Strict admin gating: admin users see only a minimal, compliance-approved menu
+  const isTenantAdminOnly = isAdmin && !isOwner && !isSuperAdmin;
+  const showOverviewGroup = !isTenantAdminOnly;
+  const showTransactionGroup = isOwner || isSuperAdmin;
+  const showSettingsDocsGroup = isOwner || isSuperAdmin;
+  const showDebugGroup = !isTenantAdminOnly;
+
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
@@ -107,9 +114,21 @@ const DashboardSidebar = () => {
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign, ownerOnly: true }, // Owner only - sensitive financial data
   ];
   
-  const managementMenuItems = allManagementItems.filter((item: any) =>
+  let managementMenuItems = allManagementItems.filter((item: any) =>
     (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
+
+  // For Admin (non-owner, non-super-admin), strictly allow only specific items
+  if (isAdmin && !isOwner && !isSuperAdmin) {
+    const allowedAdminUrls = new Set([
+      "/products",
+      "/payment-methods",
+      "/disputes",
+      "/customers",
+      "/webhook-events",
+    ]);
+    managementMenuItems = allManagementItems.filter((item: any) => allowedAdminUrls.has(item.url));
+  }
 
   // Settings menu items - filtered by permissions
   const allSettingsItems = [
@@ -161,81 +180,85 @@ const DashboardSidebar = () => {
         </div>
 
         {/* Main Menu */}
-        <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {userMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {showOverviewGroup && (
+          <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {userMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Transaction Menu */}
-        <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {transactionMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              
-              {/* Owner Only: System Deposit - ONLY visible to owner role */}
-              {showSystemDeposit && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/system-deposit"
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-primary text-green-800 font-bold shadow-md border-l-4 border-primary"
-                          : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
-                      }
-                    >
-                      <Wallet className="mr-2 h-5 w-5 text-black" />
-                      {!isCollapsed && (
-                        <span className="flex items-center gap-2">
-                          เติมเงินเข้าระบบ
-                          <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>
-                        </span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {showTransactionGroup && (
+          <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {transactionMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                
+                {/* Owner Only: System Deposit - ONLY visible to owner role */}
+                {showSystemDeposit && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/system-deposit"
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-primary text-green-800 font-bold shadow-md border-l-4 border-primary"
+                            : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
+                        }
+                      >
+                        <Wallet className="mr-2 h-5 w-5 text-black" />
+                        {!isCollapsed && (
+                          <span className="flex items-center gap-2">
+                            เติมเงินเข้าระบบ
+                            <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>
+                          </span>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Owner Menu (Tenant Management) */}
         {ownerMenuItems.length > 0 && (
@@ -294,7 +317,7 @@ const DashboardSidebar = () => {
         )}
 
         {/* Settings & Docs - Only show if user has settings access or if there's API docs */}
-        {(settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
+        {showSettingsDocsGroup && (settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupContent>
               <SidebarMenu>
@@ -353,30 +376,32 @@ const DashboardSidebar = () => {
         )}
 
         {/* Debug Menu - Available for testing */}
-        <SidebarGroup className="border-l-[6px] border-yellow-500 bg-yellow-500/5 pl-3 py-2 rounded-r-lg">
-          <SidebarGroupLabel className="text-yellow-600 font-semibold">Debug</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {debugMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {showDebugGroup && (
+          <SidebarGroup className="border-l-[6px] border-yellow-500 bg-yellow-500/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-yellow-600 font-semibold">Debug</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {debugMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <div className="mt-auto p-4 border-t border-sidebar-border space-y-3">
           {!isCollapsed && (
