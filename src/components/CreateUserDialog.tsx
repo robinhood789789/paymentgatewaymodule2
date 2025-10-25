@@ -77,10 +77,11 @@ export const CreateUserDialog = () => {
   const permissionMapping: Record<string, string> = {
     "เติมเงิน": "system_deposit.view",
     "ถอนเงิน": "withdrawals.view", 
-    "รายการชำระเงิน": "payments.view"
+    "รายการชำระเงิน": "payments.view",
+    "จัดการ API": "api_keys.manage"
   };
 
-  // Define available permissions for admin users (3 permissions only)
+  // Define available permissions for admin users (4 permissions now)
   const availablePermissions = [
     { 
       id: allPermissions.find(p => p.name === permissionMapping["เติมเงิน"])?.id || "",
@@ -96,6 +97,11 @@ export const CreateUserDialog = () => {
       id: allPermissions.find(p => p.name === permissionMapping["รายการชำระเงิน"])?.id || "",
       name: "รายการชำระเงิน", 
       description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นรายการชำระเงิน" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["จัดการ API"])?.id || "",
+      name: "จัดการ API", 
+      description: "สิทธิ์ในการสร้างและจัดการ API Keys สำหรับการเชื่อมต่อระบบ" 
     },
   ].filter(p => p.id); // Filter out any that don't have IDs
 
@@ -223,6 +229,7 @@ export const CreateUserDialog = () => {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="developer">Developer</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                       </SelectContent>
                     </Select>
@@ -231,7 +238,7 @@ export const CreateUserDialog = () => {
                 )}
               />
               
-              {/* Permissions Selection - 3 permissions only */}
+              {/* Permissions Selection - 4 permissions now */}
               <div className="space-y-2">
                 <FormLabel>สิทธิ์การเข้าถึง</FormLabel>
                 <div className="rounded-md border p-3 space-y-3">

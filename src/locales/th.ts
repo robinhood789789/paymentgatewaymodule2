@@ -85,6 +85,17 @@ export const thTranslations = {
     staffMembers: 'ทีมงาน',
     approvals: 'รายการอนุมัติ',
   },
+  roles: {
+    owner: 'เจ้าของ',
+    admin: 'ผู้ดูแลระบบ',
+    developer: 'นักพัฒนา',
+    finance: 'การเงิน',
+    viewer: 'ผู้อ่าน',
+  },
+  permissions: {
+    manageApi: 'จัดการ API',
+    manageApiDesc: 'สร้างและจัดการ API Keys สำหรับการเชื่อมต่อระบบ',
+  },
   activityLog: {
     title: 'ประวัติการใช้งาน',
     description: 'ดูและติดตามกิจกรรมทั้งหมดในองค์กรของคุณ',

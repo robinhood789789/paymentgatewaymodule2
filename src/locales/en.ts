@@ -73,6 +73,17 @@ export const enTranslations = {
     staffMembers: 'Staff Members',
     approvals: 'Approvals',
   },
+  roles: {
+    owner: 'Owner',
+    admin: 'Admin',
+    developer: 'Developer',
+    finance: 'Finance',
+    viewer: 'Viewer',
+  },
+  permissions: {
+    manageApi: 'Manage API',
+    manageApiDesc: 'Create and manage API Keys for system integration',
+  },
   activityLog: {
     title: 'Activity History',
     description: 'View and track all activities in your organization',
