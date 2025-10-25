@@ -87,10 +87,8 @@ const DashboardSidebar = () => {
     !item.permission || hasPermission(item.permission) || isOwner
   );
 
-  // Owner transaction items - System Deposit (Owner only, NOT for Super Admin)
-  const ownerTransactionItems = (isOwner && !isSuperAdmin) ? [
-    { title: "เติมเงินเข้าระบบ", url: "/system-deposit", icon: Wallet },
-  ] : [];
+  // Owner-only System Deposit button (NOT shown to admin or super admin)
+  const showSystemDeposit = isOwner && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
@@ -216,29 +214,29 @@ const DashboardSidebar = () => {
                 </SidebarMenuItem>
               ))}
               
-              {/* Owner Only: System Deposit */}
-              {isOwner && ownerTransactionItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {/* Owner Only: System Deposit - ONLY visible to owner role */}
+              {showSystemDeposit && (
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
+                      to="/system-deposit"
                       className={({ isActive }) =>
                         isActive
                           ? "bg-primary text-green-800 font-bold shadow-md border-l-4 border-primary"
                           : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
                       }
                     >
-                      <item.icon className="mr-2 h-5 w-5 text-black" />
+                      <Wallet className="mr-2 h-5 w-5 text-black" />
                       {!isCollapsed && (
                         <span className="flex items-center gap-2">
-                          {item.title}
+                          เติมเงินเข้าระบบ
                           <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>
                         </span>
                       )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
