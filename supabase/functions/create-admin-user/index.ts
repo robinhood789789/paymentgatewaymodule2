@@ -180,8 +180,8 @@ Deno.serve(async (req) => {
           // Fallback to default permissions based on role type if no custom permissions provided
           console.log(`No custom permissions provided, using default permissions for ${role}`);
           
-          if (role === 'admin') {
-            // Admin: all permissions except sensitive settings and user management
+          if (role === 'admin' || role === 'manager') {
+            // Admin/Manager: all permissions except sensitive settings and user management
             const { data: defaultPermissions } = await supabaseClient
               .from('permissions')
               .select('id')

@@ -66,13 +66,14 @@ const DashboardSidebar = () => {
   const { activeTenant } = useTenantSwitcher();
 
   const isOwner = activeTenant?.roles?.name === 'owner';
+  const isManager = activeTenant?.roles?.name === 'manager';
 
-  // Strict admin gating: admin users see only a minimal, compliance-approved menu
-  const isTenantAdminOnly = isAdmin && !isOwner && !isSuperAdmin;
-  const showOverviewGroup = !isTenantAdminOnly; // Hide overview for admin
+  // Limited role gating: admin/manager users see only a minimal, compliance-approved menu
+  const isLimitedRole = (isAdmin || isManager) && !isOwner && !isSuperAdmin;
+  const showOverviewGroup = !isLimitedRole; // Hide overview for admin/manager
   const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
   const showSettingsDocsGroup = isOwner || isSuperAdmin;
-  const showDebugGroup = !isTenantAdminOnly;
+  const showDebugGroup = !isLimitedRole;
 
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
@@ -86,15 +87,15 @@ const DashboardSidebar = () => {
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
   
-  // For Admin (non-owner, non-super-admin): show ONLY these 3 transactions
-  let transactionMenuItems = isTenantAdminOnly 
-    ? allTransactionItems // Admin gets all 3 transaction items
+  // For Admin/Manager (non-owner, non-super-admin): show ONLY these 3 transactions
+  let transactionMenuItems = isLimitedRole 
+    ? allTransactionItems // Admin/Manager gets all 3 transaction items
     : allTransactionItems.filter(item => 
         !item.permission || hasPermission(item.permission) || isOwner
       );
 
-  // System Deposit button - show for Admin (non-owner, non-super-admin) AND Owner
-  const showSystemDeposit = (isTenantAdminOnly || isOwner) && !isSuperAdmin;
+  // System Deposit button - show for Admin/Manager (non-owner, non-super-admin) AND Owner
+  const showSystemDeposit = (isLimitedRole || isOwner) && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
@@ -121,8 +122,8 @@ const DashboardSidebar = () => {
     (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
 
-  // For Admin (non-owner, non-super-admin): NO management items
-  if (isTenantAdminOnly) {
+  // For Admin/Manager (non-owner, non-super-admin): NO management items
+  if (isLimitedRole) {
     managementMenuItems = [];
   }
 
@@ -245,7 +246,7 @@ const DashboardSidebar = () => {
                           <span className="flex items-center gap-2">
                             เติมเงินเข้าระบบ
                             {isOwner && <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>}
-                            {isTenantAdminOnly && <Badge variant="default" className="text-xs px-1.5 py-0 bg-blue-700 text-white border border-blue-800">Admin</Badge>}
+                            {isLimitedRole && <Badge variant="default" className="text-xs px-1.5 py-0 bg-blue-700 text-white border border-blue-800">{isManager ? 'Manager' : 'Admin'}</Badge>}
                           </span>
                         )}
                       </NavLink>

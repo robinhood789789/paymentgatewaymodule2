@@ -60,12 +60,44 @@ export const CreateUserDialog = () => {
     },
   });
 
+  // Fetch real permissions from database
+  const { data: allPermissions = [] } = useQuery({
+    queryKey: ["permissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("permissions")
+        .select("id, name, description");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Map Thai permission names to database permission names
+  const permissionMapping: Record<string, string> = {
+    "เติมเงิน": "system_deposit.view",
+    "ถอนเงิน": "withdrawals.view", 
+    "รายการชำระเงิน": "payments.view"
+  };
+
   // Define available permissions for admin users (3 permissions only)
   const availablePermissions = [
-    { id: "deposit", name: "เติมเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นเติมเงิน" },
-    { id: "withdrawal", name: "ถอนเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นถอนเงิน" },
-    { id: "payments", name: "รายการชำระเงิน", description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นรายการชำระเงิน" },
-  ];
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["เติมเงิน"])?.id || "",
+      name: "เติมเงิน", 
+      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นเติมเงิน" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["ถอนเงิน"])?.id || "",
+      name: "ถอนเงิน", 
+      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นถอนเงิน" 
+    },
+    { 
+      id: allPermissions.find(p => p.name === permissionMapping["รายการชำระเงิน"])?.id || "",
+      name: "รายการชำระเงิน", 
+      description: "สิทธิ์ในการเข้าถึงฟังก์ชั่นรายการชำระเงิน" 
+    },
+  ].filter(p => p.id); // Filter out any that don't have IDs
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
