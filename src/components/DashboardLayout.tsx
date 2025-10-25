@@ -101,7 +101,7 @@ const DashboardSidebar = () => {
 
   // Management menu items - filtered by permissions
   const allManagementItems = [
-    { title: "Workbench", url: "/workbench", icon: Activity, permission: null }, // Always visible
+    { title: "Workbench", url: "/workbench", icon: Activity, ownerOnly: true }, // Owner only
     { title: "Products", url: "/products", icon: Package, permission: "products.view" },
     { title: "Payment Methods", url: "/payment-methods", icon: CreditCard, permission: "payment_methods.manage" },
     { title: "Reconciliation", url: "/reconciliation", icon: FileCheck, permission: "reconciliation.manage" },
@@ -113,18 +113,18 @@ const DashboardSidebar = () => {
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign, permission: "settlements.view" },
   ];
   
-  const managementMenuItems = allManagementItems.filter(item => 
-    !item.permission || hasPermission(item.permission) || isOwner
+  const managementMenuItems = allManagementItems.filter((item: any) =>
+    (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
 
   // Settings menu items - filtered by permissions
   const allSettingsItems = [
     { title: t('dashboard.settings'), url: "/settings", icon: Settings, permission: "settings.view" },
-    { title: 'API Docs', url: "/docs", icon: Book, permission: null }, // Always visible
+    { title: 'API Docs', url: "/docs", icon: Book, ownerOnly: true },
   ];
   
-  const settingsMenuItems = allSettingsItems.filter(item => 
-    !item.permission || hasPermission(item.permission) || isOwner
+  const settingsMenuItems = allSettingsItems.filter((item: any) =>
+    (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
 
   // Go-Live for owners
@@ -171,7 +171,7 @@ const DashboardSidebar = () => {
           <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {[...userMenuItems, ...ownerMenuItems].map((item) => (
+              {userMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
