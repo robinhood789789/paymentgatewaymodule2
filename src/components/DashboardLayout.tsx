@@ -42,7 +42,7 @@ import {
   PieChart,
   ArrowDownToLine,
   ArrowUpFromLine,
-  
+  Building2,
   Receipt,
   KeyRound,
   Activity,
@@ -150,6 +150,7 @@ const DashboardSidebar = () => {
     { title: "Super Admin Console", url: "/admin", icon: Shield },
     { title: "Provision Merchant", url: "/admin/provision-merchant", icon: Users },
     { title: "Tenant Management", url: "/admin/tenants", icon: Users },
+    { title: "Platform Providers", url: "/platform/providers", icon: Building2 },
     { title: "Platform Audit", url: "/platform/audit", icon: Activity },
     { title: "Platform Security", url: "/platform/security", icon: Shield },
   ];

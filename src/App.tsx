@@ -54,6 +54,7 @@ import PyramidAuthority from "./pages/PyramidAuthority";
 import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
+import PlatformProviders from "./pages/admin/PlatformProviders";
 
 const queryClient = new QueryClient();
 
@@ -278,6 +279,14 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformSecurity />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/providers"
+              element={
+                <SuperAdminRoute>
+                  <PlatformProviders />
                 </SuperAdminRoute>
               }
             />

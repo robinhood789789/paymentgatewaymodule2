@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Mail, Shield, Key, Webhook } from "lucide-react";
+import { User, Mail, Shield, Key, Webhook, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ import { ApiKeysManager } from "@/components/settings/ApiKeysManager";
 import { WebhooksManager } from "@/components/settings/WebhooksManager";
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup";
 import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy";
+import { ProviderDisplay } from "@/components/settings/ProviderDisplay";
 
 const Settings = () => {
   const { user, tenantId } = useAuth();
@@ -99,7 +100,7 @@ const Settings = () => {
         )}
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile" className="gap-2">
               <User className="w-4 h-4" />
               Profile
@@ -107,6 +108,10 @@ const Settings = () => {
             <TabsTrigger value="security" className="gap-2">
               <Shield className="w-4 h-4" />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="provider" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              Provider
             </TabsTrigger>
             <TabsTrigger value="api-keys" className="gap-2">
               <Key className="w-4 h-4" />
@@ -182,6 +187,10 @@ const Settings = () => {
           <TabsContent value="security" className="space-y-4">
             <TwoFactorSetup />
             <TenantSecurityPolicy />
+          </TabsContent>
+
+          <TabsContent value="provider" className="space-y-4">
+            <ProviderDisplay />
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">

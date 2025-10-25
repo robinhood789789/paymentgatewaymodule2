@@ -931,6 +931,51 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_provider_credentials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          feature_flags: Json | null
+          id: string
+          last_rotated_at: string | null
+          merchant_id: string | null
+          mode: string
+          provider: string
+          public_key: string | null
+          secret_key: string | null
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          feature_flags?: Json | null
+          id?: string
+          last_rotated_at?: string | null
+          merchant_id?: string | null
+          mode: string
+          provider: string
+          public_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          feature_flags?: Json | null
+          id?: string
+          last_rotated_at?: string | null
+          merchant_id?: string | null
+          mode?: string
+          provider?: string
+          public_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       platform_security_policy: {
         Row: {
           created_at: string
@@ -1418,6 +1463,41 @@ export type Database = {
             foreignKeyName: "settlements_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_provider_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          mode: string
+          provider: string
+          tenant_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          mode: string
+          provider: string
+          tenant_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          mode?: string
+          provider?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_provider_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },

@@ -9,8 +9,8 @@ interface StepUpResult {
 interface RequireStepUpOptions {
   supabase: any;
   userId: string;
-  tenantId?: string;
-  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts' | 'reconciliation' | 'export-large';
+  tenantId?: string | null;
+  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts' | 'reconciliation' | 'export-large' | 'platform-credentials' | 'tenant-provider-assignment';
   userRole?: string;
   isSuperAdmin?: boolean;
 }
