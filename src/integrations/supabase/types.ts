@@ -143,32 +143,53 @@ export type Database = {
       api_keys: {
         Row: {
           created_at: string | null
+          created_by: string | null
+          env: string | null
+          expires_at: string | null
           hashed_secret: string
           id: string
+          ip_allowlist: Json | null
           last_used_at: string | null
           name: string
+          notes: string | null
           prefix: string
           revoked_at: string | null
+          scope: Json | null
+          status: string | null
           tenant_id: string
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
+          env?: string | null
+          expires_at?: string | null
           hashed_secret: string
           id?: string
+          ip_allowlist?: Json | null
           last_used_at?: string | null
           name: string
+          notes?: string | null
           prefix: string
           revoked_at?: string | null
+          scope?: Json | null
+          status?: string | null
           tenant_id: string
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
+          env?: string | null
+          expires_at?: string | null
           hashed_secret?: string
           id?: string
+          ip_allowlist?: Json | null
           last_used_at?: string | null
           name?: string
+          notes?: string | null
           prefix?: string
           revoked_at?: string | null
+          scope?: Json | null
+          status?: string | null
           tenant_id?: string
         }
         Relationships: [
@@ -546,6 +567,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hmac_replay_cache: {
+        Row: {
+          created_at: string | null
+          id: string
+          platform_id: string
+          signature_hash: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          platform_id: string
+          signature_hash: string
+          timestamp: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          platform_id?: string
+          signature_hash?: string
+          timestamp?: string
+        }
+        Relationships: []
       }
       idempotency_keys: {
         Row: {
@@ -973,6 +1018,51 @@ export type Database = {
           secret_key?: string | null
           updated_at?: string
           webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      platform_provisioning_tokens: {
+        Row: {
+          allowed_tenants: Json | null
+          created_at: string | null
+          created_by: string | null
+          hashed_secret: string
+          id: string
+          ip_allowlist: Json | null
+          last_used_at: string | null
+          notes: string | null
+          platform_id: string
+          platform_name: string
+          revoked_at: string | null
+          status: string | null
+        }
+        Insert: {
+          allowed_tenants?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          hashed_secret: string
+          id?: string
+          ip_allowlist?: Json | null
+          last_used_at?: string | null
+          notes?: string | null
+          platform_id: string
+          platform_name: string
+          revoked_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          allowed_tenants?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          hashed_secret?: string
+          id?: string
+          ip_allowlist?: Json | null
+          last_used_at?: string | null
+          notes?: string | null
+          platform_id?: string
+          platform_name?: string
+          revoked_at?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1761,6 +1851,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_replay_cache: { Args: never; Returns: undefined }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
       is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean }
       is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
