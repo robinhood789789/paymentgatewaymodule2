@@ -44,7 +44,7 @@ serve(async (req) => {
     // Check if requesting user is owner or admin in the tenant
     const { data: requestingMembership, error: membershipError } = await supabase
       .from('memberships')
-      .select('role_id, roles(name)')
+      .select('role_id, roles!inner(name)')
       .eq('user_id', requestingUser.id)
       .eq('tenant_id', tenant_id)
       .single();
@@ -54,7 +54,7 @@ serve(async (req) => {
       throw new Error('Not a member of this tenant');
     }
 
-    const requestingRole = requestingMembership.roles?.name;
+    const requestingRole = (requestingMembership.roles as any)?.name;
     if (requestingRole !== 'owner' && requestingRole !== 'admin') {
       throw new Error('Insufficient permissions. Only owners and admins can delete users.');
     }
@@ -69,7 +69,7 @@ serve(async (req) => {
     // Get the target user's role
     const { data: targetMembership, error: targetMembershipError } = await supabase
       .from('memberships')
-      .select('role_id, roles(name)')
+      .select('role_id, roles!inner(name)')
       .eq('user_id', user_id)
       .eq('tenant_id', tenant_id)
       .single();
@@ -79,7 +79,7 @@ serve(async (req) => {
       throw new Error('User not found in this tenant');
     }
 
-    const targetRole = targetMembership.roles?.name;
+    const targetRole = (targetMembership.roles as any)?.name;
     console.log('🎯 Target user role:', targetRole);
 
     // Only owner can delete owner
@@ -141,10 +141,10 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error?.message || 'Unknown error' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

@@ -36,26 +36,49 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Check if requesting user is super admin
+    const { user_ids, tenant_id } = await req.json();
+
+    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+      throw new Error('Missing or invalid user_ids array');
+    }
+
+    if (!tenant_id) {
+      throw new Error('Missing tenant_id');
+    }
+
+    console.log('🗑️ Deleting users:', user_ids, 'from tenant:', tenant_id);
+
+    // Check if requesting user is super admin OR owner/admin of the tenant
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_super_admin')
       .eq('id', requestingUser.id)
       .single();
 
-    if (!profile?.is_super_admin) {
-      throw new Error('Only super admins can use this function');
+    const isSuperAdmin = profile?.is_super_admin || false;
+
+    if (!isSuperAdmin) {
+      // Check if user is owner or admin in the tenant
+      const { data: membership, error: membershipError } = await supabase
+        .from('memberships')
+        .select('role_id, roles!inner(name)')
+        .eq('user_id', requestingUser.id)
+        .eq('tenant_id', tenant_id)
+        .single();
+
+      if (membershipError || !membership) {
+        throw new Error('You do not have permission to delete users in this tenant');
+      }
+
+      const role = (membership.roles as any)?.name;
+      if (role !== 'owner' && role !== 'admin') {
+        throw new Error('Only owners and admins can delete users');
+      }
+
+      console.log('✅ Owner/Admin verified:', requestingUser.id, 'role:', role);
+    } else {
+      console.log('✅ Super admin verified:', requestingUser.id);
     }
-
-    console.log('🔐 Super admin verified:', requestingUser.id);
-
-    const { user_ids } = await req.json();
-
-    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
-      throw new Error('Missing or invalid user_ids array');
-    }
-
-    console.log('🗑️ Deleting users:', user_ids);
 
     const results = [];
 
@@ -71,15 +94,45 @@ serve(async (req) => {
           continue;
         }
 
-        // Delete all memberships
-        const { error: membershipError } = await supabase
-          .from('memberships')
-          .delete()
-          .eq('user_id', userId);
+        // For non-super-admins, only delete membership in current tenant
+        if (!isSuperAdmin) {
+          const { error: membershipError } = await supabase
+            .from('memberships')
+            .delete()
+            .eq('user_id', userId)
+            .eq('tenant_id', tenant_id);
 
-        if (membershipError) {
-          console.error('Delete memberships error:', membershipError);
-          throw membershipError;
+          if (membershipError) {
+            console.error('Delete membership error:', membershipError);
+            throw membershipError;
+          }
+
+          // Check if user has other memberships
+          const { data: otherMemberships } = await supabase
+            .from('memberships')
+            .select('id')
+            .eq('user_id', userId);
+
+          if (otherMemberships && otherMemberships.length > 0) {
+            console.log('✅ User removed from tenant (has other memberships)');
+            results.push({
+              user_id: userId,
+              success: true,
+              message: 'User removed from tenant'
+            });
+            continue;
+          }
+        } else {
+          // Super admin can delete all memberships
+          const { error: membershipError } = await supabase
+            .from('memberships')
+            .delete()
+            .eq('user_id', userId);
+
+          if (membershipError) {
+            console.error('Delete all memberships error:', membershipError);
+            throw membershipError;
+          }
         }
 
         // Delete profile
@@ -107,12 +160,12 @@ serve(async (req) => {
           success: true
         });
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error deleting user:', userId, error);
         results.push({
           user_id: userId,
           success: false,
-          error: error.message
+          error: error?.message || 'Unknown error'
         });
       }
     }
@@ -127,10 +180,10 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error?.message || 'Unknown error' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

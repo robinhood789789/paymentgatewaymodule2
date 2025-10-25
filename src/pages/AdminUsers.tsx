@@ -256,11 +256,13 @@ const AdminUsers = () => {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (userIds: string[]) => {
+      if (!activeTenantId) throw new Error("No active tenant");
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session");
 
       const { data, error } = await supabase.functions.invoke("admin-delete-users-completely", {
-        body: { user_ids: userIds },
+        body: { user_ids: userIds, tenant_id: activeTenantId },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -564,21 +566,23 @@ const AdminUsers = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>ยืนยันการลบบัญชีหลายบัญชี</AlertDialogTitle>
-              <AlertDialogDescription className="space-y-2">
-                <p>คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีทั้งหมด {selectedUserIds.length} บัญชีที่เลือก?</p>
-                <div className="bg-muted p-3 rounded-md mt-2 max-h-48 overflow-y-auto">
-                  <p className="font-semibold mb-2">บัญชีที่จะถูกลบ:</p>
-                  <ul className="text-sm space-y-1">
-                    {filteredUsers
-                      ?.filter((u) => selectedUserIds.includes(u.id))
-                      .map((u) => (
-                        <li key={u.id}>• {u.full_name || "ไม่ระบุชื่อ"} ({u.email})</li>
-                      ))}
-                  </ul>
+              <AlertDialogDescription>
+                <div className="space-y-3">
+                  <p>คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีทั้งหมด {selectedUserIds.length} บัญชีที่เลือก?</p>
+                  <div className="bg-muted p-3 rounded-md max-h-48 overflow-y-auto">
+                    <p className="font-semibold mb-2">บัญชีที่จะถูกลบ:</p>
+                    <ul className="text-sm space-y-1">
+                      {filteredUsers
+                        ?.filter((u) => selectedUserIds.includes(u.id))
+                        .map((u) => (
+                          <li key={u.id}>• {u.full_name || "ไม่ระบุชื่อ"} ({u.email})</li>
+                        ))}
+                    </ul>
+                  </div>
+                  <p className="text-destructive font-medium">
+                    การดำเนินการนี้ไม่สามารถย้อนกลับได้!
+                  </p>
                 </div>
-                <p className="text-destructive font-medium">
-                  การดำเนินการนี้ไม่สามารถย้อนกลับได้!
-                </p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
