@@ -98,7 +98,7 @@ const DashboardSidebar = () => {
     { title: "Reconciliation", url: "/reconciliation", icon: FileCheck, permission: "reconciliation.manage" },
     { title: "Disputes", url: "/disputes", icon: AlertCircle, permission: "disputes.view" },
     { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck, permission: "kyc.view" },
-    { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt, permission: "reports.view" },
+    { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt, ownerOnly: true }, // Owner only
     { title: t('customers.title'), url: "/customers", icon: UserCircle, permission: "customers.view" },
     { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook, permission: "webhooks.view" },
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign, permission: "settlements.view" },
