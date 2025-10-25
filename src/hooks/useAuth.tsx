@@ -44,12 +44,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             fetchUserRole(session.user.id);
           }, 0);
         } else {
+          // Clear all state and localStorage when user signs out
           setIsAdmin(false);
           setIsSuperAdmin(false);
           setUserRole(null);
           setTenantId(null);
           setTenantName(null);
           setLoading(false);
+          // Ensure localStorage is cleared
+          try { localStorage.removeItem("active_tenant_id"); } catch {}
         }
       }
     );
@@ -281,28 +284,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear local state first
+      // Clear all localStorage items first to prevent re-fetching
+      try { 
+        localStorage.removeItem("active_tenant_id");
+        localStorage.removeItem("sb-xbbxgzccxudmnrmqkwzg-auth-token");
+      } catch {}
+      
+      // Clear all local state immediately
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setUserRole(null);
+      setTenantId(null);
+      setTenantName(null);
+      
+      // Sign out from Supabase - this will trigger onAuthStateChange
+      await supabase.auth.signOut();
+      
+      // Show success message
+      toast.success("Signed out successfully");
+      
+      // Navigate immediately
+      navigate("/auth/sign-in", { replace: true });
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Clear state even on error
+      setUser(null);
+      setSession(null);
       setIsAdmin(false);
       setIsSuperAdmin(false);
       setUserRole(null);
       setTenantId(null);
       setTenantName(null);
       try { localStorage.removeItem("active_tenant_id"); } catch {}
-      
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Show success message
-      toast.success("Signed out successfully");
-      
-      // Navigate after a short delay to ensure state is cleared
-      setTimeout(() => {
-        navigate("/auth/sign-in");
-      }, 100);
-    } catch (error) {
-      console.error("Sign out error:", error);
-      // Even if there's an error, navigate to sign in
-      navigate("/auth/sign-in");
+      navigate("/auth/sign-in", { replace: true });
     }
   };
 

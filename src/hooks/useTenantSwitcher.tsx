@@ -27,6 +27,14 @@ export const useTenantSwitcher = () => {
     return localStorage.getItem(ACTIVE_TENANT_KEY);
   });
 
+  // Clear tenant state when user logs out
+  useEffect(() => {
+    if (!user) {
+      setActiveTenantId(null);
+      try { localStorage.removeItem(ACTIVE_TENANT_KEY); } catch {}
+    }
+  }, [user]);
+
   // Fetch user memberships
   const { data: memberships, isLoading } = useQuery({
     queryKey: ["user-memberships", user?.id],
