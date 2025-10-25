@@ -52,10 +52,15 @@ serve(async (req) => {
     }
 
     // Require MFA step-up
-    const mfaCheck = await requireStepUp(supabase, user.id, 'platform-tokens');
-    if (!mfaCheck.allowed) {
+    const mfaCheck = await requireStepUp({
+      supabase,
+      userId: user.id,
+      action: 'platform-tokens' as any
+    });
+    
+    if (!mfaCheck.ok) {
       return new Response(JSON.stringify({ 
-        error: mfaCheck.error,
+        error: mfaCheck.message,
         code: mfaCheck.code
       }), {
         status: 403,
@@ -131,7 +136,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[Platform Token Revoke] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

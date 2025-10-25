@@ -232,25 +232,24 @@ export const ApiKeysManager = () => {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{key.name}</p>
-                      <Badge variant="secondary" className="text-xs">
-                        Active
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-mono text-sm">{key.prefix}...</span>
+                    <span className="text-xs text-muted-foreground">{key.name}</span>
+                    {key.env && (
+                      <Badge variant={key.env === 'production' ? 'destructive' : 'secondary'}>
+                        {key.env}
                       </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1">
-                      <p className="text-sm font-mono text-muted-foreground">
-                        {key.prefix}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Created {new Date(key.created_at).toLocaleDateString()}
-                      </p>
-                      {key.last_used_at && (
-                        <p className="text-xs text-muted-foreground">
-                          Last used {new Date(key.last_used_at).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
+                    )}
+                  </div>
+                  <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
+                    {key.last_used_at && (
+                      <span>Last used: {new Date(key.last_used_at).toLocaleDateString()}</span>
+                    )}
+                    {key.expires_at && (
+                      <span>Expires: {new Date(key.expires_at).toLocaleDateString()}</span>
+                    )}
+                  </div>
                   </div>
                   
                   <AlertDialog>

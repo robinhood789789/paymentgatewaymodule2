@@ -1,5 +1,5 @@
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { SuperAdminRoute } from "@/components/SuperAdminRoute";
+import DashboardLayout from "@/components/DashboardLayout";
+import SuperAdminRoute from "@/components/SuperAdminRoute";
 import { PlatformProvisioningManager } from "@/components/admin/PlatformProvisioningManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";

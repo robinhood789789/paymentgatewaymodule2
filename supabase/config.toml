@@ -62,3 +62,18 @@ verify_jwt = true
 
 [functions.create-admin-user]
 verify_jwt = true
+
+[functions.platform-tokens-create]
+verify_jwt = true
+
+[functions.platform-tokens-revoke]
+verify_jwt = true
+
+[functions.ext-api-keys-create]
+verify_jwt = false
+
+[functions.ext-api-keys-rotate]
+verify_jwt = false
+
+[functions.ext-api-keys-revoke]
+verify_jwt = false
