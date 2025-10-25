@@ -122,10 +122,10 @@ export const ProviderCredentialsManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5" />
-                Platform Provider Credentials
+                Provider Credentials (Platform-managed)
               </CardTitle>
               <CardDescription>
-                Configure platform-level payment provider credentials (Super Admin only)
+                These keys are for Stripe/Omise/2C2P/KBank integrations and are not visible to merchants. Configure platform-level credentials here.
               </CardDescription>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

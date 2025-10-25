@@ -166,8 +166,8 @@ export const enTranslations = {
     twoFactorEnabled: 'Two-factor authentication is currently enabled',
   },
   apiKeys: {
-    title: 'API Keys',
-    description: 'Manage your API keys for programmatic access',
+    title: 'API Keys (for this store)',
+    description: 'These keys are for calling your store\'s API and are different from payment provider credentials, which are managed by the platform operator.',
     noPermission: "You don't have permission to manage API keys",
     create: 'Create Key',
     createTitle: 'Create API Key',
@@ -192,8 +192,8 @@ export const enTranslations = {
     revokeSuccess: 'API key revoked successfully',
   },
   webhooks: {
-    title: 'Webhooks',
-    description: 'Receive real-time notifications about events in your account',
+    title: 'Outbound Webhook Signing Secret',
+    description: 'These signing secrets are for webhooks sent from this system to your endpoints. They are different from payment provider credentials, which are managed by the platform operator.',
     noPermission: "You don't have permission to manage webhooks",
     add: 'Add Webhook',
     addTitle: 'Add Webhook Endpoint',

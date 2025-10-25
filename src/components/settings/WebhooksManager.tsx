@@ -275,10 +275,10 @@ export const WebhooksManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Webhook className="w-5 h-5" />
-                Webhooks
+                Outbound Webhook Signing Secret
               </CardTitle>
               <CardDescription>
-                Receive real-time notifications about events in your account
+                These signing secrets are for webhooks sent from <strong>this system</strong> to your endpoints. They are different from payment provider credentials, which are managed by the platform operator.
               </CardDescription>
             </div>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

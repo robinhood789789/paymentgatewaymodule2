@@ -204,8 +204,8 @@ export const thTranslations = {
     revokeSuccess: 'เพิกถอน API key สำเร็จ',
   },
   webhooks: {
-    title: 'Webhooks',
-    description: 'รับการแจ้งเตือนแบบเรียลไทม์เกี่ยวกับเหตุการณ์ในบัญชีของคุณ',
+    title: 'รหัสลับสำหรับลงนาม Webhook ขาออก',
+    description: 'รหัสลับเหล่านี้ใช้สำหรับ webhook ที่ส่งจากระบบนี้ไปยังปลายทางของคุณ และแตกต่างจากข้อมูลรับรองผู้ให้บริการชำระเงิน ซึ่งจัดการโดยผู้ดูแลระบบแพลตฟอร์ม',
     noPermission: 'คุณไม่มีสิทธิ์จัดการ webhooks',
     add: 'เพิ่ม Webhook',
     addTitle: 'เพิ่ม Webhook Endpoint',
