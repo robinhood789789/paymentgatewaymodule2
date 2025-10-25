@@ -15,6 +15,9 @@ verify_jwt = false
 [functions.api-keys-revoke]
 verify_jwt = false
 
+[functions.api-keys-rotate]
+verify_jwt = false
+
 [functions.webhooks-test]
 verify_jwt = false
 
