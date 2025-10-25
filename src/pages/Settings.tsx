@@ -194,10 +194,23 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-4">
+            <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
+              <p className="text-sm text-muted-foreground">
+                <strong>Developer Tools:</strong> These API keys are for calling your store's API. 
+                For payment provider configuration, contact your platform administrator or visit{" "}
+                <a href="/platform/providers" className="text-primary hover:underline">Platform Providers</a> if you're a Super Admin.
+              </p>
+            </div>
             <ApiKeysManager />
           </TabsContent>
 
           <TabsContent value="webhooks" className="space-y-4">
+            <div className="mb-4 p-4 bg-muted/50 rounded-lg border">
+              <p className="text-sm text-muted-foreground">
+                <strong>Outbound Webhooks:</strong> Configure webhook endpoints to receive events from this system. 
+                These are different from payment provider webhooks, which are managed at the platform level.
+              </p>
+            </div>
             <WebhooksManager />
           </TabsContent>
         </Tabs>
