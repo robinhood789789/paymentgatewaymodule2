@@ -85,8 +85,8 @@ const DashboardSidebar = () => {
     !item.permission || hasPermission(item.permission) || isOwner
   );
 
-  // System Deposit button - show for users with deposit permission OR owner
-  const showSystemDeposit = (hasPermission("deposits.create") || isOwner) && !isSuperAdmin;
+  // System Deposit button - show for owner only
+  const showSystemDeposit = isOwner && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
