@@ -283,20 +283,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    // Set signing out state immediately
+    // ป้องกัน race condition: รอให้ backend เคลียร์เซสชันก่อนค่อย redirect
     setSigningOut(true);
-    
-    // Clear local storage
+
     try {
-      localStorage.removeItem("active_tenant_id");
-      if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
-    } catch {}
-    
-    // Sign out from Supabase (fire and forget)
-    supabase.auth.signOut().catch(console.error);
-    
-    // Force reload to sign-in page immediately
-    window.location.replace("/auth/sign-in");
+      // ล้างค่า tenant ที่เลือกไว้
+      try {
+        localStorage.removeItem("active_tenant_id");
+        if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
+      } catch {}
+
+      // รอให้ออกจากระบบให้เสร็จ (สำคัญ!)
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Sign out error:", e);
+    } finally {
+      // บังคับโหลดใหม่ไปหน้า sign-in เสมอ
+      window.location.replace("/auth/sign-in");
+    }
   };
 
   // Show nothing while signing out to prevent any component from trying to use auth context
