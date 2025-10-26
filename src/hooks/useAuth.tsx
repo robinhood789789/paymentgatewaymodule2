@@ -283,12 +283,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear local state first
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-      setUserRole(null);
-      setTenantId(null);
-      setTenantName(null);
+      // Clear local storage first
       try {
         localStorage.removeItem("active_tenant_id");
         if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
@@ -298,16 +293,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       
       // Show success message
-      toast.success("Signed out successfully");
+      toast.success("ออกจากระบบสำเร็จ");
       
-      // Navigate after a short delay to ensure state is cleared
-      setTimeout(() => {
-        navigate("/auth/sign-in");
-      }, 100);
+      // Force page reload to sign-in page
+      window.location.href = "/auth/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
-      // Even if there's an error, navigate to sign in
-      navigate("/auth/sign-in");
+      // Force redirect even on error
+      window.location.href = "/auth/sign-in";
     }
   };
 
