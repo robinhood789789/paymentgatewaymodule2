@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from "@/hooks/useAuth";
 import { setCSRFToken, clearCSRFToken } from '@/lib/security/csrf';
 
 export function useCSRF() {

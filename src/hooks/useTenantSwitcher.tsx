@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const ACTIVE_TENANT_KEY = "active_tenant_id";
