@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { usePermissions } from "@/hooks/usePermissions";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 interface Payment {
   id: string;
@@ -38,6 +40,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
   const [isRefunding, setIsRefunding] = useState(false);
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   if (!payment) return null;
 
@@ -55,7 +58,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
     }
   };
 
-  const handleRefund = async () => {
+  const processRefundAction = async () => {
     if (!payment) return;
 
     setIsRefunding(true);
@@ -84,6 +87,14 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
       setIsRefunding(false);
     }
   };
+
+  const handleRefund = async () => {
+    // ต้องผ่าน 2FA challenge ก่อนทำ refund (guardrails)
+    await checkAndChallenge(processRefundAction);
+  };
+
+  // เมื่อ 2FA success ให้ทำ action จริง
+  onSuccess();
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -265,6 +276,12 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={onSuccess}
+      />
     </Sheet>
   );
 };

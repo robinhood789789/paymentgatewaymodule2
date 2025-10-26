@@ -1,12 +1,17 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { RequireTenant } from "@/components/RequireTenant";
-import { PermissionGate } from "@/components/PermissionGate";
 import { PaymentsTable } from "@/components/PaymentsTable";
 import { PaymentsStats } from "@/components/PaymentsStats";
 import { useI18n } from "@/lib/i18n";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 const Payments = () => {
   const { t } = useI18n();
+  const { activeTenant } = useTenantSwitcher();
+  
+  // เช็คว่าเป็น Owner, Admin หรือ Manager เท่านั้น
+  const userRole = activeTenant?.roles?.name;
+  const hasAccess = userRole === "owner" || userRole === "admin" || userRole === "manager";
   
   return (
     <DashboardLayout>
@@ -18,19 +23,16 @@ const Payments = () => {
               <p className="text-muted-foreground">{t('payments.viewManage')}</p>
             </div>
 
-            <PermissionGate 
-               permission="payments:read"
-               allowOwner
-               allowAdmin
-               fallback={
-                 <div className="text-center p-8 border rounded-lg">
-                   <p className="text-muted-foreground">{t('payments.noPermission')}</p>
-                 </div>
-               }
-             >
-              <PaymentsStats />
-              <PaymentsTable />
-            </PermissionGate>
+            {hasAccess ? (
+              <>
+                <PaymentsStats />
+                <PaymentsTable />
+              </>
+            ) : (
+              <div className="text-center p-8 border rounded-lg">
+                <p className="text-muted-foreground">{t('payments.noPermission')}</p>
+              </div>
+            )}
           </div>
         </div>
       </RequireTenant>
