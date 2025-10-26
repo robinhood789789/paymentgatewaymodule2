@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -282,36 +283,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Set signing out state immediately
+    setSigningOut(true);
+    
+    // Clear local storage
     try {
-      // Clear local state first to prevent components from re-rendering with stale data
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-      setUserRole(null);
-      setTenantId(null);
-      setTenantName(null);
-      
-      // Clear local storage
-      try {
-        localStorage.removeItem("active_tenant_id");
-        if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
-      } catch {}
-      
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Navigate to sign-in page
-      navigate("/auth/sign-in", { replace: true });
-    } catch (error) {
-      console.error("Sign out error:", error);
-      // Even on error, clear state and navigate
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-      setUserRole(null);
-      setTenantId(null);
-      setTenantName(null);
-      navigate("/auth/sign-in", { replace: true });
-    }
+      localStorage.removeItem("active_tenant_id");
+      if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
+    } catch {}
+    
+    // Sign out from Supabase (fire and forget)
+    supabase.auth.signOut().catch(console.error);
+    
+    // Force reload to sign-in page immediately
+    window.location.replace("/auth/sign-in");
   };
+
+  // Show nothing while signing out to prevent any component from trying to use auth context
+  if (signingOut) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider
