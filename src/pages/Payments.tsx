@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { RequireTenant } from "@/components/RequireTenant";
+import { TenantGuardMessage } from "@/components/RequireTenant";
 import { PaymentsTable } from "@/components/PaymentsTable";
 import { PaymentsStats } from "@/components/PaymentsStats";
 import { useI18n } from "@/lib/i18n";
@@ -7,14 +7,20 @@ import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 const Payments = () => {
   const { t } = useI18n();
-  const { activeTenant } = useTenantSwitcher();
+  const { activeTenant, activeTenantId, isLoading } = useTenantSwitcher();
   const userRole = activeTenant?.roles?.name;
   
   const isAllowedRole = userRole === "owner" || userRole === "admin" || userRole === "manager";
   
   return (
     <DashboardLayout>
-      <RequireTenant>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      ) : !activeTenantId ? (
+        <TenantGuardMessage />
+      ) : (
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             <div>
@@ -36,7 +42,7 @@ const Payments = () => {
             )}
           </div>
         </div>
-      </RequireTenant>
+      )}
     </DashboardLayout>
   );
 };
