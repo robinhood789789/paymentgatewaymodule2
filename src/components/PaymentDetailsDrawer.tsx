@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { usePermissions } from "@/hooks/usePermissions";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 interface Payment {
   id: string;
@@ -34,12 +37,21 @@ interface PaymentDetailsDrawerProps {
 
 export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsDrawerProps) => {
   const { hasPermission } = usePermissions();
+  const { activeTenant } = useTenantSwitcher();
+  const userRole = activeTenant?.roles?.name;
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
   const [isRefunding, setIsRefunding] = useState(false);
+  
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
   if (!payment) return null;
+  
+  const canRefund = hasPermission("refunds:create") || 
+                    userRole === "owner" || 
+                    userRole === "admin" || 
+                    userRole === "manager";
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -55,7 +67,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
     }
   };
 
-  const handleRefund = async () => {
+  const processRefundAction = async () => {
     if (!payment) return;
 
     setIsRefunding(true);
@@ -72,7 +84,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
 
       if (error) throw error;
 
-      toast.success(`Refund initiated successfully`);
+      toast.success("Refund initiated successfully");
       setRefundDialogOpen(false);
       setRefundAmount("");
       setRefundReason("");
@@ -83,6 +95,15 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
     } finally {
       setIsRefunding(false);
     }
+  };
+
+  const handleRefund = async () => {
+    await checkAndChallenge(processRefundAction);
+  };
+
+  const handleMfaSuccess = () => {
+    setMfaOpen(false);
+    onSuccess();
   };
 
   return (
@@ -194,7 +215,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
             </div>
           )}
 
-          {payment.status === "succeeded" && hasPermission("refunds:create") && (
+          {payment.status === "succeeded" && canRefund && (
             <div className="border-t pt-4">
               <Button 
                 variant="destructive" 
@@ -208,6 +229,14 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
           )}
         </div>
       </SheetContent>
+
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={handleMfaSuccess}
+        title="Verify Refund Action"
+        description="Please enter your 2FA code to authorize this refund transaction."
+      />
 
       <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
         <DialogContent>
