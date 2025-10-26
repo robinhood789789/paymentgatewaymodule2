@@ -66,6 +66,8 @@ const DashboardSidebar = () => {
   const { activeTenant } = useTenantSwitcher();
 
   const isOwner = activeTenant?.roles?.name === 'owner';
+  const isAdminRole = activeTenant?.roles?.name === 'admin';
+  const isManager = activeTenant?.roles?.name === 'manager';
 
   // Overview section - available to all users
   const userMenuItems = [
@@ -77,13 +79,25 @@ const DashboardSidebar = () => {
   const allTransactionItems = [
     { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine, permission: "deposits.view" },
     { title: t('dashboard.withdrawal'), url: "/withdrawal-list", icon: ArrowUpFromLine, permission: "withdrawals.view" },
-    { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
+    { 
+      title: t('dashboard.payments'), 
+      url: "/payments", 
+      icon: CreditCard, 
+      permission: "payments.view",
+      roleAccess: ['owner', 'admin', 'manager'] // Specific roles that can access
+    },
   ];
   
   // Filter transaction items based on actual permissions
-  const transactionMenuItems = allTransactionItems.filter(item => 
-    !item.permission || hasPermission(item.permission) || isOwner
-  );
+  const transactionMenuItems = allTransactionItems.filter(item => {
+    // Check if item has specific role access requirements
+    if ((item as any).roleAccess) {
+      const userRole = activeTenant?.roles?.name;
+      return (item as any).roleAccess.includes(userRole);
+    }
+    // Otherwise use permission-based access
+    return !item.permission || hasPermission(item.permission) || isOwner;
+  });
 
   // System Deposit button - show for owner only
   const showSystemDeposit = isOwner && !isSuperAdmin;
