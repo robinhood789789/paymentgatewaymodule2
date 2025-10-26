@@ -23,8 +23,14 @@ interface Membership {
 export const useTenantSwitcher = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const getStorageKey = (uid?: string | null) => (uid ? `${ACTIVE_TENANT_KEY}:${uid}` : ACTIVE_TENANT_KEY);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(() => {
-    return localStorage.getItem(ACTIVE_TENANT_KEY);
+    // Backward-compatible: read generic key first
+    try {
+      return localStorage.getItem(ACTIVE_TENANT_KEY);
+    } catch {
+      return null;
+    }
   });
 
   // Fetch user memberships
@@ -77,17 +83,16 @@ export const useTenantSwitcher = () => {
   // Get current active tenant details
   const activeTenant = memberships?.find((m) => m.tenant_id === activeTenantId);
 
-  // Auto-select preferred tenant (prefer 'owner' role) if none is selected
+  // Auto-select preferred tenant: pick the most recently created membership (already ordered desc)
   useEffect(() => {
     if (memberships && memberships.length > 0 && !activeTenantId) {
-      const ownerMembership = memberships.find((m) => m.roles?.name === "owner");
-      const preferred = ownerMembership ?? memberships[0];
+      const preferred = memberships[0];
       if (preferred?.tenants) {
         setActiveTenantId(preferred.tenant_id);
-        localStorage.setItem(ACTIVE_TENANT_KEY, preferred.tenant_id);
+        try { localStorage.setItem(getStorageKey(user?.id), preferred.tenant_id); } catch {}
       }
     }
-  }, [memberships, activeTenantId]);
+  }, [memberships, activeTenantId, user?.id]);
 
   // Auto-correct invalid stored tenant selection
   useEffect(() => {
@@ -95,11 +100,10 @@ export const useTenantSwitcher = () => {
       if (activeTenantId && memberships.length > 0) {
         const exists = memberships.some((m) => m.tenant_id === activeTenantId);
         if (!exists) {
-          const ownerMembership = memberships.find((m) => m.roles?.name === "owner");
-          const nextTenant = ownerMembership ?? memberships[0];
+          const nextTenant = memberships[0];
           if (nextTenant?.tenants) {
             setActiveTenantId(nextTenant.tenant_id);
-            localStorage.setItem(ACTIVE_TENANT_KEY, nextTenant.tenant_id);
+            try { localStorage.setItem(getStorageKey(user?.id), nextTenant.tenant_id); } catch {}
             // Refresh queries for corrected tenant
             queryClient.invalidateQueries();
             toast.info(`Switched to ${nextTenant.tenants.name}`, {
@@ -108,8 +112,19 @@ export const useTenantSwitcher = () => {
           }
         }
       }
+      // Migrate old generic key to per-user key when user loads
+      if (user?.id) {
+        try {
+          const legacy = localStorage.getItem(ACTIVE_TENANT_KEY);
+          const userScoped = localStorage.getItem(getStorageKey(user.id));
+          if (!userScoped && legacy) {
+            localStorage.setItem(getStorageKey(user.id), legacy);
+            localStorage.removeItem(ACTIVE_TENANT_KEY);
+          }
+        } catch {}
+      }
     }
-  }, [activeTenantId, memberships, isLoading, queryClient]);
+  }, [activeTenantId, memberships, isLoading, queryClient, user?.id]);
 
   // Switch active tenant
   const switchTenant = (tenantId: string) => {
@@ -120,7 +135,7 @@ export const useTenantSwitcher = () => {
     }
 
     setActiveTenantId(tenantId);
-    localStorage.setItem(ACTIVE_TENANT_KEY, tenantId);
+    try { localStorage.setItem(getStorageKey(user?.id), tenantId); } catch {}
     
     // Invalidate all queries to refresh data for new tenant
     queryClient.invalidateQueries();

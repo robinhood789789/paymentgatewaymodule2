@@ -82,8 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isSuperAdminUser = profileData?.is_super_admin || false;
       setIsSuperAdmin(isSuperAdminUser);
 
-      // Get active tenant from localStorage (same as useTenantSwitcher)
-      const activeTenantId = localStorage.getItem("active_tenant_id");
+      // Get active tenant from localStorage (user-scoped if present)
+      const getKey = (uid?: string) => (uid ? `active_tenant_id:${uid}` : "active_tenant_id");
+      const activeTenantId = localStorage.getItem(getKey(userId)) || localStorage.getItem("active_tenant_id");
 
       // Fetch user membership info - get ALL memberships first
       const { data: allMemberships, error: membershipError } = await supabase
@@ -159,8 +160,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select("role_id, tenant_id")
         .eq("user_id", data.user?.id);
 
-      // Get active tenant or use first membership
-      const activeTenantId = localStorage.getItem("active_tenant_id");
+      // Get active tenant or use first membership (user-scoped if present)
+      const getKey = (uid?: string) => (uid ? `active_tenant_id:${uid}` : "active_tenant_id");
+      const activeTenantId = localStorage.getItem(getKey(data.user?.id)) || localStorage.getItem("active_tenant_id");
       let membership = null;
       
       if (allMemberships && allMemberships.length > 0) {
@@ -287,7 +289,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserRole(null);
       setTenantId(null);
       setTenantName(null);
-      try { localStorage.removeItem("active_tenant_id"); } catch {}
+      try {
+        localStorage.removeItem("active_tenant_id");
+        if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
+      } catch {}
       
       // Sign out from Supabase
       await supabase.auth.signOut();
