@@ -142,6 +142,7 @@ export type Database = {
       }
       api_keys: {
         Row: {
+          allowed_operations: Json | null
           created_at: string | null
           created_by: string | null
           env: string | null
@@ -149,16 +150,21 @@ export type Database = {
           hashed_secret: string
           id: string
           ip_allowlist: Json | null
+          is_active: boolean | null
+          key_type: Database["public"]["Enums"]["api_key_type"]
           last_used_at: string | null
           name: string
           notes: string | null
           prefix: string
+          rate_limit_tier: string | null
           revoked_at: string | null
           scope: Json | null
           status: string | null
           tenant_id: string
+          webhook_endpoints: Json | null
         }
         Insert: {
+          allowed_operations?: Json | null
           created_at?: string | null
           created_by?: string | null
           env?: string | null
@@ -166,16 +172,21 @@ export type Database = {
           hashed_secret: string
           id?: string
           ip_allowlist?: Json | null
+          is_active?: boolean | null
+          key_type?: Database["public"]["Enums"]["api_key_type"]
           last_used_at?: string | null
           name: string
           notes?: string | null
           prefix: string
+          rate_limit_tier?: string | null
           revoked_at?: string | null
           scope?: Json | null
           status?: string | null
           tenant_id: string
+          webhook_endpoints?: Json | null
         }
         Update: {
+          allowed_operations?: Json | null
           created_at?: string | null
           created_by?: string | null
           env?: string | null
@@ -183,14 +194,18 @@ export type Database = {
           hashed_secret?: string
           id?: string
           ip_allowlist?: Json | null
+          is_active?: boolean | null
+          key_type?: Database["public"]["Enums"]["api_key_type"]
           last_used_at?: string | null
           name?: string
           notes?: string | null
           prefix?: string
+          rate_limit_tier?: string | null
           revoked_at?: string | null
           scope?: Json | null
           status?: string | null
           tenant_id?: string
+          webhook_endpoints?: Json | null
         }
         Relationships: [
           {
@@ -1860,8 +1875,13 @@ export type Database = {
         Args: { role_name: string; tenant_uuid: string; user_uuid: string }
         Returns: boolean
       }
+      validate_api_key_access: {
+        Args: { _endpoint: string; _ip: unknown; _prefix: string }
+        Returns: Json
+      }
     }
     Enums: {
+      api_key_type: "internal" | "external"
       kyc_document_type:
         | "national_id"
         | "passport"
@@ -2003,6 +2023,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      api_key_type: ["internal", "external"],
       kyc_document_type: [
         "national_id",
         "passport",

@@ -122,10 +122,27 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { name } = await req.json();
+    const { name, key_type = 'internal', rate_limit_tier = 'standard', scope, ip_allowlist, notes, allowed_operations } = await req.json();
+    
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return new Response(
         JSON.stringify({ error: 'Name is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate key_type
+    if (key_type !== 'internal' && key_type !== 'external') {
+      return new Response(
+        JSON.stringify({ error: 'key_type must be "internal" or "external"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate IP allowlist for external keys
+    if (key_type === 'external' && (!ip_allowlist || ip_allowlist.length === 0)) {
+      return new Response(
+        JSON.stringify({ error: 'External keys require at least one IP in allowlist' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -143,9 +160,19 @@ serve(async (req) => {
         tenant_id: tenantId,
         name: name.trim(),
         prefix: fullKey,
-        hashed_secret: hashedSecret
+        hashed_secret: hashedSecret,
+        created_by: user.id,
+        key_type,
+        rate_limit_tier,
+        scope: scope || { endpoints: ['*'] },
+        ip_allowlist: ip_allowlist || [],
+        allowed_operations: allowed_operations || ['read', 'write'],
+        notes: notes || null,
+        env: 'production',
+        status: 'active',
+        is_active: true
       })
-      .select('id, name, prefix, created_at')
+      .select('id, name, prefix, created_at, key_type, rate_limit_tier')
       .single();
 
     if (insertError) {
@@ -165,7 +192,8 @@ serve(async (req) => {
       after: {
         api_key_id: apiKey.id,
         name: apiKey.name,
-        prefix: apiKey.prefix
+        prefix: apiKey.prefix,
+        key_type: apiKey.key_type
       }
     });
 
