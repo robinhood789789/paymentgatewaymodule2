@@ -283,18 +283,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Clear local state first to prevent components from re-rendering with stale data
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setUserRole(null);
+      setTenantId(null);
+      setTenantName(null);
+      
       // Clear local storage
       try {
         localStorage.removeItem("active_tenant_id");
         if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
       } catch {}
       
-      // Sign out from Supabase and redirect
+      // Sign out from Supabase
       await supabase.auth.signOut();
-      window.location.href = "/auth/sign-in";
+      
+      // Navigate to sign-in page
+      navigate("/auth/sign-in", { replace: true });
     } catch (error) {
       console.error("Sign out error:", error);
-      window.location.href = "/auth/sign-in";
+      // Even on error, clear state and navigate
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setUserRole(null);
+      setTenantId(null);
+      setTenantName(null);
+      navigate("/auth/sign-in", { replace: true });
     }
   };
 
