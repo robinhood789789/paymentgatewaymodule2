@@ -66,36 +66,27 @@ const DashboardSidebar = () => {
   const { activeTenant } = useTenantSwitcher();
 
   const isOwner = activeTenant?.roles?.name === 'owner';
-  const isManager = activeTenant?.roles?.name === 'manager';
 
-  // Limited role gating: admin/manager users see only a minimal, compliance-approved menu
-  const isLimitedRole = (isAdmin || isManager) && !isOwner && !isSuperAdmin;
-  const showOverviewGroup = !isLimitedRole; // Hide overview for admin/manager
-  const showTransactionGroup = true; // Show transaction for everyone (will be filtered per role)
-  const showSettingsDocsGroup = isOwner || isSuperAdmin;
-  const showDebugGroup = !isLimitedRole;
-
+  // Overview section - available to all users
   const userMenuItems = [
     { title: t('dashboard.title'), url: "/dashboard", icon: LayoutDashboard, permission: null }, // Always visible
     { title: t('dashboard.reports'), url: "/reports", icon: BarChart3, permission: "reports.view" },
   ].filter(item => !item.permission || hasPermission(item.permission) || isOwner);
 
-  // Transaction menu items - filtered by permissions
+  // Transaction menu items - filtered by actual permissions
   const allTransactionItems = [
-    { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine, permission: "payments.view" },
-    { title: t('dashboard.withdrawal'), url: "/withdrawal-list", icon: ArrowUpFromLine, permission: "payments.view" },
+    { title: t('dashboard.deposit'), url: "/deposit-list", icon: ArrowDownToLine, permission: "deposits.view" },
+    { title: t('dashboard.withdrawal'), url: "/withdrawal-list", icon: ArrowUpFromLine, permission: "withdrawals.view" },
     { title: t('dashboard.payments'), url: "/payments", icon: CreditCard, permission: "payments.view" },
   ];
   
-  // For Admin/Manager (non-owner, non-super-admin): show ONLY these 3 transactions
-  let transactionMenuItems = isLimitedRole 
-    ? allTransactionItems // Admin/Manager gets all 3 transaction items
-    : allTransactionItems.filter(item => 
-        !item.permission || hasPermission(item.permission) || isOwner
-      );
+  // Filter transaction items based on actual permissions
+  const transactionMenuItems = allTransactionItems.filter(item => 
+    !item.permission || hasPermission(item.permission) || isOwner
+  );
 
-  // System Deposit button - show for Admin/Manager (non-owner, non-super-admin) AND Owner
-  const showSystemDeposit = (isLimitedRole || isOwner) && !isSuperAdmin;
+  // System Deposit button - show for users with deposit permission OR owner
+  const showSystemDeposit = (hasPermission("deposits.create") || isOwner) && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
@@ -118,14 +109,10 @@ const DashboardSidebar = () => {
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign, ownerOnly: true }, // Owner only - sensitive financial data
   ];
   
-  let managementMenuItems = allManagementItems.filter((item: any) =>
+  // Filter management items based on actual permissions
+  const managementMenuItems = allManagementItems.filter((item: any) =>
     (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
-
-  // For Admin/Manager (non-owner, non-super-admin): NO management items
-  if (isLimitedRole) {
-    managementMenuItems = [];
-  }
 
   // Settings menu items - filtered by permissions
   const allSettingsItems = [
@@ -177,7 +164,7 @@ const DashboardSidebar = () => {
         </div>
 
         {/* Main Menu */}
-        {showOverviewGroup && (
+        {userMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -206,7 +193,7 @@ const DashboardSidebar = () => {
         )}
 
         {/* Transaction Menu */}
-        {showTransactionGroup && (
+        {(transactionMenuItems.length > 0 || showSystemDeposit) && (
           <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -246,7 +233,6 @@ const DashboardSidebar = () => {
                           <span className="flex items-center gap-2">
                             เติมเงินเข้าระบบ
                             {isOwner && <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>}
-                            {isLimitedRole && <Badge variant="default" className="text-xs px-1.5 py-0 bg-blue-700 text-white border border-blue-800">{isManager ? 'Manager' : 'Admin'}</Badge>}
                           </span>
                         )}
                       </NavLink>
@@ -315,7 +301,7 @@ const DashboardSidebar = () => {
         )}
 
         {/* Settings & Docs - Only show if user has settings access or if there's API docs */}
-        {showSettingsDocsGroup && (settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
+        {(settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupContent>
               <SidebarMenu>
@@ -373,8 +359,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Debug Menu - Available for testing */}
-        {showDebugGroup && (
+        {/* Debug Menu - Available for testing (not for limited role users) */}
+        {!isSuperAdmin && (isOwner || hasPermission("api_keys.view")) && (
           <SidebarGroup className="border-l-[6px] border-yellow-500 bg-yellow-500/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-yellow-600 font-semibold">Debug</SidebarGroupLabel>
             <SidebarGroupContent>
