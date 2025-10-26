@@ -95,6 +95,8 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+      {/* Alias: support singular path */}
+      <Route path="/payment" element={<Navigate to="/payments" replace />} />
       <Route
         path="/refunds"
         element={
