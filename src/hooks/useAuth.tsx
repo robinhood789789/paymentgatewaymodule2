@@ -283,23 +283,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    // ป้องกัน race condition: รอให้ backend เคลียร์เซสชันก่อนค่อย redirect
+    // โหมดเด็ดขาด: เคลียร์ token ทั้งหมดและเด้งไปหน้า sign-in ทันที
     setSigningOut(true);
 
     try {
-      // ล้างค่า tenant ที่เลือกไว้
+      // เคลียร์ token ของ Supabase ทั้งหมดใน localStorage
       try {
-        localStorage.removeItem("active_tenant_id");
-        if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key) continue;
+          if (key.startsWith("sb-") || key === "active_tenant_id" || (user?.id && key === `active_tenant_id:${user.id}`)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
       } catch {}
 
-      // รอให้ออกจากระบบให้เสร็จ (สำคัญ!)
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.error("Sign out error:", e);
+      // เคลียร์สถานะในเมมโมรีทันที
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setUserRole(null);
+      setTenantId(null);
+      setTenantName(null);
     } finally {
-      // บังคับโหลดใหม่ไปหน้า sign-in เสมอ
+      // เด้งไปหน้า sign-in ทันทีแบบ force reload
       window.location.replace("/auth/sign-in");
+
+      // พยายาม sign out ฝั่ง backend แบบ async (ไม่บล็อค UI)
+      setTimeout(() => {
+        supabase.auth.signOut().catch(() => {});
+      }, 0);
     }
   };
 
