@@ -283,23 +283,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear local storage first
+      // Clear local storage
       try {
         localStorage.removeItem("active_tenant_id");
         if (user?.id) localStorage.removeItem(`active_tenant_id:${user.id}`);
       } catch {}
       
-      // Sign out from Supabase
+      // Sign out from Supabase and redirect
       await supabase.auth.signOut();
-      
-      // Show success message
-      toast.success("ออกจากระบบสำเร็จ");
-      
-      // Force page reload to sign-in page
       window.location.href = "/auth/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
-      // Force redirect even on error
       window.location.href = "/auth/sign-in";
     }
   };
