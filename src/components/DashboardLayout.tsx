@@ -86,6 +86,13 @@ const DashboardSidebar = () => {
       permission: "payments.view",
       roleAccess: ['owner', 'manager'] // Only Owner and Manager can access
     },
+    { 
+      title: "Webhooks", 
+      url: "/webhook-events", 
+      icon: Webhook, 
+      permission: "webhooks.view",
+      roleAccess: ['owner', 'developer', 'manager', 'finance'] // Technical and financial roles
+    },
   ];
   
   // Filter transaction items based on actual permissions

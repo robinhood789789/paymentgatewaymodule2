@@ -29,7 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Webhook, Plus, Trash2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { PermissionGate } from "../PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 
@@ -38,6 +38,7 @@ export const WebhooksManager = () => {
   const [webhookUrl, setWebhookUrl] = useState("");
   const queryClient = useQueryClient();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
+  const { hasPermission } = usePermissions();
 
   const { data: webhooks, isLoading } = useQuery({
     queryKey: ["webhooks"],
@@ -169,33 +170,39 @@ export const WebhooksManager = () => {
     checkAndChallenge(() => deleteWebhookMutation.mutate(webhookId));
   };
 
+  const canManage = hasPermission("webhooks.manage");
+  const canView = hasPermission("webhooks.view");
+  const canTest = hasPermission("webhooks.test");
+  
+  if (!canView && !canManage) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Webhooks</CardTitle>
+          <CardDescription>
+            คุณไม่มีสิทธิ์เข้าถึงส่วนนี้
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
-    <PermissionGate
-      permission="webhooks:manage"
-      fallback={
-        <Card>
-          <CardHeader>
-            <CardTitle>Webhooks</CardTitle>
-            <CardDescription>
-              You don't have permission to manage webhooks
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      }
-    >
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Webhook className="w-5 h-5" />
-                Webhooks
+                Webhook Endpoints
               </CardTitle>
               <CardDescription>
-                Receive real-time notifications about events in your account
+                จัดการ webhook endpoints สำหรับรับ payment events แบบ real-time
               </CardDescription>
             </div>
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            {canManage && (
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="w-4 h-4" />
@@ -236,6 +243,7 @@ export const WebhooksManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -263,30 +271,35 @@ export const WebhooksManager = () => {
                     </p>
                   </div>
                   
-                  <div className="flex items-center gap-2 ml-4">
-                    <Switch
-                      checked={webhook.enabled}
-                      onCheckedChange={(enabled) =>
-                        toggleWebhookMutation.mutate({ id: webhook.id, enabled })
-                      }
-                    />
+                   <div className="flex items-center gap-2 ml-4">
+                    {canManage && (
+                      <Switch
+                        checked={webhook.enabled}
+                        onCheckedChange={(enabled) =>
+                          toggleWebhookMutation.mutate({ id: webhook.id, enabled })
+                        }
+                      />
+                    )}
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleTestWebhook(webhook.id)}
-                      disabled={!webhook.enabled || testWebhookMutation.isPending}
-                      className="gap-2"
-                    >
-                      {testWebhookMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                      Test
-                    </Button>
+                    {(canTest || canManage) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTestWebhook(webhook.id)}
+                        disabled={!webhook.enabled || testWebhookMutation.isPending}
+                        className="gap-2"
+                      >
+                        {testWebhookMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        ทดสอบ
+                      </Button>
+                    )}
                     
-                    <AlertDialog>
+                    {canManage && (
+                      <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="destructive"
@@ -313,6 +326,7 @@ export const WebhooksManager = () => {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))}
@@ -320,13 +334,15 @@ export const WebhooksManager = () => {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No webhooks configured yet</p>
-              <p className="text-sm mt-1">Add a webhook endpoint to receive event notifications</p>
+              <p>ยังไม่มี webhook endpoints</p>
+              {canManage && (
+                <p className="text-sm mt-1">เพิ่ม webhook endpoint เพื่อรับการแจ้งเตือน events</p>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
-    </PermissionGate>
+    </>
   );
 };
