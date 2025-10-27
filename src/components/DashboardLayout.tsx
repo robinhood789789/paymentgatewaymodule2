@@ -156,11 +156,19 @@ const DashboardSidebar = () => {
   ] : [];
 
   const superAdminMenuItems = [
-    { title: "Super Admin Console", url: "/admin", icon: Shield },
+    { title: "Overview", url: "/admin", icon: LayoutDashboard },
+    { title: "Tenants", url: "/admin/tenants", icon: Users },
     { title: "Provision Merchant", url: "/admin/provision-merchant", icon: Users },
-    { title: "Tenant Management", url: "/admin/tenants", icon: Users },
-    { title: "Platform Audit", url: "/platform/audit", icon: Activity },
-    { title: "Platform Security", url: "/platform/security", icon: Shield },
+    { title: "Providers", url: "/platform/providers", icon: KeyRound },
+    { title: "Events", url: "/platform/events", icon: Activity },
+    { title: "Webhooks", url: "/platform/webhooks", icon: Webhook },
+    { title: "Disputes", url: "/platform/disputes", icon: AlertCircle },
+    { title: "Refunds", url: "/platform/refunds", icon: RefreshCw },
+    { title: "Settings", url: "/platform/settings", icon: Settings },
+    { title: "Security", url: "/platform/security", icon: Shield },
+    { title: "Audit", url: "/platform/audit", icon: Activity },
+    { title: "Impersonate", url: "/platform/impersonate", icon: UserCheck },
+    { title: "Status", url: "/platform/status", icon: Activity },
   ];
 
   // Debug menu - always available
