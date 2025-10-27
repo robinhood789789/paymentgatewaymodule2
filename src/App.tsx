@@ -68,6 +68,7 @@ function AppContent() {
       <Route path="/auth/sign-up" element={<SignUp />} />
       <Route path="/auth/two-factor" element={<TwoFactorVerification />} />
       <Route path="/auth/mfa-challenge" element={<MfaChallenge />} />
+      <Route path="/auth/create-super-admin" element={<CreateSuperAdmin />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
       
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
