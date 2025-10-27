@@ -12,6 +12,14 @@ import Index from "./pages/Index";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
 import PlatformSecurity from "./pages/admin/PlatformSecurity";
+import PlatformProviders from "./pages/admin/PlatformProviders";
+import PlatformEvents from "./pages/admin/PlatformEvents";
+import PlatformWebhooks from "./pages/admin/PlatformWebhooks";
+import PlatformDisputes from "./pages/admin/PlatformDisputes";
+import PlatformRefunds from "./pages/admin/PlatformRefunds";
+import PlatformSettings from "./pages/admin/PlatformSettings";
+import PlatformImpersonate from "./pages/admin/PlatformImpersonate";
+import PlatformStatus from "./pages/admin/PlatformStatus";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import TwoFactorVerification from "./pages/TwoFactorVerification";
@@ -320,6 +328,14 @@ function AppContent() {
                 </SuperAdminRoute>
               }
             />
+            <Route path="/platform/providers" element={<SuperAdminRoute><PlatformProviders /></SuperAdminRoute>} />
+            <Route path="/platform/events" element={<SuperAdminRoute><PlatformEvents /></SuperAdminRoute>} />
+            <Route path="/platform/webhooks" element={<SuperAdminRoute><PlatformWebhooks /></SuperAdminRoute>} />
+            <Route path="/platform/disputes" element={<SuperAdminRoute><PlatformDisputes /></SuperAdminRoute>} />
+            <Route path="/platform/refunds" element={<SuperAdminRoute><PlatformRefunds /></SuperAdminRoute>} />
+            <Route path="/platform/settings" element={<SuperAdminRoute><PlatformSettings /></SuperAdminRoute>} />
+            <Route path="/platform/impersonate" element={<SuperAdminRoute><PlatformImpersonate /></SuperAdminRoute>} />
+            <Route path="/platform/status" element={<SuperAdminRoute><PlatformStatus /></SuperAdminRoute>} />
       <Route
         path="/admin/users"
         element={
