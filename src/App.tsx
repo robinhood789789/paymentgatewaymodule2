@@ -36,7 +36,6 @@ import GoLive from "./pages/GoLive";
 import DepositList from "./pages/DepositList";
 import WithdrawalList from "./pages/WithdrawalList";
 import SystemDeposit from "./pages/SystemDeposit";
-import SystemWithdrawal from "./pages/SystemWithdrawal";
 import MDR from "./pages/MDR";
 
 import ActivityHistory from "./pages/ActivityHistory";
@@ -192,16 +191,6 @@ function AppContent() {
           <ProtectedRoute>
             <PermissionGate allowOwner fallback={<Navigate to="/dashboard" replace />}> 
               <SystemDeposit />
-            </PermissionGate>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/system-withdrawal"
-        element={
-          <ProtectedRoute>
-            <PermissionGate allowOwner fallback={<Navigate to="/dashboard" replace />}> 
-              <SystemWithdrawal />
             </PermissionGate>
           </ProtectedRoute>
         }

@@ -897,9 +897,6 @@ export type Database = {
       payments: {
         Row: {
           amount: number
-          bank_account_name: string | null
-          bank_account_number: string | null
-          bank_name: string | null
           checkout_session_id: string | null
           created_at: string | null
           currency: string
@@ -915,13 +912,9 @@ export type Database = {
           status: string
           tenant_id: string | null
           type: string | null
-          withdrawal_notes: string | null
         }
         Insert: {
           amount: number
-          bank_account_name?: string | null
-          bank_account_number?: string | null
-          bank_name?: string | null
           checkout_session_id?: string | null
           created_at?: string | null
           currency: string
@@ -937,13 +930,9 @@ export type Database = {
           status: string
           tenant_id?: string | null
           type?: string | null
-          withdrawal_notes?: string | null
         }
         Update: {
           amount?: number
-          bank_account_name?: string | null
-          bank_account_number?: string | null
-          bank_name?: string | null
           checkout_session_id?: string | null
           created_at?: string | null
           currency?: string
@@ -959,7 +948,6 @@ export type Database = {
           status?: string
           tenant_id?: string | null
           type?: string | null
-          withdrawal_notes?: string | null
         }
         Relationships: [
           {
@@ -1661,39 +1649,27 @@ export type Database = {
           enforce_2fa_roles: Json | null
           features: Json | null
           provider: string
-          require_2fa_for_withdrawal: boolean | null
           security_headers: Json | null
           tenant_id: string
           updated_at: string | null
-          withdrawal_approval_threshold: number | null
-          withdrawal_daily_limit: number | null
-          withdrawal_per_transaction_limit: number | null
         }
         Insert: {
           created_at?: string | null
           enforce_2fa_roles?: Json | null
           features?: Json | null
           provider?: string
-          require_2fa_for_withdrawal?: boolean | null
           security_headers?: Json | null
           tenant_id: string
           updated_at?: string | null
-          withdrawal_approval_threshold?: number | null
-          withdrawal_daily_limit?: number | null
-          withdrawal_per_transaction_limit?: number | null
         }
         Update: {
           created_at?: string | null
           enforce_2fa_roles?: Json | null
           features?: Json | null
           provider?: string
-          require_2fa_for_withdrawal?: boolean | null
           security_headers?: Json | null
           tenant_id?: string
           updated_at?: string | null
-          withdrawal_approval_threshold?: number | null
-          withdrawal_daily_limit?: number | null
-          withdrawal_per_transaction_limit?: number | null
         }
         Relationships: [
           {
@@ -1878,44 +1854,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "webhooks_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      withdrawal_daily_totals: {
-        Row: {
-          created_at: string
-          date: string
-          id: string
-          tenant_id: string
-          total_amount: number
-          transaction_count: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          date?: string
-          id?: string
-          tenant_id: string
-          total_amount?: number
-          transaction_count?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          id?: string
-          tenant_id?: string
-          total_amount?: number
-          transaction_count?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "withdrawal_daily_totals_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
