@@ -246,11 +246,11 @@ const DashboardSidebar = () => {
                   to="/system-deposit"
                   className={({ isActive }) =>
                     isActive
-                      ? "bg-green-600 text-white font-bold shadow-md border-l-4 border-green-700"
+                      ? "bg-green-600 text-green-50 font-bold shadow-md border-l-4 border-green-700"
                       : "bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-600/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
                   }
                 >
-                  <Wallet className="mr-2 h-5 w-5" />
+                  <Wallet className="mr-2 h-5 w-5 text-green-50" />
                   {!isCollapsed && (
                     <span className="flex items-center gap-2">
                       เติมเงินเข้าระบบ
