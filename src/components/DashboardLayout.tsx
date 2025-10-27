@@ -193,8 +193,8 @@ const DashboardSidebar = () => {
           </div>
         </div>
 
-        {/* Main Menu */}
-        {userMenuItems.length > 0 && (
+        {/* Main Menu - Hidden for Super Admin */}
+        {!isSuperAdmin && userMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -222,8 +222,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Transaction Menu */}
-        {(transactionMenuItems.length > 0 || showSystemDeposit) && (
+        {/* Transaction Menu - Hidden for Super Admin */}
+        {!isSuperAdmin && (transactionMenuItems.length > 0 || showSystemDeposit) && (
           <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -297,8 +297,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Owner Menu (Tenant Management) */}
-        {ownerMenuItems.length > 0 && (
+        {/* Owner Menu (Tenant Management) - Hidden for Super Admin */}
+        {!isSuperAdmin && ownerMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-accent font-semibold">Organization</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -325,8 +325,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Management Menu - Only show if user has any management permissions */}
-        {managementMenuItems.length > 0 && (
+        {/* Management Menu - Hidden for Super Admin */}
+        {!isSuperAdmin && managementMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-warning font-semibold">Management</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -353,8 +353,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Settings & Docs - Only show if user has settings access or if there's API docs */}
-        {(settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
+        {/* Settings & Docs - Hidden for Super Admin */}
+        {!isSuperAdmin && (settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupContent>
               <SidebarMenu>
