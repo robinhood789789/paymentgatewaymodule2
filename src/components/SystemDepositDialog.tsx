@@ -97,7 +97,7 @@ export default function SystemDepositDialog() {
       />
       <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2">
+        <Button size="lg" className="gap-2 bg-success hover:bg-success/90">
           <PlusCircle className="h-5 w-5" />
           เติมเงินเข้าระบบ
         </Button>

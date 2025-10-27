@@ -254,7 +254,7 @@ const DashboardSidebar = () => {
                   {!isCollapsed && (
                     <span className="flex items-center gap-2">
                       เติมเงินเข้าระบบ
-                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white">Owner</Badge>
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-success text-success-foreground">Owner</Badge>
                     </span>
                   )}
                 </NavLink>
