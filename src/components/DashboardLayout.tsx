@@ -84,7 +84,7 @@ const DashboardSidebar = () => {
       url: "/payments", 
       icon: CreditCard, 
       permission: "payments.view",
-      roleAccess: ['owner', 'admin', 'manager'] // Specific roles that can access
+      roleAccess: ['owner', 'manager'] // Only Owner and Manager can access
     },
   ];
   

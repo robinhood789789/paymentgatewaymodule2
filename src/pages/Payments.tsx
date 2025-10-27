@@ -4,13 +4,13 @@ import { PaymentsTable } from "@/components/PaymentsTable";
 import { PaymentsStats } from "@/components/PaymentsStats";
 import { useI18n } from "@/lib/i18n";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Payments = () => {
   const { t } = useI18n();
-  const { activeTenant, activeTenantId, isLoading } = useTenantSwitcher();
-  const userRole = activeTenant?.roles?.name;
-  
-  const isAllowedRole = userRole === "owner" || userRole === "admin" || userRole === "manager";
+  const { activeTenantId, isLoading } = useTenantSwitcher();
+  const { hasPermission } = usePermissions();
+  const canViewPayments = hasPermission("payments.view");
   
   return (
     <DashboardLayout>
@@ -28,7 +28,7 @@ const Payments = () => {
               <p className="text-muted-foreground">{t('payments.viewManage')}</p>
             </div>
 
-            {isAllowedRole ? (
+            {canViewPayments ? (
               <>
                 <PaymentsStats />
                 <PaymentsTable />
@@ -36,7 +36,7 @@ const Payments = () => {
             ) : (
               <div className="text-center p-8 border rounded-lg">
                 <p className="text-muted-foreground">
-                  Access restricted to Owner, Admin, and Manager roles only
+                  คุณไม่มีสิทธิ์เข้าถึงหน้านี้
                 </p>
               </div>
             )}

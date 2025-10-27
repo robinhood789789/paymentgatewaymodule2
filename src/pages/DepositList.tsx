@@ -11,6 +11,8 @@ import { ChevronDown, ChevronUp, Calendar, Plus, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type PaymentStatus = "all" | "pending" | "completed" | "expired" | "rejected";
 
@@ -25,12 +27,18 @@ export default function DepositList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterExpanded, setFilterExpanded] = useState(true);
 
+  const { activeTenantId } = useTenantSwitcher();
+  const { hasPermission } = usePermissions();
+
   const { data: deposits, isLoading, refetch } = useQuery({
-    queryKey: ["deposits", statusFilter],
+    queryKey: ["deposits", statusFilter, activeTenantId],
     queryFn: async () => {
+      if (!activeTenantId) return [];
+
       let query = supabase
         .from("payments")
         .select("*")
+        .eq("tenant_id", activeTenantId)
         .eq("type", "deposit")
         .order("created_at", { ascending: false });
 
@@ -42,6 +50,7 @@ export default function DepositList() {
       if (error) throw error;
       return data;
     },
+    enabled: !!activeTenantId,
   });
 
   const statusButtons: { value: PaymentStatus; label: string }[] = [
@@ -69,6 +78,17 @@ export default function DepositList() {
 
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
+
+  if (!hasPermission("deposits.view")) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <h1 className="text-3xl font-bold">Topup List</h1>
+          <p className="text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

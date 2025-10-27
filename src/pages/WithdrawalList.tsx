@@ -11,11 +11,13 @@ import { RefreshCw, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type PaymentStatus = "all" | "pending" | "processing" | "succeeded" | "expired" | "rejected";
 
 export default function WithdrawalList() {
   const { activeTenantId } = useTenantSwitcher();
+  const { hasPermission } = usePermissions();
   const [statusFilter, setStatusFilter] = useState<PaymentStatus>("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,6 +78,17 @@ export default function WithdrawalList() {
 
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
+
+  if (!hasPermission("withdrawals.view")) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <h1 className="text-3xl font-bold">จัดการรายการถอนเงินทั้งหมด</h1>
+          <p className="text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
