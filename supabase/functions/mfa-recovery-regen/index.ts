@@ -44,7 +44,12 @@ serve(async (req) => {
 
     // Generate new recovery codes
     const recoveryCodes = generateBackupCodes(10);
-    const hashedCodes = await Promise.all(recoveryCodes.map(c => hashCode(c.replace(/-/g, ''))));
+    // Hash the codes WITHOUT hyphens for storage
+    const hashedCodes = await Promise.all(
+      recoveryCodes.map(code => hashCode(code.replace(/-/g, '')))
+    );
+
+    console.log(`[MFA Recovery Regen] Generated ${recoveryCodes.length} new recovery codes (hashed)`);
 
     // Update recovery codes in database (invalidates old ones)
     const { error: updateError } = await supabase

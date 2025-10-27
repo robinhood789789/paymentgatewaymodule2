@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { generateTOTPSecret, getTOTPQRCodeUrl } from "../_shared/totp.ts";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,20 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('Unauthorized');
+    }
+
+    // Rate limiting: Max 3 enrollments per hour
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+    const rateLimitKey = `mfa-enroll:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 3, 3600000); // 3 attempts per hour
+
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Too many enrollment attempts. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`[MFA Enroll] User ${user.email} enrolling in 2FA`);
@@ -57,6 +72,8 @@ serve(async (req) => {
         action: 'mfa.enroll.initiated',
         target: `user:${user.id}`,
         tenant_id: null,
+        ip: clientIp,
+        user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
       });
 
     return new Response(

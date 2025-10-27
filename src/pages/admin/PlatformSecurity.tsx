@@ -8,14 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Save, Info } from "lucide-react";
+import { Shield, Save, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 export default function PlatformSecurity() {
   const { user, isSuperAdmin, loading } = useAuth();
   const queryClient = useQueryClient();
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   const [force2faSuperAdmin, setForce2faSuperAdmin] = useState(true);
   const [defaultRequire2faOwner, setDefaultRequire2faOwner] = useState(true);
   const [defaultRequire2faAdmin, setDefaultRequire2faAdmin] = useState(true);
@@ -58,28 +61,31 @@ export default function PlatformSecurity() {
         default_stepup_window_seconds: stepupSeconds,
       };
 
-      if (policy) {
-        // Update existing policy
-        const { error } = await supabase
-          .from("platform_security_policy")
-          .update(policyData)
-          .eq("id", policy.id);
+      // Wrap in MFA challenge
+      await checkAndChallenge(async () => {
+        if (policy) {
+          // Update existing policy
+          const { error } = await supabase
+            .from("platform_security_policy")
+            .update(policyData)
+            .eq("id", policy.id);
 
-        if (error) throw error;
-      } else {
-        // Create new policy
-        const { error } = await supabase
-          .from("platform_security_policy")
-          .insert(policyData);
+          if (error) throw error;
+        } else {
+          // Create new policy
+          const { error } = await supabase
+            .from("platform_security_policy")
+            .insert(policyData);
 
-        if (error) throw error;
-      }
+          if (error) throw error;
+        }
 
-      // Log admin activity
-      await supabase.from("admin_activity").insert({
-        admin_user_id: user?.id,
-        action: "platform.security_policy.updated",
-        details: { before: policy, after: policyData },
+        // Log admin activity
+        await supabase.from("admin_activity").insert({
+          admin_user_id: user?.id,
+          action: "platform.security_policy.updated",
+          details: { before: policy, after: policyData },
+        });
       });
 
       return policyData;
@@ -90,6 +96,48 @@ export default function PlatformSecurity() {
     },
     onError: (error: Error) => {
       toast.error("Failed to update platform security policy", {
+        description: error.message,
+      });
+    },
+  });
+
+  const enforceNowMutation = useMutation({
+    mutationFn: async () => {
+      await checkAndChallenge(async () => {
+        // Update all tenants to use current platform defaults
+        const { error } = await supabase
+          .from("tenant_security_policy")
+          .update({
+            require_2fa_for_owner: defaultRequire2faOwner,
+            require_2fa_for_admin: defaultRequire2faAdmin,
+            stepup_window_seconds: parseInt(defaultStepupWindow),
+          })
+          .neq('tenant_id', '00000000-0000-0000-0000-000000000000'); // Update all
+
+        if (error) throw error;
+
+        // Log enforcement action
+        await supabase.from("admin_activity").insert({
+          admin_user_id: user?.id,
+          action: "platform.security_policy.enforced",
+          details: { 
+            enforced_policy: {
+              require_2fa_for_owner: defaultRequire2faOwner,
+              require_2fa_for_admin: defaultRequire2faAdmin,
+              stepup_window_seconds: parseInt(defaultStepupWindow)
+            }
+          },
+        });
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenant-security-policies"] });
+      toast.success("บังคับใช้นโยบายความปลอดภัยกับทุก Tenant สำเร็จ", {
+        description: "ทุก Tenant จะใช้การตั้งค่าใหม่ทันที"
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("ไม่สามารถบังคับใช้นโยบายได้", {
         description: error.message,
       });
     },
@@ -110,7 +158,13 @@ export default function PlatformSecurity() {
   }
 
   return (
-    <DashboardLayout>
+    <>
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={onSuccess}
+      />
+      <DashboardLayout>
       <div className="container mx-auto py-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -226,11 +280,31 @@ export default function PlatformSecurity() {
               className="w-full"
             >
               <Save className="w-4 h-4 mr-2" />
-              {savePolicyMutation.isPending ? "Saving..." : "Save Platform Defaults"}
+              {savePolicyMutation.isPending ? "กำลังบันทึก..." : "บันทึกค่าเริ่มต้น"}
             </Button>
+
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>บังคับใช้กับทุก Tenant ที่มีอยู่</strong>
+                <p className="mt-2 text-sm">
+                  การกดปุ่มนี้จะอัปเดตนโยบายความปลอดภัยของทุก Tenant ให้ตรงกับค่าเริ่มต้นข้างต้นทันที
+                </p>
+                <Button
+                  variant="destructive"
+                  className="mt-3 w-full"
+                  onClick={() => enforceNowMutation.mutate()}
+                  disabled={enforceNowMutation.isPending}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  {enforceNowMutation.isPending ? "กำลังบังคับใช้..." : "บังคับใช้เดี๋ยวนี้"}
+                </Button>
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </div>
     </DashboardLayout>
+    </>
   );
 }

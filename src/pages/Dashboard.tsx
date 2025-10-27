@@ -13,14 +13,18 @@ import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
 import { useI18n } from "@/lib/i18n";
 import { Link } from "react-router-dom";
 import { useMfaGuard } from "@/hooks/useMfaGuard";
+import { useMfaLoginGuard } from "@/hooks/useMfaLoginGuard";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const { t } = useI18n();
   
-  // Enforce MFA for dashboard access
-  useMfaGuard({ required: true });
+  // Enforce MFA on login (redirects to enrollment or challenge if needed)
+  useMfaLoginGuard();
+  
+  // Additional page-level MFA guard for sensitive operations
+  useMfaGuard({ required: false });
 
   // Wallet balance
   const { data: wallet } = useQuery({

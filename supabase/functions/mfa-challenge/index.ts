@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { verifyTOTP, hashCode } from "../_shared/totp.ts";
+import { checkRateLimit, resetRateLimit } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,6 +30,59 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Rate limiting: Max 5 attempts per minute per user, 15-minute lockout on failure
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+    const rateLimitKey = `mfa-challenge:${user.id}:${clientIp}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 5, 60000, 900000); // 5 attempts, 1 min window, 15 min lockout
+
+    if (!rateLimit.allowed) {
+      if (rateLimit.isLocked) {
+        const lockedMinutes = Math.ceil((rateLimit.lockedUntil! - Date.now()) / 60000);
+        console.log(`[MFA Challenge] User ${user.id} is locked out for ${lockedMinutes} minutes`);
+        
+        // Log failed attempt due to lockout
+        await supabase
+          .from('audit_logs')
+          .insert({
+            actor_user_id: user.id,
+            action: 'mfa.challenge.locked',
+            target: `user:${user.id}`,
+            tenant_id: null,
+            ip: clientIp,
+            user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
+          });
+
+        return new Response(
+          JSON.stringify({ 
+            error: `บัญชีถูกล็อกชั่วคราวเนื่องจากพยายามยืนยันตัวตนหลายครั้ง กรุณารอ ${lockedMinutes} นาที`,
+            code: 'MFA_LOCKED',
+            locked_until: new Date(rateLimit.lockedUntil!).toISOString(),
+            remaining_minutes: lockedMinutes
+          }),
+          { 
+            status: 429,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              'Retry-After': String(Math.ceil((rateLimit.lockedUntil! - Date.now()) / 1000))
+            } 
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many attempts. Please try again later.',
+          remaining: rateLimit.remaining
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[MFA Challenge] User ${user.email} attempting verification (${rateLimit.remaining} attempts remaining)`);
+
     const { code, type = 'totp' } = await req.json();
     if (!code) {
       throw new Error('Missing verification code');
@@ -54,7 +108,7 @@ serve(async (req) => {
       // Verify TOTP code
       isValid = await verifyTOTP(profile.totp_secret || '', code);
     } else if (type === 'recovery' || code.includes('-')) {
-      // Verify recovery code
+      // Verify recovery code - hash and compare
       const cleanCode = code.toUpperCase().replace(/-/g, '');
       const hashedInput = await hashCode(cleanCode);
       const backupCodes = profile.totp_backup_codes || [];
@@ -84,10 +138,16 @@ serve(async (req) => {
           action: 'mfa.challenge.failed',
           target: `user:${user.id}`,
           tenant_id: null,
+          ip: clientIp,
+          user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
         });
 
       throw new Error('Invalid verification code');
     }
+
+    // Success - reset rate limit
+    resetRateLimit(rateLimitKey);
+    console.log(`[MFA Challenge] Verification successful for ${user.email}`);
 
     // Get tenant policy to determine window
     const { data: membership } = await supabase
@@ -123,6 +183,8 @@ serve(async (req) => {
         action: usedRecoveryCode ? 'mfa.challenge.recovery' : 'mfa.challenge.success',
         target: `user:${user.id}`,
         tenant_id: membership?.tenant_id || null,
+        ip: clientIp,
+        user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
       });
 
     return new Response(

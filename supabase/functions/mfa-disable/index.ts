@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { verifyTOTP, hashCode } from "../_shared/totp.ts";
+import { checkRateLimit, resetRateLimit } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,43 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('Unauthorized');
+    }
+
+    // Rate limiting: Max 5 attempts per 10 minutes
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+    const rateLimitKey = `mfa-disable:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 5, 600000, 1800000); // 5 attempts, 10 min, 30 min lockout
+
+    if (!rateLimit.allowed) {
+      if (rateLimit.isLocked) {
+        const lockedMinutes = Math.ceil((rateLimit.lockedUntil! - Date.now()) / 60000);
+        
+        await supabase
+          .from('audit_logs')
+          .insert({
+            actor_user_id: user.id,
+            action: 'mfa.disable.locked',
+            target: `user:${user.id}`,
+            tenant_id: null,
+            ip: clientIp,
+            user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
+          });
+
+        return new Response(
+          JSON.stringify({ 
+            error: `พยายามปิด 2FA หลายครั้ง บัญชีถูกล็อก ${lockedMinutes} นาที`,
+            code: 'MFA_DISABLE_LOCKED'
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ error: 'Too many attempts' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { code, type = 'totp' } = await req.json();
@@ -72,10 +110,15 @@ serve(async (req) => {
           action: 'mfa.disable.failed',
           target: `user:${user.id}`,
           tenant_id: null,
+          ip: clientIp,
+          user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
         });
 
       throw new Error('Invalid verification code');
     }
+
+    // Success - reset rate limit
+    resetRateLimit(rateLimitKey);
 
     // Disable 2FA
     const { error: updateError } = await supabase
@@ -101,6 +144,8 @@ serve(async (req) => {
         action: 'mfa.disabled',
         target: `user:${user.id}`,
         tenant_id: null,
+        ip: clientIp,
+        user_agent: req.headers.get('user-agent')?.substring(0, 255) || null,
       });
 
     return new Response(
