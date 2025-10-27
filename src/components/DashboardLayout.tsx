@@ -246,15 +246,15 @@ const DashboardSidebar = () => {
                   to="/system-deposit"
                   className={({ isActive }) =>
                     isActive
-                      ? "bg-success/90 text-success-foreground font-bold shadow-md border-l-4 border-success"
-                      : "bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-600/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
+                      ? "bg-green-600 text-white font-bold shadow-md border-l-4 border-green-700"
+                      : "bg-green-500/20 hover:bg-green-500/30 border-l-4 border-green-600/70 font-semibold text-green-900 shadow-sm hover:shadow-md transition-all"
                   }
                 >
                   <Wallet className="mr-2 h-5 w-5" />
                   {!isCollapsed && (
                     <span className="flex items-center gap-2">
                       เติมเงินเข้าระบบ
-                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-success text-success-foreground">Owner</Badge>
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white">Owner</Badge>
                     </span>
                   )}
                 </NavLink>
@@ -268,7 +268,7 @@ const DashboardSidebar = () => {
                   className={({ isActive }) =>
                     isActive
                       ? "bg-red-600 text-white font-bold shadow-md border-l-4 border-red-700"
-                      : "bg-red-500/15 hover:bg-red-500/25 border-l-4 border-red-600/60 font-semibold text-red-700 shadow-sm hover:shadow-md transition-all"
+                      : "bg-red-500/20 hover:bg-red-500/30 border-l-4 border-red-600/70 font-semibold text-red-900 shadow-sm hover:shadow-md transition-all"
                   }
                 >
                   <ArrowUpFromLine className="mr-2 h-5 w-5" />
