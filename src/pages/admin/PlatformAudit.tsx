@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,10 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Activity, Filter, Download, RefreshCw, Eye, Shield } from 'lucide-react';
+import { Activity, Filter, Download, RefreshCw, Eye, Shield, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { useMfaGuard } from '@/hooks/useMfaGuard';
+import { use2FAChallenge } from '@/hooks/use2FAChallenge';
+import { TwoFactorChallenge } from '@/components/security/TwoFactorChallenge';
 
 interface AuditLog {
   id: string;
@@ -30,7 +33,8 @@ interface AuditLog {
 }
 
 export default function PlatformAudit() {
-  useMfaGuard({ required: true });
+  const { user, isSuperAdmin, loading } = useAuth();
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState<string>('');
@@ -39,6 +43,18 @@ export default function PlatformAudit() {
   const [tenantFilter, setTenantFilter] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Log page access
+  useEffect(() => {
+    if (user && isSuperAdmin) {
+      supabase.from("audit_logs").insert({
+        action: "super_admin.audit.viewed",
+        actor_user_id: user.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+      });
+    }
+  }, [user, isSuperAdmin]);
 
   const { data: logs, isLoading, refetch } = useQuery<AuditLog[]>({
     queryKey: ['platform-audit-logs', actionFilter, dateFromFilter, dateToFilter, actorFilter, tenantFilter],
@@ -77,6 +93,7 @@ export default function PlatformAudit() {
       if (error) throw error;
       return data || [];
     },
+    enabled: isSuperAdmin,
   });
 
   const getActionBadgeVariant = (action: string) => {
@@ -88,42 +105,58 @@ export default function PlatformAudit() {
 
   const handleExportLarge = async () => {
     if (!logs || logs.length === 0) {
-      toast.error('No data to export');
+      toast.error('ไม่มีข้อมูลให้ส่งออก');
       return;
     }
 
+    const performExport = async () => {
+      const csv = [
+        ['Action', 'Tenant ID', 'Target', 'Actor ID', 'IP Address', 'User Agent', 'Date'].join(','),
+        ...logs.map(log => [
+          log.action,
+          log.tenant_id || '-',
+          log.target || '-',
+          log.actor_user_id || 'System',
+          log.ip || '-',
+          `"${log.user_agent?.replace(/"/g, '""') || '-'}"`,
+          new Date(log.created_at).toISOString()
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const checksum = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+      const checksumHex = Array.from(new Uint8Array(checksum))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `platform-audit-${new Date().toISOString()}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      // Log export action
+      await supabase.from("audit_logs").insert({
+        action: "super_admin.audit.exported",
+        actor_user_id: user?.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+        after: {
+          row_count: logs.length,
+          checksum: checksumHex,
+        },
+      });
+
+      toast.success(`ส่งออกสำเร็จ SHA-256: ${checksumHex.slice(0, 16)}...`);
+    };
+
+    // Require MFA for large exports (>5000 rows)
     if (logs.length > 5000) {
-      toast.info('Large export requires MFA verification');
-      // MFA challenge handled by useMfaGuard
+      checkAndChallenge(performExport);
+    } else {
+      await performExport();
     }
-
-    const csv = [
-      ['Action', 'Tenant ID', 'Target', 'Actor ID', 'IP Address', 'User Agent', 'Date'].join(','),
-      ...logs.map(log => [
-        log.action,
-        log.tenant_id || '-',
-        log.target || '-',
-        log.actor_user_id || 'System',
-        log.ip || '-',
-        `"${log.user_agent?.replace(/"/g, '""') || '-'}"`,
-        new Date(log.created_at).toISOString()
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const checksum = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
-    const checksumHex = Array.from(new Uint8Array(checksum))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `platform-audit-${new Date().toISOString()}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast.success(`Export complete. SHA-256: ${checksumHex.slice(0, 16)}...`);
   };
 
   const handleViewDetails = (log: AuditLog) => {
@@ -157,8 +190,26 @@ export default function PlatformAudit() {
     return redacted;
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
-    <DashboardLayout>
+    <>
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={onSuccess}
+      />
+      <DashboardLayout>
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
@@ -425,5 +476,6 @@ export default function PlatformAudit() {
         </Dialog>
       </div>
     </DashboardLayout>
+    </>
   );
 }

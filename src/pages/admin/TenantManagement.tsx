@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +16,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2, Search, Eye, Settings } from "lucide-react";
+import { Building2, Search, Eye, Settings, Loader2 } from "lucide-react";
 import { CreateOwnerDialog } from "@/components/CreateOwnerDialog";
 
 export default function TenantManagement() {
+  const { user, isSuperAdmin, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Log page access
+  useEffect(() => {
+    if (user && isSuperAdmin) {
+      supabase.from("audit_logs").insert({
+        action: "super_admin.tenants.viewed",
+        actor_user_id: user.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+      });
+    }
+  }, [user, isSuperAdmin]);
 
   const { data: tenants, isLoading } = useQuery({
     queryKey: ["admin-tenants"],
@@ -31,6 +46,7 @@ export default function TenantManagement() {
       if (error) throw error;
       return data;
     },
+    enabled: isSuperAdmin,
   });
 
   const filteredTenants = tenants?.filter(
@@ -64,6 +80,18 @@ export default function TenantManagement() {
         return "bg-gray-500/10 text-gray-500";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <DashboardLayout>

@@ -1,12 +1,26 @@
 import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Activity, TrendingUp, Shield } from "lucide-react";
+import { Building2, Users, Activity, TrendingUp, Shield, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export default function SuperAdminDashboard() {
-  const { user } = useAuth();
+  const { user, isSuperAdmin, loading } = useAuth();
+
+  // Log page access
+  useEffect(() => {
+    if (user && isSuperAdmin) {
+      supabase.from("audit_logs").insert({
+        action: "super_admin.dashboard.viewed",
+        actor_user_id: user.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+      });
+    }
+  }, [user, isSuperAdmin]);
 
   // Fetch platform statistics
   const { data: stats } = useQuery({
@@ -29,7 +43,20 @@ export default function SuperAdminDashboard() {
         totalRevenue,
       };
     },
+    enabled: isSuperAdmin,
   });
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <DashboardLayout>

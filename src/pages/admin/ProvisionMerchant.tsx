@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, UserPlus, Shield, Copy, Check, AlertTriangle } from "lucide-react";
+import { Building2, UserPlus, Shield, Copy, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
@@ -30,9 +32,22 @@ const formSchema = z.object({
 });
 
 export default function ProvisionMerchant() {
+  const { user, isSuperAdmin, loading } = useAuth();
   const [provisionedTenant, setProvisionedTenant] = useState<any>(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
+
+  // Log page access
+  useEffect(() => {
+    if (user && isSuperAdmin) {
+      supabase.from("audit_logs").insert({
+        action: "super_admin.provision.viewed",
+        actor_user_id: user.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+      });
+    }
+  }, [user, isSuperAdmin]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,6 +73,7 @@ export default function ProvisionMerchant() {
       if (error) throw error;
       return data;
     },
+    enabled: isSuperAdmin,
   });
 
   const provisionMutation = useMutation({
@@ -85,9 +101,23 @@ export default function ProvisionMerchant() {
       if (result?.error) throw new Error(result.error);
       return result;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success("Merchant provisioned successfully");
       setProvisionedTenant(data);
+      
+      // Log provisioning action
+      await supabase.from("audit_logs").insert({
+        action: "super_admin.tenant.provisioned",
+        actor_user_id: user?.id,
+        target: data.tenant?.id,
+        ip: null,
+        user_agent: navigator.userAgent,
+        after: {
+          tenant_id: data.tenant?.id,
+          tenant_name: data.tenant?.name,
+          owner_email: data.user?.email,
+        },
+      });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to provision merchant");
@@ -120,6 +150,18 @@ export default function ProvisionMerchant() {
     { id: "advanced_reporting", label: "Advanced Reporting" },
     { id: "multi_currency", label: "Multi-Currency Support" },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (provisionedTenant) {
     return (
