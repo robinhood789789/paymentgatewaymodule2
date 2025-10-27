@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { toast } from "sonner";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,7 @@ import { Plus } from "lucide-react";
 
 export function DepositRequestDialog() {
   const [open, setOpen] = useState(false);
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("THB");
   const [method, setMethod] = useState("bank_transfer");
@@ -57,7 +60,7 @@ export function DepositRequestDialog() {
     setReason("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const amountNum = parseFloat(amount);
@@ -71,18 +74,27 @@ export function DepositRequestDialog() {
       return;
     }
 
-    createRequestMutation.mutate({
-      amount: Math.round(amountNum * 100),
-      currency,
-      method,
-      reference,
-      notes,
-      reason,
+    // MFA Challenge before proceeding
+    await checkAndChallenge(() => {
+      createRequestMutation.mutate({
+        amount: Math.round(amountNum * 100),
+        currency,
+        method,
+        reference,
+        notes,
+        reason,
+      });
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={onSuccess}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Plus className="mr-2 h-4 w-4" />
@@ -185,5 +197,6 @@ export function DepositRequestDialog() {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

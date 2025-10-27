@@ -10,7 +10,7 @@ interface RequireStepUpOptions {
   supabase: any;
   userId: string;
   tenantId?: string;
-  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts' | 'reconciliation' | 'export-large';
+  action: 'create-payment' | 'refund' | 'api-keys' | 'webhooks' | 'roles' | 'payout' | 'approvals' | 'alerts' | 'reconciliation' | 'export-large' | 'system_deposit' | 'system_withdrawal' | 'deposit_request' | 'withdrawal_request';
   userRole?: string;
   isSuperAdmin?: boolean;
 }
@@ -98,6 +98,12 @@ export async function requireStepUp(options: RequireStepUpOptions): Promise<Step
   if (userRole === 'owner' && policy.require_2fa_for_owner) {
     mfaRequired = true;
   } else if (userRole === 'admin' && policy.require_2fa_for_admin) {
+    mfaRequired = true;
+  } else if (userRole === 'manager' && policy.require_2fa_for_manager) {
+    mfaRequired = true;
+  } else if (userRole === 'finance' && policy.require_2fa_for_finance) {
+    mfaRequired = true;
+  } else if (userRole === 'developer' && policy.require_2fa_for_developer) {
     mfaRequired = true;
   }
 

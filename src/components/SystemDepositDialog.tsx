@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +16,7 @@ import { useI18n } from "@/lib/i18n";
 export default function SystemDepositDialog() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("THB");
   const [method, setMethod] = useState("bank_transfer");
@@ -61,7 +64,7 @@ export default function SystemDepositDialog() {
     setNotes("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const amountNum = parseFloat(amount);
@@ -73,17 +76,26 @@ export default function SystemDepositDialog() {
     // Convert to smallest currency unit (cents/satang)
     const amountInCents = Math.round(amountNum * 100);
 
-    createDepositMutation.mutate({
-      amount: amountInCents,
-      currency,
-      method,
-      reference: reference || undefined,
-      notes: notes || undefined,
+    // MFA Challenge before proceeding
+    const canProceed = await checkAndChallenge(() => {
+      createDepositMutation.mutate({
+        amount: amountInCents,
+        currency,
+        method,
+        reference: reference || undefined,
+        notes: notes || undefined,
+      });
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <TwoFactorChallenge
+        open={mfaOpen}
+        onOpenChange={setMfaOpen}
+        onSuccess={onSuccess}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className="gap-2">
           <PlusCircle className="h-5 w-5" />
@@ -184,5 +196,6 @@ export default function SystemDepositDialog() {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

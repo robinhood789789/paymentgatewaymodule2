@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,6 +56,19 @@ serve(async (req) => {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // MFA Step-up check
+    const mfaCheck = await requireStepUp({
+      supabase: supabaseClient as any,
+      userId: user.id,
+      tenantId,
+      action: 'withdrawal_request',
+      userRole
+    });
+
+    if (!mfaCheck.ok) {
+      return createMfaError(mfaCheck.code!, mfaCheck.message!);
     }
 
     const { amount, currency, method, bank_name, bank_account_number, bank_account_name, notes, reason } = await req.json();
