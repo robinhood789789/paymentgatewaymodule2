@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Dispute {
   id: string;
@@ -54,35 +55,44 @@ const PlatformDisputes = () => {
   const loadDisputes = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual cross-tenant disputes query
-      const mockDisputes: Dispute[] = [
-        {
-          id: "disp_1",
-          payment_id: "pay_123",
-          tenant_id: "tenant_1",
-          tenant_name: "Merchant A",
-          amount: 5000,
-          currency: "THB",
-          reason: "fraudulent",
-          status: "under_review",
-          created_at: new Date().toISOString(),
-          due_by: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "disp_2",
-          payment_id: "pay_456",
-          tenant_id: "tenant_2",
-          tenant_name: "Merchant B",
-          amount: 2000,
-          currency: "THB",
-          reason: "product_not_received",
-          status: "pending",
-          created_at: new Date().toISOString(),
-        },
-      ];
-      setDisputes(mockDisputes);
+      // Cross-tenant query - Super Admin can see all
+      const { data, error } = await supabase
+        .from("disputes")
+        .select(`
+          id,
+          payment_id,
+          tenant_id,
+          tenants!inner(name),
+          amount,
+          currency,
+          reason,
+          status,
+          stage,
+          due_at,
+          created_at
+        `)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      const transformedDisputes = data?.map((d: any) => ({
+        id: d.id,
+        payment_id: d.payment_id,
+        tenant_id: d.tenant_id,
+        tenant_name: d.tenants?.name || "Unknown",
+        amount: d.amount,
+        currency: d.currency,
+        reason: d.reason,
+        status: d.status || d.stage,
+        created_at: d.created_at,
+        due_by: d.due_at,
+      })) || [];
+
+      setDisputes(transformedDisputes);
     } catch (error) {
       console.error("Error loading disputes:", error);
+      toast.error("ไม่สามารถโหลด disputes ได้");
     } finally {
       setLoading(false);
     }

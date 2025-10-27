@@ -46,14 +46,34 @@ const PlatformProviders = () => {
   const loadProviders = async () => {
     setLoading(true);
     try {
-      // Load from secrets or database
-      const defaultProviders = [
-        { provider: "stripe", api_key: "", secret_key: "", webhook_secret: "" },
-        { provider: "omise", api_key: "", secret_key: "", webhook_secret: "" },
-        { provider: "2c2p", api_key: "", secret_key: "", webhook_secret: "" },
-        { provider: "kbank", api_key: "", secret_key: "", webhook_secret: "" },
-      ];
-      setProviders(defaultProviders);
+      const { data, error } = await supabase
+        .from("platform_provider_credentials")
+        .select("*")
+        .order("provider", { ascending: true });
+
+      if (error) throw error;
+
+      const providersMap: Record<string, ProviderCredentials> = {
+        stripe: { provider: "stripe", api_key: "", secret_key: "", webhook_secret: "" },
+        omise: { provider: "omise", api_key: "", secret_key: "", webhook_secret: "" },
+        "2c2p": { provider: "2c2p", api_key: "", secret_key: "", webhook_secret: "" },
+        kbank: { provider: "kbank", api_key: "", secret_key: "", webhook_secret: "" },
+      };
+
+      // Populate with existing data
+      data?.forEach((cred) => {
+        if (providersMap[cred.provider]) {
+          providersMap[cred.provider] = {
+            provider: cred.provider,
+            api_key: cred.public_key || "",
+            secret_key: cred.secret_key || "",
+            webhook_secret: cred.webhook_secret || "",
+            last_rotated_at: cred.last_rotated_at,
+          };
+        }
+      });
+
+      setProviders(Object.values(providersMap));
     } catch (error) {
       console.error("Error loading providers:", error);
       toast.error("ไม่สามารถโหลดข้อมูล Provider ได้");
@@ -69,20 +89,35 @@ const PlatformProviders = () => {
         const providerData = providers.find(p => p.provider === provider);
         if (!providerData) return;
 
-        // Audit: Before state
+        // Upsert provider credentials
+        const { error } = await supabase
+          .from("platform_provider_credentials")
+          .upsert({
+            provider: provider,
+            mode: "production",
+            public_key: providerData.api_key,
+            secret_key: providerData.secret_key,
+            webhook_secret: providerData.webhook_secret,
+            created_by: user!.id,
+            last_rotated_at: new Date().toISOString(),
+          }, {
+            onConflict: "provider,mode",
+          });
+
+        if (error) throw error;
+
+        // Audit log
         await supabase.from("audit_logs").insert({
-          actor_id: user!.id,
+          actor_user_id: user!.id,
           action: "platform.providers.update",
-          target_type: "provider_credentials",
-          target_id: provider,
-          before_state: { provider, masked: true },
-          after_state: { provider, updated: true, last_rotated_at: new Date().toISOString() },
-          ip_address: "",
+          target: `${provider}_credentials`,
+          after: { provider, updated: true, last_rotated_at: new Date().toISOString() },
+          ip: "",
           user_agent: navigator.userAgent,
         });
 
-        // Save to secrets (implementation depends on backend)
         toast.success(`บันทึก ${provider.toUpperCase()} สำเร็จ`);
+        await loadProviders();
       } catch (error) {
         console.error("Error saving provider:", error);
         toast.error("ไม่สามารถบันทึกข้อมูลได้");

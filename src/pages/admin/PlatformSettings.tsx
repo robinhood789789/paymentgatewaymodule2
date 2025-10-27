@@ -57,16 +57,21 @@ const PlatformSettings = () => {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      // Load from database or use defaults
-      setSettings({
-        default_fee_percentage: 2.9,
-        default_fee_fixed: 3.0,
-        maintenance_mode: false,
-        maintenance_message: "ระบบอยู่ระหว่างการปรับปรุง กรุณากลับมาใหม่ภายหลัง",
-        new_tenant_auto_approve: false,
-        webhook_retry_max: 5,
-        webhook_retry_backoff_seconds: 300,
-      });
+      const { data, error } = await supabase.functions.invoke("platform-settings-get");
+      
+      if (error) throw error;
+      
+      if (data?.settings) {
+        setSettings({
+          default_fee_percentage: data.settings.default_fee_percentage?.value || 2.9,
+          default_fee_fixed: data.settings.default_fee_fixed?.value || 3.0,
+          maintenance_mode: data.settings.maintenance_mode?.enabled || false,
+          maintenance_message: data.settings.maintenance_mode?.message || "ระบบอยู่ระหว่างการปรับปรุง กรุณากลับมาใหม่ภายหลัง",
+          new_tenant_auto_approve: data.settings.new_tenant_auto_approve?.enabled || false,
+          webhook_retry_max: data.settings.webhook_retry_max?.value || 5,
+          webhook_retry_backoff_seconds: data.settings.webhook_retry_backoff_seconds?.value || 300,
+        });
+      }
     } catch (error) {
       console.error("Error loading settings:", error);
       toast.error("ไม่สามารถโหลดการตั้งค่าได้");
@@ -79,16 +84,23 @@ const PlatformSettings = () => {
     await checkAndChallenge(async () => {
       setSaving(true);
       try {
-        // Audit: Before and after state
-        await supabase.from("audit_logs").insert({
-          actor_id: user!.id,
-          action: "platform.settings.update",
-          target_type: "platform_settings",
-          before_state: {},
-          after_state: settings,
-          ip_address: "",
-          user_agent: navigator.userAgent,
+        const settingsToSave = {
+          default_fee_percentage: { value: settings.default_fee_percentage },
+          default_fee_fixed: { value: settings.default_fee_fixed },
+          maintenance_mode: { 
+            enabled: settings.maintenance_mode, 
+            message: settings.maintenance_message 
+          },
+          new_tenant_auto_approve: { enabled: settings.new_tenant_auto_approve },
+          webhook_retry_max: { value: settings.webhook_retry_max },
+          webhook_retry_backoff_seconds: { value: settings.webhook_retry_backoff_seconds },
+        };
+
+        const { error } = await supabase.functions.invoke("platform-settings-update", {
+          body: { settings: settingsToSave },
         });
+
+        if (error) throw error;
 
         toast.success("บันทึกการตั้งค่าสำเร็จ");
       } catch (error) {

@@ -68,24 +68,33 @@ const PlatformWebhooks = () => {
   const loadWebhooks = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual DLQ query
-      const mockWebhooks: WebhookEvent[] = [
-        {
-          id: "wh_1",
-          event_type: "payment.succeeded",
-          tenant_id: "tenant_1",
-          tenant_name: "Merchant A",
-          payload: { amount: 1000 },
-          status: "failed",
-          retry_count: 3,
-          last_attempt_at: new Date().toISOString(),
-          next_retry_at: new Date(Date.now() + 300000).toISOString(),
-          created_at: new Date().toISOString(),
-        },
-      ];
-      setWebhooks(mockWebhooks);
+      const { data, error } = await supabase
+        .from("webhook_dlq")
+        .select(`
+          id,
+          event_id,
+          event_type,
+          tenant_id,
+          tenant_name,
+          payload,
+          status,
+          retry_count,
+          max_retries,
+          last_attempt_at,
+          next_retry_at,
+          created_at
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setWebhooks((data || []).map(w => ({
+        ...w,
+        status: (w.status as "pending" | "delivered" | "failed") || "pending",
+      })));
     } catch (error) {
       console.error("Error loading webhooks:", error);
+      toast.error("ไม่สามารถโหลด webhooks ได้");
     } finally {
       setLoading(false);
     }
@@ -94,14 +103,11 @@ const PlatformWebhooks = () => {
   const handleReplay = async (webhookId: string) => {
     const action = async () => {
       try {
-        await supabase.from("audit_logs").insert({
-          actor_id: user!.id,
-          action: "platform.webhooks.replay",
-          target_type: "webhook_event",
-          target_id: webhookId,
-          ip_address: "",
-          user_agent: navigator.userAgent,
+        const { error } = await supabase.functions.invoke("webhooks-replay", {
+          body: { webhookId },
         });
+
+        if (error) throw error;
 
         toast.success("Webhook ถูก replay สำเร็จ");
         await loadWebhooks();

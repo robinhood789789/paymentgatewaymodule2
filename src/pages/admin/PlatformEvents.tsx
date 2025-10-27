@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface Event {
   id: string;
@@ -61,32 +62,31 @@ const PlatformEvents = () => {
   const loadEvents = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual webhook_events query
-      const mockEvents: Event[] = [
-        {
-          id: "evt_1",
-          event_type: "payment.succeeded",
-          tenant_id: "tenant_1",
-          tenant_name: "Merchant A",
-          payload: { amount: 1000, currency: "THB" },
-          signature_verified: true,
-          created_at: new Date().toISOString(),
-          status: "processed",
-        },
-        {
-          id: "evt_2",
-          event_type: "payment.failed",
-          tenant_id: "tenant_2",
-          tenant_name: "Merchant B",
-          payload: { amount: 500, currency: "THB" },
-          signature_verified: false,
-          created_at: new Date().toISOString(),
-          status: "failed",
-        },
-      ];
-      setEvents(mockEvents);
+      // Query provider_events for cross-tenant view
+      const { data, error } = await supabase
+        .from("provider_events")
+        .select("*")
+        .order("received_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      // Transform to UI format (simplified - in real app would need tenant mapping)
+      const transformedEvents: Event[] = data?.map((e: any) => ({
+        id: e.id,
+        event_type: e.type,
+        tenant_id: e.payload?.tenant_id || "unknown",
+        tenant_name: "Tenant", // Would need join with tenants table
+        payload: e.payload,
+        signature_verified: true, // Would check actual verification
+        created_at: e.received_at,
+        status: "processed",
+      })) || [];
+
+      setEvents(transformedEvents);
     } catch (error) {
       console.error("Error loading events:", error);
+      toast.error("ไม่สามารถโหลด events ได้");
     } finally {
       setLoading(false);
     }

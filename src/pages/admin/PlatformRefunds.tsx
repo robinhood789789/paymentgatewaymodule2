@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Refund {
   id: string;
@@ -54,35 +55,41 @@ const PlatformRefunds = () => {
   const loadRefunds = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual cross-tenant refunds query
-      const mockRefunds: Refund[] = [
-        {
-          id: "ref_1",
-          payment_id: "pay_123",
-          tenant_id: "tenant_1",
-          tenant_name: "Merchant A",
-          amount: 3000,
-          currency: "THB",
-          reason: "customer_request",
-          status: "succeeded",
-          created_at: new Date().toISOString(),
-          processed_at: new Date().toISOString(),
-        },
-        {
-          id: "ref_2",
-          payment_id: "pay_456",
-          tenant_id: "tenant_2",
-          tenant_name: "Merchant B",
-          amount: 1500,
-          currency: "THB",
-          reason: "duplicate",
-          status: "processing",
-          created_at: new Date().toISOString(),
-        },
-      ];
-      setRefunds(mockRefunds);
+      // Cross-tenant query - Super Admin can see all
+      const { data, error } = await supabase
+        .from("refunds")
+        .select(`
+          id,
+          payment_id,
+          tenant_id,
+          tenants!inner(name),
+          amount,
+          reason,
+          status,
+          created_at
+        `)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      const transformedRefunds = data?.map((r: any) => ({
+        id: r.id,
+        payment_id: r.payment_id,
+        tenant_id: r.tenant_id,
+        tenant_name: r.tenants?.name || "Unknown",
+        amount: r.amount,
+        currency: "THB",
+        reason: r.reason || "customer_request",
+        status: r.status,
+        created_at: r.created_at,
+        processed_at: r.status === "succeeded" ? r.created_at : undefined,
+      })) || [];
+
+      setRefunds(transformedRefunds);
     } catch (error) {
       console.error("Error loading refunds:", error);
+      toast.error("ไม่สามารถโหลด refunds ได้");
     } finally {
       setLoading(false);
     }
