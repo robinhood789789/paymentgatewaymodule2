@@ -237,29 +237,52 @@ const DashboardSidebar = () => {
                   </SidebarMenuItem>
                 ))}
                 
-                {/* System Deposit - visible to Admin and Owner */}
-                {showSystemDeposit && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to="/system-deposit"
-                        className={({ isActive }) =>
-                          isActive
-                            ? "bg-primary text-green-800 font-bold shadow-md border-l-4 border-primary"
-                            : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
-                        }
-                      >
-                        <Wallet className="mr-2 h-5 w-5 text-black" />
-                        {!isCollapsed && (
-                          <span className="flex items-center gap-2">
-                            เติมเงินเข้าระบบ
-                            {isOwner && <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>}
-                          </span>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+        {/* System Deposit and Withdrawal - Owner only */}
+        {showSystemDeposit && (
+          <>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/system-deposit"
+                  className={({ isActive }) =>
+                    isActive
+                      ? "bg-green-600 text-white font-bold shadow-md border-l-4 border-green-700"
+                      : "bg-green-500/15 hover:bg-green-500/25 border-l-4 border-green-600/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
+                  }
+                >
+                  <Wallet className="mr-2 h-5 w-5" />
+                  {!isCollapsed && (
+                    <span className="flex items-center gap-2">
+                      เติมเงินเข้าระบบ
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white">Owner</Badge>
+                    </span>
+                  )}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to="/system-withdrawal"
+                  className={({ isActive }) =>
+                    isActive
+                      ? "bg-red-600 text-white font-bold shadow-md border-l-4 border-red-700"
+                      : "bg-red-500/15 hover:bg-red-500/25 border-l-4 border-red-600/60 font-semibold text-red-700 shadow-sm hover:shadow-md transition-all"
+                  }
+                >
+                  <ArrowUpFromLine className="mr-2 h-5 w-5" />
+                  {!isCollapsed && (
+                    <span className="flex items-center gap-2">
+                      ถอนเงินออกระบบ
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-red-700 text-white">Owner</Badge>
+                    </span>
+                  )}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </>
+        )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

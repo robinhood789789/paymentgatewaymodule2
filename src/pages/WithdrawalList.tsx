@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
+import { WithdrawalRequestDialog } from "@/components/WithdrawalRequestDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,11 +17,15 @@ import { usePermissions } from "@/hooks/usePermissions";
 type PaymentStatus = "all" | "pending" | "processing" | "succeeded" | "expired" | "rejected";
 
 export default function WithdrawalList() {
-  const { activeTenantId } = useTenantSwitcher();
+  const { activeTenantId, activeTenant } = useTenantSwitcher();
   const { hasPermission } = usePermissions();
   const [statusFilter, setStatusFilter] = useState<PaymentStatus>("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Check user role
+  const userRole = activeTenant?.roles?.name;
+  const canCreateRequest = userRole === 'admin' || userRole === 'manager';
 
   const { data: withdrawals, isLoading, refetch } = useQuery({
     queryKey: ["withdrawals", statusFilter, activeTenantId],
@@ -95,6 +100,7 @@ export default function WithdrawalList() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">จัดการรายการถอนเงินทั้งหมด</h1>
+          {canCreateRequest && <WithdrawalRequestDialog />}
         </div>
 
         <Card>

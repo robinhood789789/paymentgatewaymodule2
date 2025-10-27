@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
+import { DepositRequestDialog } from "@/components/DepositRequestDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,8 +28,12 @@ export default function DepositList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterExpanded, setFilterExpanded] = useState(true);
 
-  const { activeTenantId } = useTenantSwitcher();
+  const { activeTenantId, activeTenant } = useTenantSwitcher();
   const { hasPermission } = usePermissions();
+
+  // Check user role
+  const userRole = activeTenant?.roles?.name;
+  const canCreateRequest = userRole === 'admin' || userRole === 'manager';
 
   const { data: deposits, isLoading, refetch } = useQuery({
     queryKey: ["deposits", statusFilter, activeTenantId],
@@ -95,18 +100,7 @@ export default function DepositList() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Topup List</h1>
-          <Button 
-            size="lg"
-            className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold"
-            onClick={() => {
-              // TODO: Open deposit dialog or navigate to deposit page
-              console.log("Deposit clicked");
-            }}
-          >
-            <Wallet className="mr-2 h-5 w-5" />
-            เติมเงิน
-            <Plus className="ml-2 h-5 w-5" />
-          </Button>
+          {canCreateRequest && <DepositRequestDialog />}
         </div>
 
         <Card>
