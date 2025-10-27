@@ -106,14 +106,18 @@ const DashboardSidebar = () => {
     return !item.permission || hasPermission(item.permission) || isOwner;
   });
 
-  // System Deposit button - show for owner only
-  const showSystemDeposit = isOwner && !isSuperAdmin;
+  // System Deposit and Withdrawal buttons - show for owner only
+  const showSystemFinancials = isOwner && !isSuperAdmin;
 
   // Owner menu items (tenant-level management)
   const ownerMenuItems = isOwner ? [
     { title: t('dashboard.staffMembers'), url: "/admin/users", icon: Users },
     { title: t('dashboard.approvals'), url: "/approvals", icon: Shield },
     { title: t('dashboard.activityHistory'), url: "/activity-history", icon: Activity },
+    ...(showSystemFinancials ? [
+      { title: "เติมเงินระบบ", url: "/system-deposit", icon: Wallet },
+      { title: "ถอนเงินระบบ", url: "/system-withdrawal", icon: ArrowUpFromLine },
+    ] : []),
   ] : [];
 
   // Management menu items - filtered by permissions
@@ -214,7 +218,7 @@ const DashboardSidebar = () => {
         )}
 
         {/* Transaction Menu */}
-        {(transactionMenuItems.length > 0 || showSystemDeposit) && (
+        {transactionMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -236,30 +240,6 @@ const DashboardSidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
-                
-                {/* System Deposit - visible to Admin and Owner */}
-                {showSystemDeposit && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to="/system-deposit"
-                        className={({ isActive }) =>
-                          isActive
-                            ? "bg-primary text-green-800 font-bold shadow-md border-l-4 border-primary"
-                            : "bg-primary/15 hover:bg-primary/25 border-l-4 border-primary/60 font-semibold text-green-700 shadow-sm hover:shadow-md transition-all"
-                        }
-                      >
-                        <Wallet className="mr-2 h-5 w-5 text-black" />
-                        {!isCollapsed && (
-                          <span className="flex items-center gap-2">
-                            เติมเงินเข้าระบบ
-                            {isOwner && <Badge variant="default" className="text-xs px-1.5 py-0 bg-green-700 text-white border border-green-800">Owner</Badge>}
-                          </span>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
