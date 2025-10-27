@@ -139,6 +139,7 @@ const DashboardSidebar = () => {
   const allSettingsItems = [
     { title: t('dashboard.settings'), url: "/settings", icon: Settings, permission: "settings.view" },
     { title: 'API Docs', url: "/docs", icon: Book, ownerOnly: true },
+    { title: 'คู่มือการทดสอบ', url: "/testing-guide", icon: FileCheck, ownerOnly: true },
   ];
   
   const settingsMenuItems = allSettingsItems.filter((item: any) =>

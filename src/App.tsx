@@ -55,6 +55,7 @@ import PyramidAuthority from "./pages/PyramidAuthority";
 import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
+import TestingGuide from "./pages/TestingGuide";
 
 const queryClient = new QueryClient();
 
@@ -160,6 +161,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Docs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/testing-guide"
+        element={
+          <ProtectedRoute>
+            <TestingGuide />
           </ProtectedRoute>
         }
       />
