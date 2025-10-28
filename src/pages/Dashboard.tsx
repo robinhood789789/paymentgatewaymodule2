@@ -1,32 +1,50 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, ArrowDownRight, Users, Activity, TrendingUp, TrendingDown } from "lucide-react";
+import { 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Activity, 
+  TrendingUp, 
+  TrendingDown,
+  Shield,
+  AlertCircle,
+  Webhook,
+  Key,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Zap,
+  DollarSign,
+  RefreshCw,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { RequireTenant } from "@/components/RequireTenant";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
-import { useI18n } from "@/lib/i18n";
 import { Link } from "react-router-dom";
 import { useMfaGuard } from "@/hooks/useMfaGuard";
 import { useMfaLoginGuard } from "@/hooks/useMfaLoginGuard";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { useRoleVisibility } from "@/hooks/useRoleVisibility";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
-  const { t } = useI18n();
+  const roleVisibility = useRoleVisibility();
+  const mfaChallenge = use2FAChallenge();
   
-  // Enforce MFA on login (redirects to enrollment or challenge if needed)
   useMfaLoginGuard();
-  
-  // Additional page-level MFA guard for sensitive operations
   useMfaGuard({ required: false });
 
-  // Wallet balance
+  // Financial queries (Owner/Manager/Finance)
   const { data: wallet } = useQuery({
     queryKey: ["wallet", activeTenantId],
     queryFn: async () => {
@@ -38,10 +56,9 @@ const Dashboard = () => {
         .single();
       return data;
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
   });
 
-  // Current month deposits
   const { data: currentMonthDeposits, isLoading: loadingCurrentDeposits } = useQuery({
     queryKey: ["deposits-current-month", activeTenantId],
     queryFn: async () => {
@@ -58,10 +75,9 @@ const Dashboard = () => {
       const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
       return { total: total / 100, count: data?.length || 0 };
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
   });
 
-  // Last month deposits
   const { data: lastMonthDeposits } = useQuery({
     queryKey: ["deposits-last-month", activeTenantId],
     queryFn: async () => {
@@ -80,86 +96,9 @@ const Dashboard = () => {
       const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
       return { total: total / 100 };
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
   });
 
-  // Current month withdrawals
-  const { data: currentMonthWithdrawals, isLoading: loadingCurrentWithdrawals } = useQuery({
-    queryKey: ["withdrawals-current-month", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return { total: 0, count: 0 };
-      const startDate = startOfMonth(new Date());
-      const { data } = await supabase
-        .from("payments")
-        .select("amount")
-        .eq("tenant_id", activeTenantId)
-        .eq("type", "withdrawal")
-        .eq("status", "succeeded")
-        .gte("created_at", startDate.toISOString());
-      
-      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
-      return { total: total / 100, count: data?.length || 0 };
-    },
-    enabled: !!activeTenantId,
-  });
-
-  // Last month withdrawals
-  const { data: lastMonthWithdrawals } = useQuery({
-    queryKey: ["withdrawals-last-month", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return { total: 0 };
-      const startDate = startOfMonth(subMonths(new Date(), 1));
-      const endDate = startOfMonth(new Date());
-      const { data } = await supabase
-        .from("payments")
-        .select("amount")
-        .eq("tenant_id", activeTenantId)
-        .eq("type", "withdrawal")
-        .eq("status", "succeeded")
-        .gte("created_at", startDate.toISOString())
-        .lt("created_at", endDate.toISOString());
-      
-      const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
-      return { total: total / 100 };
-    },
-    enabled: !!activeTenantId,
-  });
-
-  // Today's transactions
-  const { data: todayStats } = useQuery({
-    queryKey: ["today-stats", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return { count: 0 };
-      const today = startOfDay(new Date());
-      const { data } = await supabase
-        .from("payments")
-        .select("id")
-        .eq("tenant_id", activeTenantId)
-        .gte("created_at", today.toISOString());
-      
-      return { count: data?.length || 0 };
-    },
-    enabled: !!activeTenantId,
-  });
-
-  // All transactions
-  const { data: allTransactions } = useQuery({
-    queryKey: ["all-transactions", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return { deposits: 0, withdrawals: 0 };
-      const { data } = await supabase
-        .from("payments")
-        .select("type")
-        .eq("tenant_id", activeTenantId);
-      
-      const deposits = data?.filter(p => p.type === "deposit").length || 0;
-      const withdrawals = data?.filter(p => p.type === "withdrawal").length || 0;
-      return { deposits, withdrawals };
-    },
-    enabled: !!activeTenantId,
-  });
-
-  // Deposit transactions
   const { data: depositStats } = useQuery({
     queryKey: ["deposit-stats", activeTenantId],
     queryFn: async () => {
@@ -173,42 +112,75 @@ const Dashboard = () => {
       const successful = data?.filter(p => p.status === "succeeded").length || 0;
       return { total: data?.length || 0, successful };
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
   });
 
-  // Withdrawal transactions
-  const { data: withdrawalStats } = useQuery({
-    queryKey: ["withdrawal-stats", activeTenantId],
-    queryFn: async () => {
-      if (!activeTenantId) return { total: 0, successful: 0 };
-      const { data } = await supabase
-        .from("payments")
-        .select("status")
-        .eq("tenant_id", activeTenantId)
-        .eq("type", "withdrawal");
-      
-      const successful = data?.filter(p => p.status === "succeeded").length || 0;
-      return { total: data?.length || 0, successful };
-    },
-    enabled: !!activeTenantId,
-  });
-
-  // Total users (memberships)
-  const { data: usersCount } = useQuery({
-    queryKey: ["users-count", activeTenantId],
+  const { data: todayStats } = useQuery({
+    queryKey: ["today-stats", activeTenantId],
     queryFn: async () => {
       if (!activeTenantId) return { count: 0 };
+      const today = startOfDay(new Date());
       const { data } = await supabase
-        .from("memberships")
+        .from("payments")
         .select("id")
-        .eq("tenant_id", activeTenantId);
+        .eq("tenant_id", activeTenantId)
+        .gte("created_at", today.toISOString());
       
       return { count: data?.length || 0 };
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
   });
 
-  // Recent transactions
+  // Approvals (Owner/Manager only)
+  const { data: pendingApprovals } = useQuery({
+    queryKey: ["pending-approvals", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return [];
+      const { data } = await supabase
+        .from("approvals")
+        .select("*")
+        .eq("tenant_id", activeTenantId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!activeTenantId && roleVisibility.canViewApprovals,
+  });
+
+  // Alerts (Owner/Manager only)
+  const { data: activeAlerts } = useQuery({
+    queryKey: ["active-alerts", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return [];
+      const { data } = await supabase
+        .from("alerts")
+        .select("*")
+        .eq("tenant_id", activeTenantId)
+        .eq("resolved", false)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!activeTenantId && roleVisibility.canViewRiskAlerts,
+  });
+
+  // Dev metrics (Developer/Owner only)
+  const { data: devMetrics, isLoading: loadingDevMetrics } = useQuery({
+    queryKey: ["dev-metrics", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return null;
+      const { data, error } = await invokeFunctionWithTenant("dashboard-dev-metrics");
+      if (error) {
+        console.error("Failed to fetch dev metrics:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!activeTenantId && roleVisibility.canViewAPIMetrics,
+  });
+
+  // Recent transactions (Owner/Manager only)
   const { data: recentTransactions, isLoading: loadingRecent } = useQuery({
     queryKey: ["recent-transactions", activeTenantId],
     queryFn: async () => {
@@ -218,10 +190,10 @@ const Dashboard = () => {
         .select("*")
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId,
+    enabled: !!activeTenantId && roleVisibility.canViewPayments,
   });
 
   const calculatePercentChange = (current: number, previous: number) => {
@@ -234,254 +206,412 @@ const Dashboard = () => {
     lastMonthDeposits?.total || 0
   );
 
-  const withdrawalChange = calculatePercentChange(
-    currentMonthWithdrawals?.total || 0,
-    lastMonthWithdrawals?.total || 0
-  );
-
   return (
     <DashboardLayout>
       <RequireTenant>
-        <div className="p-6 space-y-6">
+        <TwoFactorChallenge
+          open={mfaChallenge.isOpen}
+          onOpenChange={mfaChallenge.setIsOpen}
+          onSuccess={mfaChallenge.onSuccess}
+        />
+        
+        <div className="p-6 space-y-6 max-w-[1600px]">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{t('dashboard.title')}</h1>
-              <p className="text-muted-foreground">
-                {t('dashboard.welcomeBack')}, {user?.email}!
+              <h1 className="text-3xl font-bold text-foreground">
+                แดชบอร์ด
+                <Badge className="ml-3 text-xs">{roleVisibility.currentRole?.toUpperCase()}</Badge>
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                ยินดีต้อนรับ {user?.email}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="deposit" asChild>
-                <Link to="/deposit-list">
-                  <ArrowUpRight className="mr-2 h-4 w-4" />
-                  {t('dashboard.depositButton')}
-                </Link>
-              </Button>
-              <Button variant="withdrawal" asChild>
-                <Link to="/withdrawal-list">
-                  <ArrowDownRight className="mr-2 h-4 w-4" />
-                  {t('dashboard.withdrawalButton')}
-                </Link>
-              </Button>
+            <div className="flex gap-2 flex-wrap">
+              {roleVisibility.canViewPayouts && (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/deposit-list">
+                      <ArrowUpRight className="mr-2 h-4 w-4" />
+                      ฝากเงิน
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/withdrawal-list">
+                      <ArrowDownRight className="mr-2 h-4 w-4" />
+                      ถอนเงิน
+                    </Link>
+                  </Button>
+                </>
+              )}
+              {roleVisibility.canCreatePaymentLink && (
+                <Button variant="default" size="sm" asChild>
+                  <Link to="/links">
+                    <Zap className="mr-2 h-4 w-4" />
+                    สร้างลิงก์ชำระ
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Top Stats - Deposits, Withdrawals, Balance */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium opacity-90">{t('dashboard.totalDeposit')}</p>
-                  <ArrowUpRight className="h-5 w-5" />
-                </div>
-                {loadingCurrentDeposits ? (
-                  <Skeleton className="h-10 w-32 bg-white/20" />
-                ) : (
-                  <>
-                    <p className="text-3xl font-bold">
-                      ฿{currentMonthDeposits?.total.toLocaleString() || "0.00"}
-                    </p>
-                    <div className="flex items-center mt-2 text-sm">
-                      {depositChange >= 0 ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      <span className="opacity-90">
-                        {depositChange >= 0 ? "+" : ""}{depositChange.toFixed(1)}% {t('dashboard.compareLastMonth')}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-pink-500 to-purple-600 text-white border-0">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium opacity-90">{t('dashboard.totalWithdrawal')}</p>
-                  <ArrowDownRight className="h-5 w-5" />
-                </div>
-                {loadingCurrentWithdrawals ? (
-                  <Skeleton className="h-10 w-32 bg-white/20" />
-                ) : (
-                  <>
-                    <p className="text-3xl font-bold">
-                      ฿{currentMonthWithdrawals?.total.toLocaleString() || "0.00"}
-                    </p>
-                    <div className="flex items-center mt-2 text-sm">
-                      {withdrawalChange >= 0 ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      <span className="opacity-90">
-                        {withdrawalChange >= 0 ? "+" : ""}{withdrawalChange.toFixed(1)}% {t('dashboard.compareLastMonth')}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-balance text-white border-0">
-              <CardContent className="pt-6">
-                <p className="text-sm font-medium opacity-90 mb-2">
-                  {t('dashboard.totalBalance')}
-                </p>
-                <p className="text-3xl font-bold">
-                  ฿{((wallet?.balance || 0) / 100).toLocaleString()}
-                </p>
-                <p className="text-sm opacity-90 mt-2">
-                  {todayStats?.count || 0} {t('dashboard.transactions')}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Middle Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="bg-gradient-activity text-white border-0 hover:shadow-glow transition-all duration-300">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium opacity-90">
-                      {t('dashboard.todayTransactions')}
-                    </p>
-                    <p className="text-2xl font-bold">{todayStats?.count || 0}</p>
-                    <p className="text-xs opacity-90 mt-1">
-                      {allTransactions?.deposits || 0} {t('dashboard.deposits')} / {allTransactions?.withdrawals || 0} {t('dashboard.withdrawals')}
-                    </p>
-                  </div>
-                  <Activity className="h-8 w-8 opacity-90" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-info text-white border-0 hover:shadow-glow transition-all duration-300">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium opacity-90">
-                      {t('dashboard.allTransactions')}
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {(allTransactions?.deposits || 0) + (allTransactions?.withdrawals || 0)}
-                    </p>
-                    <p className="text-xs opacity-90 mt-1">
-                      ฝาก {allTransactions?.deposits || 0} / ถอน {allTransactions?.withdrawals || 0}
-                    </p>
-                  </div>
-                  <ArrowUpRight className="h-8 w-8 opacity-90" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 hover:shadow-glow transition-all duration-300">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium opacity-90">
-                      {t('dashboard.depositTransactions')}
-                    </p>
-                    <p className="text-2xl font-bold">{depositStats?.total || 0}</p>
-                    <p className="text-xs opacity-90 mt-1">
-                      {t('dashboard.successful')}: {depositStats?.successful || 0}
-                    </p>
-                  </div>
-                  <ArrowUpRight className="h-8 w-8 opacity-90" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-rose-500 to-pink-600 text-white border-0 hover:shadow-glow transition-all duration-300">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium opacity-90">
-                      {t('dashboard.withdrawalTransactions')}
-                    </p>
-                    <p className="text-2xl font-bold">{withdrawalStats?.total || 0}</p>
-                    <p className="text-xs opacity-90 mt-1">
-                      {t('dashboard.successful')}: {withdrawalStats?.successful || 0}
-                    </p>
-                  </div>
-                  <ArrowDownRight className="h-8 w-8 opacity-90" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Users Card */}
-          <Card className="bg-gradient-users text-white border-0 hover:shadow-glow transition-all duration-300">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium opacity-90">
-                    {t('dashboard.totalUsers')}
-                  </p>
-                  <p className="text-3xl font-bold">{usersCount?.count || 0}</p>
-                  <p className="text-xs opacity-90 mt-1">
-                    {t('dashboard.users')}
-                  </p>
-                </div>
-                <Users className="h-10 w-10 opacity-90" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Transactions */}
-          <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-md">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-              <CardTitle className="text-primary">{t('dashboard.recentTransactions')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingRecent ? (
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : !recentTransactions || recentTransactions.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">{t('dashboard.noTransactionsYet')}</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        {transaction.type === "deposit" ? (
-                          <div className="p-2 bg-blue-100 rounded-full">
-                            <ArrowUpRight className="h-4 w-4 text-blue-600" />
-                          </div>
-                        ) : (
-                          <div className="p-2 bg-pink-100 rounded-full">
-                            <ArrowDownRight className="h-4 w-4 text-pink-600" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium">
-                            {transaction.type === "deposit" ? "ฝากเงิน" : "ถอนเงิน"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(transaction.created_at), "dd/MM/yyyy HH:mm")}
-                          </p>
-                        </div>
+          {/* Financial KPIs (Owner/Manager/Finance) */}
+          {roleVisibility.canViewFinancialOverview && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">ยอดรับวันนี้</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loadingCurrentDeposits ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold">
+                        ฿{currentMonthDeposits?.total.toLocaleString() || "0"}
                       </div>
-                      <div className="text-right">
-                        <p className={`font-bold ${transaction.type === "deposit" ? "text-green-600" : "text-pink-600"}`}>
-                          {transaction.type === "deposit" ? "+" : "-"}฿{(transaction.amount / 100).toLocaleString()}
-                        </p>
-                        <Badge variant={transaction.status === "succeeded" ? "default" : "secondary"} className="mt-1">
-                          {transaction.status}
-                        </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {currentMonthDeposits?.count || 0} รายการ
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">เดือนนี้</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ฿{currentMonthDeposits?.total.toLocaleString() || "0"}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground mt-1">
+                    {depositChange >= 0 ? (
+                      <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                    )}
+                    <span className={depositChange >= 0 ? "text-green-600" : "text-red-600"}>
+                      {depositChange >= 0 ? "+" : ""}{depositChange.toFixed(1)}%
+                    </span>
+                    <span className="ml-1">จากเดือนที่แล้ว</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {depositStats?.total ? 
+                      Math.round((depositStats.successful / depositStats.total) * 100) : 
+                      100}%
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {depositStats?.successful || 0}/{depositStats?.total || 0} สำเร็จ
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">ยอดคงเหลือ</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ฿{((wallet?.balance || 0) / 100).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {todayStats?.count || 0} รายการวันนี้
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Two Column Layout */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Approvals (Owner/Manager) */}
+              {roleVisibility.canViewApprovals && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      อนุมัติที่รอดำเนินการ
+                    </CardTitle>
+                    <CardDescription>
+                      คำขอที่ต้องการการอนุมัติ
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!pendingApprovals || pendingApprovals.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        ไม่มีรายการรออนุมัติ
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {pendingApprovals.map((approval) => (
+                          <div key={approval.id} className="flex items-start justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium text-sm">{approval.action_type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(approval.created_at), "dd/MM/yyyy HH:mm")}
+                              </p>
+                            </div>
+                            <Badge variant="secondary">รอดำเนินการ</Badge>
+                          </div>
+                        ))}
+                        <Button variant="link" size="sm" asChild className="w-full">
+                          <Link to="/approvals">ดูทั้งหมด →</Link>
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
+
+              {/* Alerts (Owner/Manager) */}
+              {roleVisibility.canViewRiskAlerts && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5" />
+                      การแจ้งเตือนและความเสี่ยง
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {!activeAlerts || activeAlerts.length === 0 ? (
+                      <div className="text-center py-4">
+                        <CheckCircle2 className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          ไม่มีการแจ้งเตือน ทุกอย่างปกติ
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {activeAlerts.map((alert) => (
+                          <div key={alert.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                            <AlertCircle className={`h-5 w-5 mt-0.5 ${
+                              alert.severity === 'critical' ? 'text-red-600' :
+                              alert.severity === 'warning' ? 'text-yellow-600' :
+                              'text-blue-600'
+                            }`} />
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{alert.title}</p>
+                              <p className="text-xs text-muted-foreground">{alert.message}</p>
+                            </div>
+                            <Badge variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}>
+                              {alert.severity}
+                            </Badge>
+                          </div>
+                        ))}
+                        <Button variant="link" size="sm" asChild className="w-full">
+                          <Link to="/alerts">จัดการการแจ้งเตือน →</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recent Transactions (Owner/Manager) */}
+              {roleVisibility.canViewPayments && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>ชำระเงินล่าสุด</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingRecent ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                      </div>
+                    ) : !recentTransactions || recentTransactions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        ยังไม่มีรายการ
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {recentTransactions.map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium text-sm">
+                                {tx.type === "deposit" ? "ฝากเงิน" : "ถอนเงิน"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-sm">
+                                ฿{(tx.amount / 100).toLocaleString()}
+                              </p>
+                              <Badge variant={tx.status === "succeeded" ? "default" : "secondary"} className="text-xs">
+                                {tx.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                        <Button variant="link" size="sm" asChild className="w-full">
+                          <Link to="/payments">ดูทั้งหมด →</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Developer Metrics (Developer/Owner) */}
+              {roleVisibility.canViewAPIMetrics && (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Zap className="h-5 w-5" />
+                        สถานะ API
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingDevMetrics ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Success Rate</p>
+                              <p className="text-2xl font-bold text-green-600">
+                                {devMetrics?.api_success_rate || 0}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Latency (p50)</p>
+                              <p className="text-2xl font-bold">
+                                {devMetrics?.latency_p50 || 0}ms
+                              </p>
+                            </div>
+                          </div>
+                          <div className="pt-4 border-t">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-muted-foreground">Errors (24h)</span>
+                              <span className="text-sm font-medium">
+                                4xx: {devMetrics?.http_4xx || 0} / 5xx: {devMetrics?.http_5xx || 0}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Key className="h-5 w-5" />
+                        API Keys
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Active Keys</span>
+                          <Badge variant="secondary">{devMetrics?.active_api_keys || 0}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">หมดอายุเร็วๆ นี้</span>
+                          <Badge variant={devMetrics?.expiring_soon ? "destructive" : "default"}>
+                            {devMetrics?.expiring_soon || 0}
+                          </Badge>
+                        </div>
+                        <Button variant="outline" size="sm" asChild className="w-full mt-2">
+                          <Link to="/settings?tab=api-keys">
+                            <Key className="mr-2 h-4 w-4" />
+                            จัดการ API Keys
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Webhook className="h-5 w-5" />
+                        Webhooks
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Success Rate</span>
+                          <Badge variant={
+                            (devMetrics?.webhook_success_rate || 0) >= 95 ? "default" : "destructive"
+                          }>
+                            {devMetrics?.webhook_success_rate || 0}%
+                          </Badge>
+                        </div>
+                        <div className="space-y-2 pt-2 border-t">
+                          <p className="text-xs text-muted-foreground">Deliveries ล่าสุด:</p>
+                          {devMetrics?.recent_deliveries?.slice(0, 3).map((delivery: any) => (
+                            <div key={delivery.id} className="flex items-center justify-between text-xs">
+                              <span className="truncate max-w-[150px]">{delivery.endpoint}</span>
+                              <Badge variant={delivery.status === 'delivered' ? 'default' : 'destructive'} className="text-xs">
+                                {delivery.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                        <Button variant="outline" size="sm" asChild className="w-full mt-2">
+                          <Link to="/webhook-events">
+                            <Webhook className="mr-2 h-4 w-4" />
+                            ดู Webhook Events
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {/* Finance-specific widgets (Finance role) */}
+              {roleVisibility.isFinance && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <RefreshCw className="h-5 w-5" />
+                      คำขอของฉัน
+                    </CardTitle>
+                    <CardDescription>
+                      คำขอถอนเงินที่คุณสร้าง
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      ฟีเจอร์นี้จะเปิดใช้งานเร็วๆ นี้
+                    </p>
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                      <Link to="/withdrawal-list">
+                        <ArrowDownRight className="mr-2 h-4 w-4" />
+                        สร้างคำขอถอนเงิน
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </RequireTenant>
     </DashboardLayout>
