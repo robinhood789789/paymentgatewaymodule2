@@ -13,10 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
+import { PermissionGate } from "@/components/PermissionGate";
+import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
 const Reports = () => {
   const { tenantId } = useAuth();
+  const { activeTenantId } = useTenantSwitcher();
   const { toast } = useToast();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   const [reconcileFile, setReconcileFile] = useState<File | null>(null);
   const [reconcileLoading, setReconcileLoading] = useState(false);
   const [reconcileResult, setReconcileResult] = useState<any>(null);
@@ -45,7 +51,7 @@ const Reports = () => {
       const { data, error } = await supabase
         .from('payments')
         .select('*')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', activeTenantId || tenantId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -72,6 +78,14 @@ const Reports = () => {
       a.click();
       URL.revokeObjectURL(url);
 
+      // Audit log
+      await supabase.from('audit_logs').insert({
+        tenant_id: activeTenantId || tenantId,
+        action: 'reports.export.transactions',
+        target: 'payments',
+        after: { count: data.length }
+      });
+
       toast({
         title: "Success",
         description: "Transactions exported successfully",
@@ -90,7 +104,7 @@ const Reports = () => {
       const { data, error } = await supabase
         .from('settlements')
         .select('*')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', activeTenantId || tenantId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -115,6 +129,14 @@ const Reports = () => {
       a.download = `settlements-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+
+      // Audit log
+      await supabase.from('audit_logs').insert({
+        tenant_id: activeTenantId || tenantId,
+        action: 'reports.export.settlements',
+        target: 'settlements',
+        after: { count: data.length }
+      });
 
       toast({
         title: "Success",
@@ -179,6 +201,18 @@ const Reports = () => {
   return (
     <DashboardLayout>
       <RequireTenant>
+        <PermissionGate
+          permissions={["reports.view"]}
+          fallback={
+            <div className="p-6">
+              <div className="text-center p-8 border rounded-lg">
+                <p className="text-muted-foreground">
+                  คุณไม่มีสิทธิ์เข้าถึงหน้านี้
+                </p>
+              </div>
+            </div>
+          }
+        >
         <div className="p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
@@ -329,7 +363,10 @@ const Reports = () => {
                     Export all payment transactions as CSV
                   </CardDescription>
                 </div>
-                <Button onClick={handleDownloadTransactions} variant="outline">
+                <Button 
+                  onClick={() => checkAndChallenge(handleDownloadTransactions)} 
+                  variant="outline"
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Download CSV
                 </Button>
@@ -354,7 +391,10 @@ const Reports = () => {
                     View and export settlement data by cycle
                   </CardDescription>
                 </div>
-                <Button onClick={handleDownloadSettlements} variant="outline">
+                <Button 
+                  onClick={() => checkAndChallenge(handleDownloadSettlements)} 
+                  variant="outline"
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Download CSV
                 </Button>
@@ -470,6 +510,8 @@ const Reports = () => {
           </TabsContent>
         </Tabs>
         </div>
+        </PermissionGate>
+        <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
       </RequireTenant>
     </DashboardLayout>
   );

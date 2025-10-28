@@ -22,9 +22,12 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentDetailsDrawer } from "./PaymentDetailsDrawer";
 import { toast } from "sonner";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "./security/TwoFactorChallenge";
 
 export const PaymentsTable = () => {
   const { activeTenantId } = useTenantSwitcher();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterExpanded, setFilterExpanded] = useState(true);
@@ -108,11 +111,19 @@ export const PaymentsTable = () => {
     return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
   };
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     if (!payments || payments.length === 0) {
       toast.error("No data to export");
       return;
     }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      tenant_id: activeTenantId,
+      action: 'payments.export.csv',
+      target: 'payments',
+      after: { count: payments.length }
+    });
 
     const headers = ["Date", "Ref ID", "TX ID", "Amount", "Currency", "Status", "Method", "Provider"];
     const csvData = payments.map(payment => [
@@ -162,7 +173,7 @@ export const PaymentsTable = () => {
         <Button
           variant="default"
           size="sm"
-          onClick={exportToCSV}
+          onClick={() => checkAndChallenge(exportToCSV)}
           className="gap-2"
         >
           <Download className="h-4 w-4" />
@@ -437,6 +448,7 @@ export const PaymentsTable = () => {
           setSelectedPayment(null);
         }}
       />
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </div>
   );
 };

@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import QRCode from "qrcode";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
+import { PermissionGate } from "@/components/PermissionGate";
 
 interface PaymentLink {
   id: string;
@@ -172,6 +173,19 @@ const Links = () => {
 
   return (
     <DashboardLayout>
+      <PermissionGate
+        permissions={["payments.view", "payments.manage"]}
+        requireAll={false}
+        fallback={
+          <div className="p-6">
+            <div className="text-center p-8 border rounded-lg">
+              <p className="text-muted-foreground">
+                คุณไม่มีสิทธิ์เข้าถึงหน้านี้
+              </p>
+            </div>
+          </div>
+        }
+      >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
@@ -410,6 +424,7 @@ const Links = () => {
         )}
       </div>
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
+      </PermissionGate>
     </DashboardLayout>
   );
 };

@@ -4,6 +4,7 @@ import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import DashboardLayout from "@/components/DashboardLayout";
 import ReconciliationUpload from "@/components/reconciliation/ReconciliationUpload";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PermissionGate } from "@/components/PermissionGate";
 import {
   Table,
   TableBody,
@@ -54,6 +55,19 @@ export default function Reconciliation() {
 
   return (
     <DashboardLayout>
+      <PermissionGate
+        permissions={["reconciliation.manage", "reconciliation.view"]}
+        requireAll={false}
+        fallback={
+          <div className="p-6">
+            <div className="text-center p-8 border rounded-lg">
+              <p className="text-muted-foreground">
+                คุณไม่มีสิทธิ์เข้าถึงหน้านี้
+              </p>
+            </div>
+          </div>
+        }
+      >
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -179,6 +193,7 @@ export default function Reconciliation() {
           </CardContent>
         </Card>
       </div>
+      </PermissionGate>
     </DashboardLayout>
   );
 }
