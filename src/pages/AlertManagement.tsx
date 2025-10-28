@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Bell, CheckCircle, Play, Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle, Edit, Play, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
@@ -57,6 +57,8 @@ export default function AlertManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMetadata, setAlertMetadata] = useState("{}");
@@ -188,6 +190,53 @@ export default function AlertManagement() {
     },
   });
 
+  const updateAlertMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingAlert) throw new Error("No alert selected for editing");
+
+      let metadata;
+      try {
+        metadata = JSON.parse(alertMetadata);
+      } catch (e) {
+        throw new Error("Invalid JSON configuration");
+      }
+
+      const { error } = await supabase
+        .from("alerts")
+        .update({
+          title: alertTitle,
+          metadata,
+        })
+        .eq("id", editingAlert.id);
+
+      if (error) throw error;
+
+      // Audit log
+      await supabase.from("audit_logs").insert({
+        tenant_id: activeTenantId,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "alert_rule_updated",
+        resource_type: "alert",
+        resource_id: editingAlert.id,
+        metadata: { 
+          title: alertTitle, 
+          previous_title: editingAlert.title,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Alert rule updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      setIsEditOpen(false);
+      setEditingAlert(null);
+      setAlertTitle("");
+      setAlertMetadata("{}");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update alert rule");
+    },
+  });
+
   const handleTemplateSelect = (templateId: string) => {
     const template = alertTemplates.find(t => t.id === templateId);
     if (template) {
@@ -207,6 +256,21 @@ export default function AlertManagement() {
 
   const handleDeleteRule = (alertId: string) => {
     checkAndChallenge(() => deleteAlertMutation.mutate(alertId));
+  };
+
+  const handleEditRule = (alert: any) => {
+    setEditingAlert(alert);
+    setAlertTitle(alert.title);
+    setAlertMetadata(JSON.stringify(alert.metadata || {}, null, 2));
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateRule = () => {
+    if (!alertTitle) {
+      toast.error("Please fill in alert title");
+      return;
+    }
+    checkAndChallenge(() => updateAlertMutation.mutate());
   };
 
   const getSeverityColor = (severity: string) => {
@@ -385,16 +449,18 @@ export default function AlertManagement() {
                             <Button 
                               variant="outline" 
                               size="sm"
+                              onClick={() => handleEditRule(alert)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
                               onClick={() => handleDeleteRule(alert.id)}
                               disabled={deleteAlertMutation.isPending}
                             >
                               <X className="h-4 w-4" />
                             </Button>
-                            {!alert.resolved && (
-                              <Button variant="outline" size="sm">
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -478,6 +544,48 @@ export default function AlertManagement() {
               </div>
             </TabsContent>
           </Tabs>
+
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Alert Rule</DialogTitle>
+                <DialogDescription>
+                  Update the alert rule configuration
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Alert Title</Label>
+                  <Input
+                    value={alertTitle}
+                    onChange={(e) => setAlertTitle(e.target.value)}
+                    placeholder="e.g., Excessive Refunds by Admin"
+                  />
+                </div>
+                <div>
+                  <Label>Configuration (JSON)</Label>
+                  <Textarea
+                    value={alertMetadata}
+                    onChange={(e) => setAlertMetadata(e.target.value)}
+                    placeholder='{"threshold": 5, "window_hours": 1}'
+                    className="font-mono text-sm"
+                    rows={6}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateRule}
+                  disabled={!alertTitle || updateAlertMutation.isPending}
+                >
+                  {updateAlertMutation.isPending ? "Updating..." : "Update Rule"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <TwoFactorChallenge
