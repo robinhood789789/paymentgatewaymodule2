@@ -255,15 +255,15 @@ const DashboardSidebar = () => {
                   to="/system-deposit"
                   className={({ isActive }) =>
                     isActive
-                      ? "bg-success text-success-foreground font-bold shadow-md border-l-4 border-success"
-                      : "bg-success/20 hover:bg-success/30 border-l-4 border-success/70 font-semibold text-success shadow-sm hover:shadow-md transition-all"
+                      ? "bg-success/30 text-success font-bold shadow-md border-l-4 border-success"
+                      : "bg-success/10 hover:bg-success/20 border-l-4 border-success/70 font-semibold text-success shadow-sm hover:shadow-md transition-all"
                   }
                 >
                   <Wallet className="mr-2 h-5 w-5 text-success" />
                   {!isCollapsed && (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 text-success">
                       เติมเงินเข้าระบบ
-                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-success text-success-foreground">Owner</Badge>
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-success text-white">Owner</Badge>
                     </span>
                   )}
                 </NavLink>
@@ -276,15 +276,15 @@ const DashboardSidebar = () => {
                   to="/system-withdrawal"
                   className={({ isActive }) =>
                     isActive
-                      ? "bg-destructive text-destructive-foreground font-bold shadow-md border-l-4 border-destructive"
-                      : "bg-destructive/20 hover:bg-destructive/30 border-l-4 border-destructive/70 font-semibold text-destructive shadow-sm hover:shadow-md transition-all"
+                      ? "bg-destructive/30 text-destructive font-bold shadow-md border-l-4 border-destructive"
+                      : "bg-destructive/10 hover:bg-destructive/20 border-l-4 border-destructive/70 font-semibold text-destructive shadow-sm hover:shadow-md transition-all"
                   }
                 >
                   <ArrowUpFromLine className="mr-2 h-5 w-5 text-destructive" />
                   {!isCollapsed && (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 text-destructive">
                       ถอนเงินออกระบบ
-                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-destructive text-destructive-foreground">Owner</Badge>
+                      <Badge variant="default" className="text-xs px-1.5 py-0 bg-destructive text-white">Owner</Badge>
                     </span>
                   )}
                 </NavLink>
