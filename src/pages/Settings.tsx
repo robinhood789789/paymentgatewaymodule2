@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,20 +22,26 @@ import { TenantSecurityPolicy } from "@/components/settings/TenantSecurityPolicy
 const Settings = () => {
   const { user, tenantId } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams(); // H-3: Support ?tab=api-keys
   const [isUpdating, setIsUpdating] = useState(false);
   const [fullName, setFullName] = useState("");
   const [defaultTab, setDefaultTab] = useState("profile");
 
-  // Handle location state for redirects (e.g., from MFA guard)
+  // Handle location state for redirects (e.g., from MFA guard) และ query params
   useEffect(() => {
     const state = location.state as any;
-    if (state?.tab) {
+    const tabParam = searchParams.get('tab');
+    
+    if (tabParam) {
+      setDefaultTab(tabParam);
+    } else if (state?.tab) {
       setDefaultTab(state.tab);
     }
+    
     if (state?.message) {
       toast.info(state.message);
     }
-  }, [location.state]);
+  }, [location.state, searchParams]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],

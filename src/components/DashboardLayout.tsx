@@ -87,6 +87,13 @@ const DashboardSidebar = () => {
       roleAccess: ['owner', 'manager'] // Only Owner and Manager can access
     },
     { 
+      title: "Payment Links", 
+      url: "/links", 
+      icon: Link2, 
+      permission: "payments.view",
+      roleAccess: ['owner', 'manager', 'finance'] // H-1: เพิ่ม Payment Links ใน sidebar
+    },
+    { 
       title: "Webhooks", 
       url: "/webhook-events", 
       icon: Webhook, 
@@ -126,8 +133,8 @@ const DashboardSidebar = () => {
     { title: "KYC Verification", url: "/kyc-verification", icon: UserCheck, ownerOnly: true }, // Owner only - sensitive compliance data
     { title: t('dashboard.mdr'), url: "/mdr", icon: Receipt, ownerOnly: true }, // Owner only
     { title: t('customers.title'), url: "/customers", icon: UserCircle, permission: "customers.view" },
-    { title: t('webhookEvents.title'), url: "/webhook-events", icon: Webhook, permission: "webhooks.view" },
     { title: t('settlements.title'), url: "/settlements", icon: DollarSign, ownerOnly: true }, // Owner only - sensitive financial data
+    // H-2: ลบ Webhooks ซ้ำจาก Management (อยู่ใน Transaction แล้ว)
   ];
   
   // Filter management items based on actual permissions
@@ -135,10 +142,18 @@ const DashboardSidebar = () => {
     (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
   );
 
+  // Developers menu items - H-3: แยก API Keys/Webhooks/Docs
+  const developersMenuItems = [
+    { title: 'API Keys', url: "/settings?tab=api-keys", icon: KeyRound, permission: "api_keys.view" },
+    { title: 'Webhooks (Outbound)', url: "/settings?tab=webhooks", icon: Webhook, permission: "webhooks.manage" },
+    { title: 'API Docs', url: "/docs", icon: Book, ownerOnly: true },
+  ].filter((item: any) =>
+    (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
+  );
+
   // Settings menu items - filtered by permissions
   const allSettingsItems = [
     { title: t('dashboard.settings'), url: "/settings", icon: Settings, permission: "settings.view" },
-    { title: 'API Docs', url: "/docs", icon: Book, ownerOnly: true },
     { title: 'คู่มือการทดสอบ', url: "/testing-guide", icon: FileCheck, ownerOnly: true },
   ];
   
@@ -332,6 +347,34 @@ const DashboardSidebar = () => {
             <SidebarGroupContent>
               <SidebarMenu>
                 {managementMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Developers Menu - H-3: แยก API/Webhooks/Docs */}
+        {!isSuperAdmin && developersMenuItems.length > 0 && (
+          <SidebarGroup className="border-l-[6px] border-blue-500 bg-blue-500/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-blue-600 font-semibold">Developers</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {developersMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink

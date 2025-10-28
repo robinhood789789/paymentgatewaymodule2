@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { CreditCard, Wallet, Building2, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "../security/TwoFactorChallenge";
 
 const PAYMENT_METHODS = [
   { type: "card", label: "Credit/Debit Card", icon: CreditCard },
@@ -35,6 +37,7 @@ const PROVIDERS = [
 export default function PaymentMethodsConfig() {
   const { activeTenantId } = useTenantSwitcher();
   const queryClient = useQueryClient();
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge(); // H-7: MFA
 
   // Fetch tenant settings
   const { data: settings, isLoading } = useQuery({
@@ -68,7 +71,7 @@ export default function PaymentMethodsConfig() {
     enabled: !!activeTenantId,
   });
 
-  // Update provider mutation
+  // Update provider mutation - H-7: เพิ่ม MFA
   const updateProvider = useMutation({
     mutationFn: async (provider: string) => {
       if (!activeTenantId) throw new Error("No active tenant");
@@ -79,6 +82,14 @@ export default function PaymentMethodsConfig() {
         .eq("tenant_id", activeTenantId);
 
       if (error) throw error;
+
+      // Audit log
+      await supabase.from('audit_logs').insert({
+        tenant_id: activeTenantId,
+        action: 'payment_methods.provider.update',
+        target: 'tenant_settings',
+        after: { provider }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenant-settings"] });
@@ -91,7 +102,7 @@ export default function PaymentMethodsConfig() {
     },
   });
 
-  // Toggle payment method mutation
+  // Toggle payment method mutation - H-7: เพิ่ม MFA
   const toggleMethod = useMutation({
     mutationFn: async ({ type, enabled }: { type: string; enabled: boolean }) => {
       if (!activeTenantId) throw new Error("No active tenant");
@@ -117,6 +128,14 @@ export default function PaymentMethodsConfig() {
 
         if (error) throw error;
       }
+
+      // Audit log
+      await supabase.from('audit_logs').insert({
+        tenant_id: activeTenantId,
+        action: enabled ? 'payment_methods.enable' : 'payment_methods.disable',
+        target: type,
+        after: { type, enabled }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
@@ -150,7 +169,7 @@ export default function PaymentMethodsConfig() {
           <div className="flex items-center gap-4">
             <Select
               value={settings?.provider || "stripe"}
-              onValueChange={(value) => updateProvider.mutate(value)}
+              onValueChange={(value) => checkAndChallenge(() => updateProvider.mutate(value))}
               disabled={updateProvider.isPending}
             >
               <SelectTrigger className="w-64">
@@ -201,7 +220,7 @@ export default function PaymentMethodsConfig() {
                     <Switch
                       checked={enabled}
                       onCheckedChange={(checked) =>
-                        toggleMethod.mutate({ type: method.type, enabled: checked })
+                        checkAndChallenge(() => toggleMethod.mutate({ type: method.type, enabled: checked }))
                       }
                       disabled={toggleMethod.isPending}
                     />
@@ -212,6 +231,8 @@ export default function PaymentMethodsConfig() {
           </div>
         </CardContent>
       </Card>
+
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </div>
   );
 }

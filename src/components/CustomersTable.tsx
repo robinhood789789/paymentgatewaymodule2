@@ -13,14 +13,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Mail, Phone } from "lucide-react";
+import { Search, Mail, Phone, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useI18n } from "@/lib/i18n";
+import { toast } from "sonner";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "./security/TwoFactorChallenge";
 
 export const CustomersTable = () => {
   const { activeTenantId } = useTenantSwitcher();
   const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("");
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge(); // H-9: MFA
+
+  // H-9: PII Masking helper
+  const maskEmail = (email: string) => {
+    if (!email) return "-";
+    const [local, domain] = email.split('@');
+    return `${local.slice(0, 2)}${"*".repeat(Math.max(local.length - 2, 3))}@${domain}`;
+  };
+
+  const maskPhone = (phone: string) => {
+    if (!phone) return "-";
+    return phone.slice(0, 3) + "*".repeat(phone.length - 6) + phone.slice(-3);
+  };
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ["customers", activeTenantId],
@@ -61,6 +77,50 @@ export const CustomersTable = () => {
     );
   });
 
+  // H-9: Bulk export with MFA
+  const handleExportCSV = async () => {
+    if (!customers || customers.length === 0) {
+      toast.error("ไม่มีข้อมูลลูกค้าให้ export");
+      return;
+    }
+
+    // MFA required for PII export
+    checkAndChallenge(async () => {
+      try {
+        const csv = [
+          ['Name', 'Email', 'Phone', 'Payments Count', 'Created Date'].join(','),
+          ...customers.map(c => [
+            c.name || '',
+            c.email || '',
+            c.phone || '',
+            (c.payments as any)?.[0]?.count || 0,
+            format(new Date(c.created_at), 'yyyy-MM-dd')
+          ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        // Audit log
+        await supabase.from('audit_logs').insert({
+          tenant_id: activeTenantId,
+          action: 'customers.export.pii',
+          target: 'customers',
+          after: { count: customers.length }
+        });
+
+        toast.success(`Export สำเร็จ ${customers.length} รายการ`);
+      } catch (error: any) {
+        toast.error("Export ไม่สำเร็จ", { description: error.message });
+      }
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -73,6 +133,10 @@ export const CustomersTable = () => {
             className="pl-10"
           />
         </div>
+        <Button onClick={handleExportCSV} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {!filteredCustomers || filteredCustomers.length === 0 ? (
@@ -103,7 +167,7 @@ export const CustomersTable = () => {
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <span className="max-w-xs truncate" title={customer.email}>
-                          {customer.email}
+                          {maskEmail(customer.email)}
                         </span>
                       </div>
                     ) : (
@@ -114,7 +178,7 @@ export const CustomersTable = () => {
                     {customer.phone ? (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{customer.phone}</span>
+                        <span>{maskPhone(customer.phone)}</span>
                       </div>
                     ) : (
                       "-"
@@ -132,6 +196,8 @@ export const CustomersTable = () => {
           </Table>
         </div>
       )}
+
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </div>
   );
 };

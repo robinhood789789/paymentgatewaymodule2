@@ -9,16 +9,20 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { AlertCircle, FileText, CheckCircle, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import { AlertCircle, FileText, CheckCircle, XCircle, Upload } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PermissionGate } from "@/components/PermissionGate";
+import { use2FAChallenge } from "@/hooks/use2FAChallenge";
+import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 
 const Disputes = () => {
   const queryClient = useQueryClient();
   const [selectedDispute, setSelectedDispute] = useState<any>(null);
   const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null); // H-12: Evidence upload
   const [updateStatus, setUpdateStatus] = useState("");
+  const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge(); // H-12: MFA
 
   const { data: disputes, isLoading } = useQuery({
     queryKey: ["disputes"],
@@ -42,6 +46,7 @@ const Disputes = () => {
     },
   });
 
+  // H-12: Update dispute with MFA
   const updateDisputeMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const { error } = await supabase
@@ -50,14 +55,22 @@ const Disputes = () => {
         .eq("id", id);
 
       if (error) throw error;
+
+      // Audit log
+      await supabase.from('audit_logs').insert({
+        action: 'disputes.update',
+        target: id,
+        after: updates
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disputes"] });
-      toast({ title: "Dispute updated successfully" });
+      toast.success("Dispute updated successfully");
       setSelectedDispute(null);
+      setEvidenceFile(null);
     },
     onError: (error: Error) => {
-      toast({ title: "Failed to update dispute", description: error.message, variant: "destructive" });
+      toast.error("Failed to update dispute", { description: error.message });
     },
   });
 
@@ -80,14 +93,24 @@ const Disputes = () => {
     return <Badge variant={variants[stage] || "default"}>{stage}</Badge>;
   };
 
+  // H-12: Handle update with MFA
   const handleUpdateDispute = () => {
     if (!selectedDispute) return;
 
     const updates: any = {};
     if (evidenceUrl) updates.evidence_url = evidenceUrl;
+    if (evidenceFile) {
+      toast.info("File upload feature coming soon - use URL for now");
+    }
     if (updateStatus) updates.status = updateStatus;
 
-    updateDisputeMutation.mutate({ id: selectedDispute.id, updates });
+    if (Object.keys(updates).length === 0) {
+      toast.error("No changes to save");
+      return;
+    }
+
+    // MFA challenge before updating
+    checkAndChallenge(() => updateDisputeMutation.mutate({ id: selectedDispute.id, updates }));
   };
 
   if (isLoading) {
@@ -263,6 +286,18 @@ const Disputes = () => {
                               />
                             </div>
                             <div>
+                              <Label htmlFor="evidenceFile">Upload Evidence (optional)</Label>
+                              <Input
+                                id="evidenceFile"
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => setEvidenceFile(e.target.files?.[0] || null)}
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Supported: PDF, JPG, PNG (max 10MB)
+                              </p>
+                            </div>
+                            <div>
                               <Label htmlFor="status">Update Status</Label>
                               <Select value={updateStatus} onValueChange={setUpdateStatus}>
                                 <SelectTrigger>
@@ -278,7 +313,9 @@ const Disputes = () => {
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button onClick={handleUpdateDispute}>Save Changes</Button>
+                            <Button onClick={handleUpdateDispute} disabled={updateDisputeMutation.isPending}>
+                              {updateDisputeMutation.isPending ? "Saving..." : "Save Changes"}
+                            </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -296,6 +333,8 @@ const Disputes = () => {
           </div>
         </CardContent>
       </Card>
+
+      <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
     </div>
   );
 };
