@@ -122,6 +122,72 @@ export default function AlertManagement() {
     checkAndChallenge(() => evaluateAlertsMutation.mutate());
   };
 
+  const createAlertMutation = useMutation({
+    mutationFn: async () => {
+      let metadata;
+      try {
+        metadata = JSON.parse(alertMetadata);
+      } catch (e) {
+        throw new Error("Invalid JSON configuration");
+      }
+
+      const { error } = await supabase.from("alerts").insert({
+        tenant_id: activeTenantId,
+        title: alertTitle,
+        alert_type: selectedTemplate,
+        severity: "medium",
+        message: `Alert rule: ${alertTitle}`,
+        metadata,
+        resolved: false,
+      });
+
+      if (error) throw error;
+
+      // Audit log
+      await supabase.from("audit_logs").insert({
+        tenant_id: activeTenantId,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "alert_rule_created",
+        resource_type: "alert",
+        metadata: { title: alertTitle, type: selectedTemplate },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Alert rule created successfully");
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      setIsCreateOpen(false);
+      setSelectedTemplate("");
+      setAlertTitle("");
+      setAlertMetadata("{}");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create alert rule");
+    },
+  });
+
+  const deleteAlertMutation = useMutation({
+    mutationFn: async (alertId: string) => {
+      const { error } = await supabase.from("alerts").delete().eq("id", alertId);
+      if (error) throw error;
+
+      // Audit log
+      await supabase.from("audit_logs").insert({
+        tenant_id: activeTenantId,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "alert_rule_deleted",
+        resource_type: "alert",
+        resource_id: alertId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Alert rule deleted");
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete alert");
+    },
+  });
+
   const handleTemplateSelect = (templateId: string) => {
     const template = alertTemplates.find(t => t.id === templateId);
     if (template) {
@@ -129,6 +195,18 @@ export default function AlertManagement() {
       setAlertTitle(template.name);
       setAlertMetadata(JSON.stringify(template.defaultConfig, null, 2));
     }
+  };
+
+  const handleCreateRule = () => {
+    if (!alertTitle || !selectedTemplate) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    checkAndChallenge(() => createAlertMutation.mutate());
+  };
+
+  const handleDeleteRule = (alertId: string) => {
+    checkAndChallenge(() => deleteAlertMutation.mutate(alertId));
   };
 
   const getSeverityColor = (severity: string) => {
@@ -228,8 +306,11 @@ export default function AlertManagement() {
                     <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={() => toast.info("Coming soon")}>
-                      Create Rule
+                    <Button 
+                      onClick={handleCreateRule}
+                      disabled={!alertTitle || !selectedTemplate || createAlertMutation.isPending}
+                    >
+                      {createAlertMutation.isPending ? "Creating..." : "Create Rule"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -301,8 +382,13 @@ export default function AlertManagement() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              Configure
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteRule(alert.id)}
+                              disabled={deleteAlertMutation.isPending}
+                            >
+                              <X className="h-4 w-4" />
                             </Button>
                             {!alert.resolved && (
                               <Button variant="outline" size="sm">
