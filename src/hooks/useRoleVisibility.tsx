@@ -7,11 +7,10 @@ export const useRoleVisibility = () => {
   const { activeTenant } = useTenantSwitcher();
   const { isSuperAdmin } = useAuth();
   
-  const rawRole = activeTenant?.roles?.name as UserRole | undefined;
-  const currentRole = (isSuperAdmin ? 'owner' : rawRole) as UserRole | undefined;
+  const currentRole = activeTenant?.roles?.name as UserRole | undefined;
   
-  // Owner sees everything (Super Admin treated as owner)
-  const isOwner = isSuperAdmin || currentRole === 'owner';
+  // Owner sees everything
+  const isOwner = currentRole === 'owner';
   const isManager = currentRole === 'manager';
   const isFinance = currentRole === 'finance';
   const isDeveloper = currentRole === 'developer';

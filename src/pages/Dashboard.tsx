@@ -27,7 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { format, startOfMonth, subMonths, startOfDay } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useMfaGuard } from "@/hooks/useMfaGuard";
 import { useMfaLoginGuard } from "@/hooks/useMfaLoginGuard";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
@@ -36,13 +36,18 @@ import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 import { toast } from "sonner";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const roleVisibility = useRoleVisibility();
   const mfaChallenge = use2FAChallenge();
   
   useMfaLoginGuard();
   useMfaGuard({ required: false });
+
+  // Super Admin should use /admin dashboard, not tenant dashboard
+  if (isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
 
   // Financial queries (Owner/Manager/Finance)
   const { data: wallet } = useQuery({
