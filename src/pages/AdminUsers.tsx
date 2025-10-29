@@ -116,7 +116,7 @@ const AdminUsers = () => {
         
         return {
           ...profile,
-          role: membership?.roles?.name || "viewer",
+          role: membership?.roles?.name || "No Role",
           role_id: membership?.role_id || null,
           tenant_id: membership?.tenant_id || null,
           tenant_name: membership?.tenants?.name || "No workspace",
@@ -447,13 +447,13 @@ const AdminUsers = () => {
                                 user.role === "manager" ? "secondary" :
                                 "outline"
                               }>
-                                {user.role || "viewer"}
+                                {user.role || "No Role"}
                               </Badge>
                             }
                           >
                             <div className="flex items-center gap-2">
                               <Select
-                                value={user.role || "viewer"}
+                                value={user.role || "finance"}
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
                               >
                                 <SelectTrigger className="w-[150px] border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors">

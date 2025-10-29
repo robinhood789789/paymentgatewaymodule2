@@ -125,7 +125,7 @@ export const UserDetailDrawer = ({ userId, open, onOpenChange }: UserDetailDrawe
                     <div>
                       <p className="text-sm text-muted-foreground">Role</p>
                       <Badge variant="secondary">
-                        {membership?.roles?.name || "viewer"}
+                        {membership?.roles?.name || "No Role"}
                       </Badge>
                     </div>
                   </div>

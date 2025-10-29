@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Info
+  Info,
+  DollarSign
 } from 'lucide-react';
 
 const TestingGuide = () => {
@@ -28,7 +29,7 @@ const TestingGuide = () => {
     { id: 'super-admin', name: 'Super Admin', icon: Shield, color: 'bg-purple-500' },
     { id: 'owner', name: 'Owner', icon: Crown, color: 'bg-amber-500' },
     { id: 'manager', name: 'Manager', icon: Briefcase, color: 'bg-green-500' },
-    { id: 'admin', name: 'Admin', icon: Settings, color: 'bg-blue-500' },
+    { id: 'finance', name: 'Finance', icon: DollarSign, color: 'bg-blue-500' },
     { id: 'developer', name: 'Developer', icon: Code, color: 'bg-indigo-500' },
   ];
 
@@ -175,7 +176,7 @@ const TestingGuide = () => {
                                   Manager
                                 </Badge>
                                 <Badge variant="secondary" className="bg-blue-500 text-white">
-                                  Admin
+                                  Finance
                                 </Badge>
                                 <Badge variant="secondary" className="bg-indigo-500 text-white">
                                   Developer
@@ -230,7 +231,7 @@ const TestingGuide = () => {
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-start gap-2">
                             <span className="text-primary font-bold">1.</span>
-                            <span><strong>ทดสอบตามลำดับ:</strong> เริ่มจาก Super Admin → Owner → Manager → Admin → Developer</span>
+                            <span><strong>ทดสอบตามลำดับ:</strong> เริ่มจาก Super Admin → Owner → Manager → Finance → Developer</span>
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="text-primary font-bold">2.</span>
@@ -303,7 +304,7 @@ const TestingGuide = () => {
                           'Global Refund Freeze - หยุดการคืนเงินทั้งระบบ',
                           'System Deposit/Withdrawal - ทำธุรกรรมระดับระบบ',
                           'Access Cross-Tenant Audit - เข้าถึงข้อมูลข้ามองค์กร',
-                          'Bootstrap Admin - สร้าง admin แรกของระบบ',
+                          'Bootstrap Super Admin - สร้าง super admin แรกของระบบ',
                         ]}
                       />
 
@@ -372,7 +373,7 @@ const TestingGuide = () => {
                       <TestSection
                         title="การจัดการผู้ใช้ในองค์กร"
                         items={[
-                          'เชิญผู้ใช้ใหม่ (Manager/Admin/Developer)',
+                          'เชิญผู้ใช้ใหม่ (Manager/Finance/Developer)',
                           'กำหนด Role และ Permissions',
                           'แก้ไขสิทธิ์ผู้ใช้',
                           'ลบผู้ใช้ออกจากองค์กร',
@@ -474,67 +475,72 @@ const TestingGuide = () => {
                     <div className="space-y-6">
                       <div>
                         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                          <Settings className="w-7 h-7 text-blue-500" />
+                          <DollarSign className="w-7 h-7 text-green-500" />
                           Finance
                         </h2>
                         <p className="text-muted-foreground">
-                          มีสิทธิ์ในการตั้งค่าระบบและจัดการผู้ใช้ แต่ไม่มีสิทธิ์ทางการเงินระดับสูง
+                          มีสิทธิ์ในการเติมเงินและถอนเงินให้กับลูกค้าขององค์กร รวมถึงดูข้อมูลทางการเงินพื้นฐาน
                         </p>
                       </div>
 
                       <PermissionAlert
                         canDo={[
-                          'ดู Dashboard และสถิติ',
-                          'ดู Payments (อ่านอย่างเดียว)',
-                          'ดู Refunds (อ่านอย่างเดียว)',
-                          'ดูและจัดการ Customers',
-                          'จัดการผู้ใช้ (เชิญ/ลบ Manager และ Developer)',
-                          'จัดการ Webhooks',
-                          'ดู API Keys',
-                          'ตั้งค่า Payment Methods',
+                          'ดู Dashboard และสถิติทางการเงิน',
+                          'สร้างคำขอฝากเงิน (Deposit Request)',
+                          'สร้างคำขอถอนเงิน (Withdrawal Request)',
+                          'ดู Payments',
+                          'ดู Customers',
+                          'ดู Settlements',
                           'ดู Reports',
                         ]}
                         cannotDo={[
-                          'สร้าง/อนุมัติ Refunds',
-                          'ทำ System Deposit/Withdrawal',
-                          'สร้าง API Keys',
-                          'เชิญ Owner หรือ Admin อื่น',
-                          'ลบ Owner',
-                          'แก้ไข Security Policies ระดับสูง',
+                          'อนุมัติ Deposits/Withdrawals',
+                          'สร้าง/จัดการ API Keys',
+                          'จัดการ Webhooks',
+                          'เชิญผู้ใช้ใหม่',
+                          'แก้ไขตั้งค่าระบบ',
+                          'ทำ Refunds',
                         ]}
                       />
 
                       <TestSection
-                        title="การทดสอบการจัดการผู้ใช้"
+                        title="การทดสอบการฝากเงิน"
                         items={[
-                          'เชิญ Manager ใหม่ → ควรสำเร็จ',
-                          'เชิญ Developer ใหม่ → ควรสำเร็จ',
-                          'แก้ไข Permissions ของ Manager → ควรสำเร็จ',
-                          'ลบ Manager ออกจากองค์กร → ควรสำเร็จ',
-                          'พยายามเชิญ Admin ใหม่ → ควรไม่สามารถทำได้',
-                          'พยายามลบ Owner → ควรไม่สามารถทำได้',
+                          'ไปที่หน้า /deposit-list',
+                          'สร้างคำขอฝากเงินใหม่ → ควรสำเร็จ',
+                          'ระบุข้อมูลลูกค้า (ชื่อ, จำนวนเงิน)',
+                          'ตรวจสอบสถานะคำขอ',
+                          'ดูประวัติการฝากเงิน',
                         ]}
                       />
 
                       <TestSection
-                        title="การทดสอบ Webhooks Management"
+                        title="การทดสอบการถอนเงิน"
                         items={[
-                          'เพิ่ม Webhook Endpoint ใหม่',
-                          'แก้ไข Webhook Endpoint',
-                          'ทดสอบ Webhook',
-                          'ดู Webhook Events',
-                          'ลบ Webhook Endpoint',
+                          'ไปที่หน้า /withdrawal-list',
+                          'สร้างคำขอถอนเงินใหม่ → ควรสำเร็จ',
+                          'ระบุข้อมูลธนาคาร (ชื่อ, เลขบัญชี)',
+                          'ตรวจสอบสถานะคำขอ',
+                          'ดูประวัติการถอนเงิน',
                         ]}
                       />
 
                       <TestSection
-                        title="การทดสอบ Payment Methods"
+                        title="การทดสอบข้อจำกัด"
                         items={[
-                          'ดูช่องทางการชำระเงินที่มีอยู่',
-                          'เปิด/ปิดช่องทางการชำระเงิน (ต้องมีการอนุมัติจาก Owner)',
-                          'ดูการตั้งค่า Gateway',
+                          'พยายามเข้าถึง /settings → ควรถูกปฏิเสธ',
+                          'พยายามสร้าง API Key → ควรถูกปฏิเสธ',
+                          'พยายามจัดการ Webhooks → ควรถูกปฏิเสธ',
+                          'พยายามเชิญผู้ใช้ใหม่ → ควรถูกปฏิเสธ',
                         ]}
                       />
+
+                      <Alert className="border-green-500/50 bg-green-500/10">
+                        <Info className="h-4 w-4 text-green-500" />
+                        <AlertDescription>
+                          <strong>หมายเหตุ:</strong> Finance เป็นบทบาทสำหรับผู้ที่ดูแลการเติม/ถอนเงินให้ลูกค้าเท่านั้น ไม่มีสิทธิ์อนุมัติหรือตั้งค่าระบบ
+                        </AlertDescription>
+                      </Alert>
                     </div>
                   )}
 

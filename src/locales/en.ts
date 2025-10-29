@@ -75,10 +75,9 @@ export const enTranslations = {
   },
   roles: {
     owner: 'Owner',
-    admin: 'Admin',
     developer: 'Developer',
+    manager: 'Manager',
     finance: 'Finance',
-    viewer: 'Viewer',
   },
   permissions: {
     manageApi: 'Manage API',

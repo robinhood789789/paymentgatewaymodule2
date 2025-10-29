@@ -235,7 +235,7 @@ export const CreateUserDialog = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="finance">Finance</SelectItem>
                         <SelectItem value="developer">Developer</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                       </SelectContent>

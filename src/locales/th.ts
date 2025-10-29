@@ -87,10 +87,9 @@ export const thTranslations = {
   },
   roles: {
     owner: 'เจ้าของ',
-    admin: 'ผู้ดูแลระบบ',
     developer: 'นักพัฒนา',
+    manager: 'ผู้จัดการ',
     finance: 'การเงิน',
-    viewer: 'ผู้อ่าน',
   },
   permissions: {
     manageApi: 'จัดการ API',

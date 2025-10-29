@@ -83,7 +83,7 @@ export const useTenantSwitcher = () => {
         id: m.id,
         tenant_id: m.tenant_id,
         role_id: m.role_id,
-        roles: rolesMap.get(m.role_id) || { name: 'viewer' },
+        roles: rolesMap.get(m.role_id) || { name: 'finance' },
         tenants: tenantsMap.get(m.tenant_id) || { id: m.tenant_id, name: 'Unknown', status: 'active' }
       }));
 
