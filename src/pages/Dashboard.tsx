@@ -45,9 +45,7 @@ const Dashboard = () => {
   useMfaGuard({ required: false });
 
   // Super Admin should use /admin dashboard, not tenant dashboard
-  if (isSuperAdmin) {
-    return <Navigate to="/admin" replace />;
-  }
+  const redirectToAdmin = isSuperAdmin;
 
   // Financial queries (Owner/Manager/Finance)
   const { data: wallet } = useQuery({
@@ -61,7 +59,7 @@ const Dashboard = () => {
         .single();
       return data;
     },
-    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewFinancialOverview,
   });
 
   const { data: currentMonthDeposits, isLoading: loadingCurrentDeposits } = useQuery({
@@ -80,7 +78,7 @@ const Dashboard = () => {
       const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
       return { total: total / 100, count: data?.length || 0 };
     },
-    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewFinancialOverview,
   });
 
   const { data: lastMonthDeposits } = useQuery({
@@ -101,7 +99,7 @@ const Dashboard = () => {
       const total = data?.reduce((sum, p) => sum + p.amount, 0) || 0;
       return { total: total / 100 };
     },
-    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewFinancialOverview,
   });
 
   const { data: depositStats } = useQuery({
@@ -117,7 +115,7 @@ const Dashboard = () => {
       const successful = data?.filter(p => p.status === "succeeded").length || 0;
       return { total: data?.length || 0, successful };
     },
-    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewFinancialOverview,
   });
 
   const { data: todayStats } = useQuery({
@@ -133,7 +131,7 @@ const Dashboard = () => {
       
       return { count: data?.length || 0 };
     },
-    enabled: !!activeTenantId && roleVisibility.canViewFinancialOverview,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewFinancialOverview,
   });
 
   // Approvals (Owner/Manager only)
@@ -150,7 +148,7 @@ const Dashboard = () => {
         .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId && roleVisibility.canViewApprovals,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewApprovals,
   });
 
   // Alerts (Owner/Manager only)
@@ -167,7 +165,7 @@ const Dashboard = () => {
         .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId && roleVisibility.canViewRiskAlerts,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewRiskAlerts,
   });
 
   // Dev metrics (Developer/Owner only)
@@ -182,7 +180,7 @@ const Dashboard = () => {
       }
       return data;
     },
-    enabled: !!activeTenantId && roleVisibility.canViewAPIMetrics,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewAPIMetrics,
   });
 
   // Recent transactions (Owner/Manager/Finance)
@@ -198,7 +196,7 @@ const Dashboard = () => {
         .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId && roleVisibility.canViewPayments,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.canViewPayments,
   });
 
   // Recent withdrawals (Finance specific)
@@ -215,7 +213,7 @@ const Dashboard = () => {
         .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId && roleVisibility.isFinance,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.isFinance,
   });
 
   // Recent settlements (Finance specific)
@@ -231,7 +229,7 @@ const Dashboard = () => {
         .limit(5);
       return data || [];
     },
-    enabled: !!activeTenantId && roleVisibility.isFinance,
+    enabled: !!activeTenantId && !redirectToAdmin && roleVisibility.isFinance,
   });
 
   const calculatePercentChange = (current: number, previous: number) => {
@@ -244,6 +242,9 @@ const Dashboard = () => {
     lastMonthDeposits?.total || 0
   );
 
+  if (redirectToAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
   return (
     <DashboardLayout>
       <RequireTenant>
