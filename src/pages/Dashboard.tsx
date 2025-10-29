@@ -185,7 +185,7 @@ const Dashboard = () => {
     enabled: !!activeTenantId && roleVisibility.canViewAPIMetrics,
   });
 
-  // Recent transactions (Owner/Manager only)
+  // Recent transactions (Owner/Manager/Finance)
   const { data: recentTransactions, isLoading: loadingRecent } = useQuery({
     queryKey: ["recent-transactions", activeTenantId],
     queryFn: async () => {
@@ -199,6 +199,39 @@ const Dashboard = () => {
       return data || [];
     },
     enabled: !!activeTenantId && roleVisibility.canViewPayments,
+  });
+
+  // Recent withdrawals (Finance specific)
+  const { data: recentWithdrawals, isLoading: loadingWithdrawals } = useQuery({
+    queryKey: ["recent-withdrawals", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return [];
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("tenant_id", activeTenantId)
+        .eq("type", "withdrawal")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!activeTenantId && roleVisibility.isFinance,
+  });
+
+  // Recent settlements (Finance specific)
+  const { data: recentSettlements, isLoading: loadingSettlements } = useQuery({
+    queryKey: ["recent-settlements", activeTenantId],
+    queryFn: async () => {
+      if (!activeTenantId) return [];
+      const { data } = await supabase
+        .from("settlements")
+        .select("*")
+        .eq("tenant_id", activeTenantId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!activeTenantId && roleVisibility.isFinance,
   });
 
   const calculatePercentChange = (current: number, previous: number) => {
@@ -428,11 +461,12 @@ const Dashboard = () => {
                 </Card>
               )}
 
-              {/* Recent Transactions (Owner/Manager) */}
+              {/* Recent Transactions (Owner/Manager/Finance) */}
               {roleVisibility.canViewPayments && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>ชำระเงินล่าสุด</CardTitle>
+                    <CardTitle>รายการฝากล่าสุด</CardTitle>
+                    <CardDescription>รายการฝากเงินเข้าระบบล่าสุด</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {loadingRecent ? (
@@ -445,21 +479,32 @@ const Dashboard = () => {
                       </p>
                     ) : (
                       <div className="space-y-3">
-                        {recentTransactions.map((tx) => (
-                          <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div>
-                              <p className="font-medium text-sm">
-                                {tx.type === "deposit" ? "ฝากเงิน" : "ถอนเงิน"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
-                              </p>
+                        {recentTransactions.filter(tx => tx.type === "deposit").slice(0, 5).map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                                tx.status === "succeeded" ? "bg-green-100 text-green-700" : 
+                                tx.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                "bg-red-100 text-red-700"
+                              }`}>
+                                {tx.status === "succeeded" ? <CheckCircle2 className="h-5 w-5" /> :
+                                 tx.status === "pending" ? <Clock className="h-5 w-5" /> :
+                                 <XCircle className="h-5 w-5" />}
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  ฝากเงิน
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
+                                </p>
+                              </div>
                             </div>
                             <div className="text-right">
                               <p className="font-bold text-sm">
                                 ฿{(tx.amount / 100).toLocaleString()}
                               </p>
-                              <Badge variant={tx.status === "succeeded" ? "default" : "secondary"} className="text-xs">
+                              <Badge variant={tx.status === "succeeded" ? "default" : tx.status === "pending" ? "secondary" : "destructive"} className="text-xs">
                                 {tx.status}
                               </Badge>
                             </div>
@@ -592,28 +637,153 @@ const Dashboard = () => {
 
               {/* Finance-specific widgets (Finance role) */}
               {roleVisibility.isFinance && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <RefreshCw className="h-5 w-5" />
-                      คำขอของฉัน
-                    </CardTitle>
-                    <CardDescription>
-                      คำขอถอนเงินที่คุณสร้าง
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      ฟีเจอร์นี้จะเปิดใช้งานเร็วๆ นี้
-                    </p>
-                    <Button variant="outline" size="sm" asChild className="w-full">
-                      <Link to="/withdrawal-list">
-                        <ArrowDownRight className="mr-2 h-4 w-4" />
-                        สร้างคำขอถอนเงิน
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
+                <>
+                  {/* Recent Withdrawals */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowDownRight className="h-5 w-5" />
+                        คำขอถอนเงินล่าสุด
+                      </CardTitle>
+                      <CardDescription>
+                        รายการถอนเงินและสถานะ
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingWithdrawals ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                        </div>
+                      ) : !recentWithdrawals || recentWithdrawals.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          ยังไม่มีคำขอถอนเงิน
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {recentWithdrawals.map((withdrawal) => (
+                            <div key={withdrawal.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                                  withdrawal.status === "succeeded" ? "bg-green-100 text-green-700" : 
+                                  withdrawal.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                  "bg-red-100 text-red-700"
+                                }`}>
+                                  <ArrowDownRight className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">ถอนเงิน</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(withdrawal.created_at), "dd/MM/yyyy HH:mm")}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-sm">
+                                  ฿{(withdrawal.amount / 100).toLocaleString()}
+                                </p>
+                                <Badge variant={
+                                  withdrawal.status === "succeeded" ? "default" : 
+                                  withdrawal.status === "pending" ? "secondary" : 
+                                  "destructive"
+                                } className="text-xs">
+                                  {withdrawal.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                          <Button variant="link" size="sm" asChild className="w-full">
+                            <Link to="/withdrawal-list">ดูทั้งหมด →</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Settlements */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <RefreshCw className="h-5 w-5" />
+                        Settlement ล่าสุด
+                      </CardTitle>
+                      <CardDescription>
+                        สรุปการชำระเงินและสถานะ Settlement
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingSettlements ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                        </div>
+                      ) : !recentSettlements || recentSettlements.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          ยังไม่มี Settlement
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {recentSettlements.map((settlement) => (
+                            <div key={settlement.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div>
+                                <p className="font-medium text-sm">
+                                  Settlement #{settlement.id.slice(0, 8)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(settlement.created_at), "dd/MM/yyyy")}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-sm">
+                                  ฿{((settlement.net_amount || 0) / 100).toLocaleString()}
+                                </p>
+                                <Badge variant={
+                                  settlement.paid_out_at ? "default" : "secondary"
+                                } className="text-xs">
+                                  {settlement.paid_out_at ? "Paid" : "Pending"}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                          <Button variant="link" size="sm" asChild className="w-full">
+                            <Link to="/settlements">ดูทั้งหมด →</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Actions for Finance */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Zap className="h-5 w-5" />
+                        การดำเนินการด่วน
+                      </CardTitle>
+                      <CardDescription>
+                        เครื่องมือสำหรับทีมการเงิน
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link to="/reconciliation">
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Reconciliation
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link to="/reports">
+                          <Activity className="mr-2 h-4 w-4" />
+                          รายงานทางการเงิน
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <Link to="/settlements">
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          จัดการ Settlement
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </>
               )}
             </div>
           </div>

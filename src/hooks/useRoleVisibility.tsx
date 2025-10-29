@@ -25,7 +25,7 @@ export const useRoleVisibility = () => {
     
     // Widget visibility
     canViewFinancialOverview: isOwner || isManager || isFinance,
-    canViewPayments: isOwner || isManager,
+    canViewPayments: isOwner || isManager || isFinance, // Finance can view transactions
     canViewPayouts: isOwner || isManager || isFinance,
     canViewApprovals: isOwner || isManager,
     canViewRiskAlerts: isOwner || isManager,
