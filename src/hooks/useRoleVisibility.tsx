@@ -9,21 +9,21 @@ export const useRoleVisibility = () => {
   
   const currentRole = activeTenant?.roles?.name as UserRole | undefined;
   
-  // Super Admin sees everything (treat as Owner)
-  const isOwner = isSuperAdmin || currentRole === 'owner';
+  // Owner sees everything
+  const isOwner = currentRole === 'owner';
   const isManager = currentRole === 'manager';
   const isFinance = currentRole === 'finance';
   const isDeveloper = currentRole === 'developer';
   
   return {
-    currentRole: isSuperAdmin ? 'owner' : currentRole,
+    currentRole,
     isOwner,
     isManager,
     isFinance,
     isDeveloper,
     isSuperAdmin,
     
-    // Widget visibility (Super Admin = Owner permissions)
+    // Widget visibility
     canViewFinancialOverview: isOwner || isManager || isFinance,
     canViewPayments: isOwner || isManager,
     canViewPayouts: isOwner || isManager || isFinance,
