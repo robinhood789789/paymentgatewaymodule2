@@ -269,7 +269,7 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <div className="text-2xl font-bold">
-                        ฿{currentMonthDeposits?.total.toLocaleString() || "0"}
+                        ฿{new Intl.NumberFormat('th-TH').format(currentMonthDeposits?.total ?? 0)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {currentMonthDeposits?.count || 0} รายการ
@@ -286,7 +286,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    ฿{currentMonthDeposits?.total.toLocaleString() || "0"}
+                    ฿{new Intl.NumberFormat('th-TH').format(currentMonthDeposits?.total ?? 0)}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground mt-1">
                     {depositChange >= 0 ? (
