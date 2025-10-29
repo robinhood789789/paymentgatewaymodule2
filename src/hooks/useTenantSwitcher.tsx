@@ -25,12 +25,24 @@ export const useTenantSwitcher = () => {
   const queryClient = useQueryClient();
   const getStorageKey = (uid?: string | null) => (uid ? `${ACTIVE_TENANT_KEY}:${uid}` : ACTIVE_TENANT_KEY);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(() => {
-    // Backward-compatible: read generic key first
+    // Try to read from localStorage - check all possible keys
     try {
-      return localStorage.getItem(ACTIVE_TENANT_KEY);
+      // Try generic key first (backward compatible)
+      const generic = localStorage.getItem(ACTIVE_TENANT_KEY);
+      if (generic) return generic;
+      
+      // Try to find any user-scoped key
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(`${ACTIVE_TENANT_KEY}:`)) {
+          const value = localStorage.getItem(key);
+          if (value) return value;
+        }
+      }
     } catch {
-      return null;
+      // Silently fail
     }
+    return null;
   });
 
   // Fetch user memberships
