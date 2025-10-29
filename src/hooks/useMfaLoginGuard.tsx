@@ -71,7 +71,7 @@ export function useMfaLoginGuard() {
         }
 
         // For non-super admin, check tenant policy
-        if (userRole === 'owner' || userRole === 'admin' || userRole === 'manager') {
+        if (userRole === 'owner' || userRole === 'finance' || userRole === 'manager') {
           const { data: membership } = await supabase
             .from('memberships')
             .select('tenant_id')
@@ -93,7 +93,7 @@ export function useMfaLoginGuard() {
           let mfaRequired = false;
           if (userRole === 'owner' && policy.require_2fa_for_owner) {
             mfaRequired = true;
-          } else if (userRole === 'admin' && policy.require_2fa_for_admin) {
+          } else if (userRole === 'finance' && policy.require_2fa_for_finance) {
             mfaRequired = true;
           } else if (userRole === 'manager' && policy.require_2fa_for_manager) {
             mfaRequired = true;

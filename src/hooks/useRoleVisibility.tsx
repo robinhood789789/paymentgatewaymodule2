@@ -1,7 +1,7 @@
 import { useTenantSwitcher } from "./useTenantSwitcher";
 import { useAuth } from "./useAuth";
 
-export type UserRole = 'owner' | 'manager' | 'finance' | 'developer' | 'admin';
+export type UserRole = 'owner' | 'manager' | 'finance' | 'developer';
 
 export const useRoleVisibility = () => {
   const { activeTenant } = useTenantSwitcher();
@@ -14,7 +14,6 @@ export const useRoleVisibility = () => {
   const isManager = currentRole === 'manager';
   const isFinance = currentRole === 'finance';
   const isDeveloper = currentRole === 'developer';
-  const isAdmin = currentRole === 'admin';
   
   return {
     currentRole,
@@ -22,24 +21,23 @@ export const useRoleVisibility = () => {
     isManager,
     isFinance,
     isDeveloper,
-    isAdmin,
     isSuperAdmin,
     
-    // Widget visibility - Admin has comprehensive access like Manager
-    canViewFinancialOverview: isOwner || isManager || isFinance || isAdmin,
-    canViewPayments: isOwner || isManager || isFinance || isAdmin,
-    canViewPayouts: isOwner || isManager || isFinance || isAdmin,
-    canViewApprovals: isOwner || isManager || isAdmin,
-    canViewRiskAlerts: isOwner || isManager || isAdmin,
-    canViewAPIMetrics: isOwner || isDeveloper || isManager || isAdmin,
-    canViewWebhooks: isOwner || isDeveloper || isManager || isAdmin,
+    // Widget visibility - Finance has access to financial operations
+    canViewFinancialOverview: isOwner || isManager || isFinance,
+    canViewPayments: isOwner || isManager || isFinance,
+    canViewPayouts: isOwner || isManager || isFinance,
+    canViewApprovals: isOwner || isManager,
+    canViewRiskAlerts: isOwner || isManager,
+    canViewAPIMetrics: isOwner || isDeveloper || isManager,
+    canViewWebhooks: isOwner || isDeveloper || isManager,
     
-    // Quick actions - Admin can perform most management actions
-    canCreatePayout: isOwner || isManager || isFinance || isAdmin,
-    canApprovePayout: isOwner || isManager || isAdmin,
-    canCreatePaymentLink: isOwner || isManager || isAdmin,
-    canManageAPIKeys: isOwner || isDeveloper || isAdmin,
-    canTestWebhooks: isOwner || isDeveloper || isAdmin,
-    canExportData: isOwner || isManager || isFinance || isAdmin,
+    // Quick actions - Finance can perform basic financial operations
+    canCreatePayout: isOwner || isManager || isFinance,
+    canApprovePayout: isOwner || isManager,
+    canCreatePaymentLink: isOwner || isManager,
+    canManageAPIKeys: isOwner || isDeveloper,
+    canTestWebhooks: isOwner || isDeveloper,
+    canExportData: isOwner || isManager || isFinance,
   };
 };

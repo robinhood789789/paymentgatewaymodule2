@@ -50,7 +50,7 @@ export const PaymentDetailsDrawer = ({ payment, open, onClose }: PaymentDetailsD
   
   const canRefund = hasPermission("refunds:create") || 
                     userRole === "owner" || 
-                    userRole === "admin" || 
+                    userRole === "finance" || 
                     userRole === "manager";
 
   const copyToClipboard = (text: string, label: string) => {

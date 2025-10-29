@@ -470,12 +470,12 @@ const TestingGuide = () => {
                     </div>
                   )}
 
-                  {activeRole === 'admin' && (
+                  {activeRole === 'finance' && (
                     <div className="space-y-6">
                       <div>
                         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
                           <Settings className="w-7 h-7 text-blue-500" />
-                          Admin
+                          Finance
                         </h2>
                         <p className="text-muted-foreground">
                           มีสิทธิ์ในการตั้งค่าระบบและจัดการผู้ใช้ แต่ไม่มีสิทธิ์ทางการเงินระดับสูง

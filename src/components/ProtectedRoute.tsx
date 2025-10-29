@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isSuperAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/auth/sign-in" replace />;
   }
 
-  if (requireAdmin && !isAdmin) {
+  if (requireAdmin && !isSuperAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 

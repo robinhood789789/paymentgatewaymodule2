@@ -56,7 +56,7 @@ export const CreateUserDialog = () => {
       email: "",
       password: "",
       full_name: "",
-      role: "admin",
+      role: "finance",
     },
   });
 

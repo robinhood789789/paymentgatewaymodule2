@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 const AuthStatus = () => {
-  const { user, isAdmin, isSuperAdmin, userRole, tenantId, tenantName } = useAuth();
+  const { user, isSuperAdmin, userRole, tenantId, tenantName } = useAuth();
 
   return (
     <DashboardLayout>
@@ -42,14 +42,6 @@ const AuthStatus = () => {
               <div className="flex justify-between items-center">
                 <span className="font-medium">User Role:</span>
                 <Badge variant="outline">{userRole || "N/A"}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Is Admin:</span>
-                {isAdmin ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
-                )}
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-medium">Is Super Admin:</span>
@@ -125,7 +117,6 @@ const AuthStatus = () => {
     id: user?.id,
     email: user?.email,
   },
-  isAdmin,
   isSuperAdmin,
   userRole,
   tenantId,

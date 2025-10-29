@@ -61,7 +61,7 @@ export function useMfaGuard(options: MfaGuardOptions = {}) {
         // Check tenant policy
         if (userRole === 'owner' && tenantPolicy.require_2fa_for_owner) {
           mfaRequired = true;
-        } else if (userRole === 'admin' && tenantPolicy.require_2fa_for_admin) {
+        } else if (userRole === 'finance' && tenantPolicy.require_2fa_for_finance) {
           mfaRequired = true;
         }
       }

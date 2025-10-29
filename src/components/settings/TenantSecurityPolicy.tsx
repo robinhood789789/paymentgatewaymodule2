@@ -136,7 +136,7 @@ export function TenantSecurityPolicy() {
 
         const shouldHave2fa = 
           (roleName === 'owner' && requiresOwner2fa) ||
-          (roleName === 'admin' && requiresAdmin2fa);
+          (roleName === 'finance' && requiresAdmin2fa);
 
         if (shouldHave2fa && !totpEnabled) {
           markedCount++;

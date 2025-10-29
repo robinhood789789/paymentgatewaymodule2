@@ -263,7 +263,7 @@ const Dashboard = () => {
                 <Badge className={`ml-3 text-xs font-semibold ${
                   roleVisibility.currentRole === 'owner' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0' :
                   roleVisibility.currentRole === 'manager' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0' :
-                  roleVisibility.currentRole === 'finance' || roleVisibility.currentRole === 'admin' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0' :
+                  roleVisibility.currentRole === 'finance' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0' :
                   roleVisibility.currentRole === 'developer' ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white border-0' :
                   ''
                 }`}>

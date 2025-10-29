@@ -59,15 +59,13 @@ interface DashboardLayoutProps {
 
 const DashboardSidebar = () => {
   const { state } = useSidebar();
-  const { signOut, isAdmin, isSuperAdmin, user, userRole } = useAuth();
+  const { signOut, isSuperAdmin, user } = useAuth();
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
   const { activeTenant } = useTenantSwitcher();
 
   const isOwner = activeTenant?.roles?.name === 'owner';
-  const isAdminRole = activeTenant?.roles?.name === 'admin';
-  const isManager = activeTenant?.roles?.name === 'manager';
 
   // Overview section - available to all users
   const userMenuItems = [

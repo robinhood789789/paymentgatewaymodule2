@@ -33,7 +33,7 @@ export default function DepositList() {
 
   // Check user role
   const userRole = activeTenant?.roles?.name;
-  const canCreateRequest = userRole === 'admin' || userRole === 'manager';
+  const canCreateRequest = userRole === 'finance' || userRole === 'manager';
 
   const { data: deposits, isLoading, refetch } = useQuery({
     queryKey: ["deposits", statusFilter, activeTenantId],

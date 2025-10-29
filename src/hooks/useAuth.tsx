@@ -11,7 +11,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  isAdmin: boolean;
   isSuperAdmin: boolean;
   userRole: string | null;
   tenantId: string | null;
@@ -25,7 +24,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
@@ -45,7 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             fetchUserRole(session.user.id);
           }, 0);
         } else {
-          setIsAdmin(false);
           setIsSuperAdmin(false);
           setUserRole(null);
           setTenantId(null);
@@ -126,13 +123,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const roleName = roleData?.name || null;
         setUserRole(roleName);
-        setIsAdmin(isSuperAdminUser || roleName === "admin" || roleName === "owner");
         setTenantId(membershipData.tenant_id);
         setTenantName(tenantData?.name || null);
       } else if (isSuperAdminUser) {
         // Super admin doesn't need membership
         setUserRole("super_admin");
-        setIsAdmin(true);
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
@@ -195,18 +190,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (isSuperAdmin) {
         // Super admin always requires MFA
         mfaRequired = true;
-      } else if (tenantId && (role === 'owner' || role === 'admin')) {
+      } else if (tenantId && (role === 'owner' || role === 'finance')) {
         // Check tenant security policy
         const { data: policy } = await supabase
           .from("tenant_security_policy")
-          .select("require_2fa_for_owner, require_2fa_for_admin")
+          .select("require_2fa_for_owner, require_2fa_for_finance")
           .eq("tenant_id", tenantId)
           .single();
 
         if (policy) {
           if (role === 'owner' && policy.require_2fa_for_owner) {
             mfaRequired = true;
-          } else if (role === 'admin' && policy.require_2fa_for_admin) {
+          } else if (role === 'finance' && policy.require_2fa_for_finance) {
             mfaRequired = true;
           }
         }
@@ -303,7 +298,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // เคลียร์สถานะในเมมโมรีทันที
       setUser(null);
       setSession(null);
-      setIsAdmin(false);
       setIsSuperAdmin(false);
       setUserRole(null);
       setTenantId(null);
@@ -333,7 +327,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signIn,
         signUp,
         signOut,
-        isAdmin,
         isSuperAdmin,
         userRole,
         tenantId,

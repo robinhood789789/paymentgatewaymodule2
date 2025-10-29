@@ -32,13 +32,12 @@ export const PermissionGate = ({
   const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading: permsLoading } = usePermissions();
   const { activeTenant, activeTenantId, isLoading: tenantLoading } = useTenantSwitcher();
   const isOwner = activeTenant?.roles?.name === "owner";
-  const isAdmin = activeTenant?.roles?.name === "admin";
 
   if (permsLoading || tenantLoading || !activeTenantId) {
     return null;
   }
 
-  if ((allowOwner && isOwner) || (allowAdmin && isAdmin)) {
+  if (allowOwner && isOwner) {
     return <>{children}</>;
   }
 
