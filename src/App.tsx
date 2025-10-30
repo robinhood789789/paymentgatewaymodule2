@@ -63,6 +63,11 @@ import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
 import TestingGuide from "./pages/TestingGuide";
+import { ShareholderRoute } from "./components/ShareholderRoute";
+import ShareholderDashboard from "./pages/shareholder/ShareholderDashboard";
+import ShareholderClients from "./pages/shareholder/ShareholderClients";
+import ShareholderEarnings from "./pages/shareholder/ShareholderEarnings";
+import ShareholderWithdrawals from "./pages/shareholder/ShareholderWithdrawals";
 
 const queryClient = new QueryClient();
 
@@ -338,6 +343,48 @@ function AppContent() {
       <Route path="/pyramid-authority" element={<ProtectedRoute><PyramidAuthority /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertManagement /></ProtectedRoute>} />
       <Route path="/reports/gap" element={<ProtectedRoute><GapReport /></ProtectedRoute>} />
+      
+      {/* Shareholder Routes */}
+      <Route
+        path="/shareholder/dashboard"
+        element={
+          <ProtectedRoute>
+            <ShareholderRoute>
+              <ShareholderDashboard />
+            </ShareholderRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shareholder/clients"
+        element={
+          <ProtectedRoute>
+            <ShareholderRoute>
+              <ShareholderClients />
+            </ShareholderRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shareholder/earnings"
+        element={
+          <ProtectedRoute>
+            <ShareholderRoute>
+              <ShareholderEarnings />
+            </ShareholderRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shareholder/withdrawals"
+        element={
+          <ProtectedRoute>
+            <ShareholderRoute>
+              <ShareholderWithdrawals />
+            </ShareholderRoute>
+          </ProtectedRoute>
+        }
+      />
       
       {/* Auth Status Test Page */}
       <Route path="/auth-status" element={<ProtectedRoute><AuthStatus /></ProtectedRoute>} />

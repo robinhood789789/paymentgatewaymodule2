@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useI18n } from "@/lib/i18n";
+import { useShareholder } from "@/hooks/useShareholder";
 
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
@@ -64,6 +65,7 @@ const DashboardSidebar = () => {
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
   const { activeTenant } = useTenantSwitcher();
+  const { isShareholder } = useShareholder();
 
   const isOwner = activeTenant?.roles?.name === 'owner';
 
@@ -181,6 +183,14 @@ const DashboardSidebar = () => {
     { title: "Audit", url: "/platform/audit", icon: Activity },
     { title: "Impersonate", url: "/platform/impersonate", icon: UserCheck },
     { title: "Status", url: "/platform/status", icon: Activity },
+  ];
+
+  // Shareholder menu items
+  const shareholderMenuItems = [
+    { title: "Dashboard", url: "/shareholder/dashboard", icon: LayoutDashboard },
+    { title: "My Clients", url: "/shareholder/clients", icon: Users },
+    { title: "Earnings", url: "/shareholder/earnings", icon: DollarSign },
+    { title: "Withdrawals", url: "/shareholder/withdrawals", icon: Wallet },
   ];
 
   // Debug menu - always available
@@ -431,6 +441,34 @@ const DashboardSidebar = () => {
             <SidebarGroupContent>
               <SidebarMenu>
                 {superAdminMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                            : "hover:bg-sidebar-accent/50"
+                        }
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Shareholder Menu */}
+        {isShareholder && !isSuperAdmin && (
+          <SidebarGroup className="border-l-[6px] border-blue-500 bg-blue-500/5 pl-3 py-2 rounded-r-lg">
+            <SidebarGroupLabel className="text-blue-600 font-semibold">Shareholder</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {shareholderMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink
