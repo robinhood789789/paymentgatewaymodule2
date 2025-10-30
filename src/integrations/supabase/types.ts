@@ -1618,12 +1618,80 @@ export type Database = {
           },
         ]
       }
+      shareholder_adjust_requests: {
+        Row: {
+          created_at: string
+          current_percent: number
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          reason: string | null
+          requested_at: string
+          requested_by: string
+          requested_percent: number
+          shareholder_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_percent: number
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          requested_by: string
+          requested_percent: number
+          shareholder_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_percent?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string
+          requested_percent?: number
+          shareholder_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_adjust_requests_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shareholder_adjust_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shareholder_clients: {
         Row: {
+          bounty_amount: number | null
           commission_rate: number
+          commission_type: string | null
           created_at: string
+          effective_from: string | null
+          effective_to: string | null
           id: string
           notes: string | null
+          referral_source: string | null
           referred_at: string
           shareholder_id: string
           status: string
@@ -1631,10 +1699,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bounty_amount?: number | null
           commission_rate?: number
+          commission_type?: string | null
           created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
           id?: string
           notes?: string | null
+          referral_source?: string | null
           referred_at?: string
           shareholder_id: string
           status?: string
@@ -1642,10 +1715,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bounty_amount?: number | null
           commission_rate?: number
+          commission_type?: string | null
           created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
           id?: string
           notes?: string | null
+          referral_source?: string | null
           referred_at?: string
           shareholder_id?: string
           status?: string
@@ -1662,6 +1740,63 @@ export type Database = {
           },
           {
             foreignKeyName: "shareholder_clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholder_commission_events: {
+        Row: {
+          base_value: number
+          commission_amount: number
+          commission_percent: number
+          created_at: string
+          event_type: string
+          id: string
+          meta: Json | null
+          occurred_at: string
+          shareholder_id: string
+          source_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          base_value?: number
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          event_type: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string
+          shareholder_id: string
+          source_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          base_value?: number
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string
+          shareholder_id?: string
+          source_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_commission_events_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shareholder_commission_events_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1795,9 +1930,14 @@ export type Database = {
       shareholders: {
         Row: {
           active_clients_count: number
+          adjust_max_percent: number | null
+          adjust_min_percent: number | null
+          allow_self_adjust: boolean | null
           balance: number
           created_at: string
           created_by: string | null
+          default_commission_type: string | null
+          default_commission_value: number | null
           email: string
           full_name: string
           id: string
@@ -1810,9 +1950,14 @@ export type Database = {
         }
         Insert: {
           active_clients_count?: number
+          adjust_max_percent?: number | null
+          adjust_min_percent?: number | null
+          allow_self_adjust?: boolean | null
           balance?: number
           created_at?: string
           created_by?: string | null
+          default_commission_type?: string | null
+          default_commission_value?: number | null
           email: string
           full_name: string
           id?: string
@@ -1825,9 +1970,14 @@ export type Database = {
         }
         Update: {
           active_clients_count?: number
+          adjust_max_percent?: number | null
+          adjust_min_percent?: number | null
+          allow_self_adjust?: boolean | null
           balance?: number
           created_at?: string
           created_by?: string | null
+          default_commission_type?: string | null
+          default_commission_value?: number | null
           email?: string
           full_name?: string
           id?: string
