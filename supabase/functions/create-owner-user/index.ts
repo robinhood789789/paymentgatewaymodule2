@@ -37,52 +37,55 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, full_name, tenant_name } = await req.json();
+    const { 
+      owner_user_id, 
+      owner_name, 
+      owner_type,
+      tenant_name,
+      business_type,
+      provider,
+      force_2fa,
+      platform_fee_percent,
+      features 
+    } = await req.json();
 
-    if (!email || !full_name || !tenant_name) {
-      throw new Error('Missing required fields: email, full_name, tenant_name');
+    if (!owner_user_id || !owner_name || !owner_type || !tenant_name) {
+      throw new Error('Missing required fields: owner_user_id, owner_name, owner_type, tenant_name');
     }
 
-    // Generate temporary password
-    const temporaryPassword = `Owner${Math.random().toString(36).slice(-8)}!${Date.now().toString(36)}`;
+    // Generate automatic login password
+    const temporaryPassword = `${owner_type}${Math.random().toString(36).slice(-8)}${Date.now().toString(36).slice(-4)}`;
 
-    console.log('Creating new owner user:', { email, full_name, tenant_name });
+    console.log('Creating merchant for owner:', { owner_user_id, owner_name, owner_type, tenant_name });
 
-    // Create the new user
-    const { data: newUser, error: createUserError } = await supabaseClient.auth.admin.createUser({
-      email,
-      password: temporaryPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-      },
-    });
-
-    if (createUserError) {
-      console.error('Error creating user:', createUserError);
-      throw new Error(`Failed to create user: ${createUserError.message}`);
-    }
-
-    console.log('User created successfully:', newUser.user.id);
-
-    // Create new tenant
+    // Create new tenant with additional info
     const { data: newTenant, error: tenantError } = await supabaseClient
       .from('tenants')
       .insert({
         name: tenant_name,
         status: 'active',
+        business_type: business_type,
+        kyc_level: 0,
       })
       .select()
       .single();
 
     if (tenantError) {
       console.error('Error creating tenant:', tenantError);
-      // Cleanup: delete the created user
-      await supabaseClient.auth.admin.deleteUser(newUser.user.id);
       throw new Error(`Failed to create tenant: ${tenantError.message}`);
     }
 
     console.log('Tenant created successfully:', newTenant.id);
+
+    // Create tenant settings with provider
+    await supabaseClient
+      .from('tenant_settings')
+      .insert({
+        tenant_id: newTenant.id,
+        provider: provider || 'stripe',
+        features: features || {},
+        enforce_2fa_roles: force_2fa ? ['owner'] : [],
+      });
 
     // Get or create owner role for this tenant
     const { data: ownerRole, error: roleError } = await supabaseClient
@@ -110,7 +113,6 @@ Deno.serve(async (req) => {
       if (createRoleError) {
         console.error('Error creating owner role:', createRoleError);
         // Cleanup
-        await supabaseClient.auth.admin.deleteUser(newUser.user.id);
         await supabaseClient.from('tenants').delete().eq('id', newTenant.id);
         throw new Error(`Failed to create owner role: ${createRoleError.message}`);
       }
@@ -134,60 +136,66 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create membership
-    const { error: membershipError } = await supabaseClient
-      .from('memberships')
+    console.log('Tenant setup completed successfully');
+
+    // Generate API Key automatically
+    const generateApiKey = () => {
+      const prefix = 'pk_live';
+      const secret = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      return `${prefix}_${secret}`;
+    };
+
+    const hashSecret = async (secret: string) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(secret);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    };
+
+    const apiKey = generateApiKey();
+    const hashedSecret = await hashSecret(apiKey);
+
+    // Store API key in database
+    const { error: apiKeyError } = await supabaseClient
+      .from('api_keys')
       .insert({
-        user_id: newUser.user.id,
         tenant_id: newTenant.id,
-        role_id: ownerRoleId,
+        name: `Auto-generated for ${owner_name}`,
+        prefix: apiKey.split('_')[0] + '_' + apiKey.split('_')[1],
+        hashed_secret: hashedSecret,
+        key_type: 'external',
+        rate_limit_tier: 'standard',
+        scope: { endpoints: ['*'] },
+        allowed_operations: ['read', 'write'],
+        status: 'active',
+        notes: `Auto-generated API key for ${owner_type} - ${owner_name}`,
       });
 
-    if (membershipError) {
-      console.error('Error creating membership:', membershipError);
-      // Cleanup
-      await supabaseClient.auth.admin.deleteUser(newUser.user.id);
-      await supabaseClient.from('tenants').delete().eq('id', newTenant.id);
-      throw new Error(`Failed to create membership: ${membershipError.message}`);
-    }
-
-    console.log('Owner user setup completed successfully');
-
-    // Send welcome email to the new owner
-    try {
-      const { error: emailError } = await supabaseClient.functions.invoke('send-owner-welcome-email', {
-        body: {
-          tenantName: tenant_name,
-          email,
-          temporaryPassword,
-        },
-      });
-
-      if (emailError) {
-        console.error('Error sending welcome email:', emailError);
-        // Don't fail the entire operation if email fails
-      } else {
-        console.log('Welcome email sent successfully to:', email);
-      }
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Continue despite email failure
+    if (apiKeyError) {
+      console.error('Error creating API key:', apiKeyError);
+      // Don't fail the entire operation
+    } else {
+      console.log('API key created successfully');
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        user: {
-          id: newUser.user.id,
-          email: newUser.user.email,
-          full_name,
-        },
+        owner_user_id,
+        owner_name,
+        owner_type,
         tenant: {
           id: newTenant.id,
           name: newTenant.name,
+          provider: provider || 'stripe',
         },
         temporary_password: temporaryPassword,
-        email_sent: true,
+        api_key: apiKey,
+        force_2fa,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

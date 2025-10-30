@@ -21,8 +21,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   business_name: z.string().min(2, "ชื่อธุรกิจต้องมีอย่างน้อย 2 ตัวอักษร"),
-  owner_email: z.string().email("อีเมลไม่ถูกต้อง"),
-  owner_full_name: z.string().min(2, "ชื่อ-นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
+  owner_user_id: z.string().min(1, "กรุณากรอก Owner User ID"),
+  owner_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
+  owner_type: z.enum(["Game1", "Game2", "Game3"], { required_error: "กรุณาเลือก Owner Type" }),
   business_type: z.string().min(1, "กรุณาเลือกประเภทธุรกิจ"),
   provider: z.string().default("stripe"),
   force_2fa: z.boolean().default(true),
@@ -46,8 +47,9 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       business_name: "",
-      owner_email: "",
-      owner_full_name: "",
+      owner_user_id: "",
+      owner_name: "",
+      owner_type: "Game1",
       business_type: "",
       provider: "stripe",
       force_2fa: true,
@@ -76,8 +78,9 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
 
       const { data: result, error } = await supabase.functions.invoke("create-owner-user", {
         body: {
-          email: data.owner_email,
-          full_name: data.owner_full_name,
+          owner_user_id: data.owner_user_id,
+          owner_name: data.owner_name,
+          owner_type: data.owner_type,
           tenant_name: data.business_name,
           business_type: data.business_type,
           provider: data.provider,
@@ -109,7 +112,8 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
         after: {
           tenant_id: data.tenant?.id,
           tenant_name: data.tenant?.name,
-          owner_email: data.user?.email,
+          owner_user_id: data.owner_user_id,
+          owner_name: data.owner_name,
         },
       });
     },
@@ -122,12 +126,23 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
     checkAndChallenge(() => provisionMutation.mutate(data));
   };
 
+  const [copiedApiKey, setCopiedApiKey] = useState(false);
+
   const handleCopyPassword = () => {
     if (provisionedTenant?.temporary_password) {
       navigator.clipboard.writeText(provisionedTenant.temporary_password);
       setCopiedPassword(true);
       toast.success("คัดลอกรหัสผ่านแล้ว");
       setTimeout(() => setCopiedPassword(false), 2000);
+    }
+  };
+
+  const handleCopyApiKey = () => {
+    if (provisionedTenant?.api_key) {
+      navigator.clipboard.writeText(provisionedTenant.api_key);
+      setCopiedApiKey(true);
+      toast.success("คัดลอก API Key แล้ว");
+      setTimeout(() => setCopiedApiKey(false), 2000);
     }
   };
 
@@ -140,6 +155,7 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
     setOpen(false);
     setProvisionedTenant(null);
     setCopiedPassword(false);
+    setCopiedApiKey(false);
     form.reset();
   };
 
@@ -194,17 +210,22 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground">อีเมล Owner</div>
-                    <div className="text-lg font-semibold">{provisionedTenant.user.email}</div>
+                    <div className="text-sm font-medium text-muted-foreground">Owner User ID</div>
+                    <div className="text-lg font-semibold">{provisionedTenant.owner_user_id}</div>
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground">ชื่อ Owner</div>
-                    <div className="text-lg font-semibold">{provisionedTenant.user.full_name}</div>
+                    <div className="text-sm font-medium text-muted-foreground">Owner Name</div>
+                    <div className="text-lg font-semibold">{provisionedTenant.owner_name}</div>
                   </div>
 
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground">รหัสผ่านชั่วคราว</div>
+                    <div className="text-sm font-medium text-muted-foreground">Owner Type</div>
+                    <div className="text-lg font-semibold">{provisionedTenant.owner_type}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">รหัสผ่าน Login</div>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-sm">
                         {provisionedTenant.temporary_password}
@@ -214,7 +235,22 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                       </Button>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      ผู้ใช้จะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อล็อกอินครั้งแรก
+                      ส่งรหัสผ่านนี้ให้ลูกค้าเพื่อ Login เข้าระบบ
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">API Key</div>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-sm break-all">
+                        {provisionedTenant.api_key}
+                      </code>
+                      <Button size="sm" variant="outline" onClick={handleCopyApiKey}>
+                        {copiedApiKey ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      ส่ง API Key นี้ให้ลูกค้าสำหรับการเชื่อมต่อระบบ
                     </div>
                   </div>
 
@@ -224,6 +260,9 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                     </Badge>
                     <Badge variant="outline">
                       Provider: {provisionedTenant.tenant.provider || "stripe"}
+                    </Badge>
+                    <Badge variant="outline">
+                      Type: {provisionedTenant.owner_type}
                     </Badge>
                   </div>
                 </div>
@@ -287,16 +326,33 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                   </div>
 
                   <div className="space-y-4 border-t pt-4">
-                    <h3 className="text-lg font-semibold">บัญชี Owner</h3>
+                    <h3 className="text-lg font-semibold">ข้อมูล Owner</h3>
                     
                     <FormField
                       control={form.control}
-                      name="owner_email"
+                      name="owner_user_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>อีเมล Owner</FormLabel>
+                          <FormLabel>Owner User ID</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="owner@example.com" {...field} />
+                            <Input placeholder="USER001" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            รหัสประจำตัวของ Owner ในระบบ
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="owner_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Owner Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ชื่อ Owner" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,13 +361,25 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
 
                     <FormField
                       control={form.control}
-                      name="owner_full_name"
+                      name="owner_type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ชื่อ-นามสกุล Owner</FormLabel>
-                          <FormControl>
-                            <Input placeholder="สมชาย ใจดี" {...field} />
-                          </FormControl>
+                          <FormLabel>Owner Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="เลือก Owner Type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Game1">Game1</SelectItem>
+                              <SelectItem value="Game2">Game2</SelectItem>
+                              <SelectItem value="Game3">Game3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            ประเภทของ Owner
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
