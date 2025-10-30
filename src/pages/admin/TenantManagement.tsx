@@ -137,7 +137,7 @@ export default function TenantManagement() {
         .update({
           payment_deposit_percentage: depositPercent,
           payment_withdrawal_percentage: withdrawalPercent
-        })
+        } as any)
         .eq("tenant_id", tenantId);
 
       if (settingsError) throw settingsError;

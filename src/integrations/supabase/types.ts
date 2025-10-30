@@ -1702,6 +1702,8 @@ export type Database = {
           created_at: string | null
           enforce_2fa_roles: Json | null
           features: Json | null
+          payment_deposit_percentage: number | null
+          payment_withdrawal_percentage: number | null
           provider: string
           require_2fa_for_withdrawal: boolean | null
           security_headers: Json | null
@@ -1715,6 +1717,8 @@ export type Database = {
           created_at?: string | null
           enforce_2fa_roles?: Json | null
           features?: Json | null
+          payment_deposit_percentage?: number | null
+          payment_withdrawal_percentage?: number | null
           provider?: string
           require_2fa_for_withdrawal?: boolean | null
           security_headers?: Json | null
@@ -1728,6 +1732,8 @@ export type Database = {
           created_at?: string | null
           enforce_2fa_roles?: Json | null
           features?: Json | null
+          payment_deposit_percentage?: number | null
+          payment_withdrawal_percentage?: number | null
           provider?: string
           require_2fa_for_withdrawal?: boolean | null
           security_headers?: Json | null
