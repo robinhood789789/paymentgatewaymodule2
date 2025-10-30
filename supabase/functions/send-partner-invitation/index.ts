@@ -105,7 +105,7 @@ serve(async (req) => {
       </html>
     `;
 
-    const { error: emailError } = await fetch('https://api.resend.com/emails', {
+    const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendApiKey}`,
@@ -117,11 +117,13 @@ serve(async (req) => {
         subject: '🎉 เชิญใช้งานพอร์ทัลพาร์ทเนอร์',
         html: emailHtml,
       }),
-    }).then(r => r.json());
+    });
 
-    if (emailError) {
-      console.error('[send-partner-invitation] Email error:', emailError);
-      throw new Error('Failed to send email');
+    const emailData = await emailResponse.json();
+
+    if (!emailResponse.ok) {
+      console.error('[send-partner-invitation] Email error:', emailData);
+      throw new Error(`Failed to send email: ${JSON.stringify(emailData)}`);
     }
 
     console.log('[send-partner-invitation] Email sent successfully to:', email);
