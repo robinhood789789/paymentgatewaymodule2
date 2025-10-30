@@ -16,7 +16,7 @@ export const invokeFunctionWithTenant = async <T = any>(
   
   const headers = {
     ...(options?.headers || {}),
-    ...(activeTenantId ? { "X-Tenant": activeTenantId } : {}),
+    ...(activeTenantId ? { "x-tenant": activeTenantId } : {}),
   };
 
   return await supabase.functions.invoke(functionName, {
