@@ -12,13 +12,27 @@ export const invokeFunctionWithTenant = async <T = any>(
     headers?: Record<string, string>;
   }
 ): Promise<{ data: T | null; error: any }> => {
-  const activeTenantId = localStorage.getItem(ACTIVE_TENANT_KEY);
+  // Resolve active tenant from localStorage (supports generic and per-user keys)
+  let activeTenantId: string | null = null;
+  try {
+    // Try generic key first (backward compatible)
+    activeTenantId = localStorage.getItem(ACTIVE_TENANT_KEY);
+    // Fallback: search any user-scoped key like `active_tenant_id:<userId>`
+    if (!activeTenantId) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`${ACTIVE_TENANT_KEY}:`)) {
+          const val = localStorage.getItem(key);
+          if (val) { activeTenantId = val; break; }
+        }
+      }
+    }
+  } catch {}
   
   const headers = {
     ...(options?.headers || {}),
     ...(activeTenantId ? { "x-tenant": activeTenantId } : {}),
   };
-
   return await supabase.functions.invoke(functionName, {
     ...options,
     headers,
