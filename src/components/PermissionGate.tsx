@@ -9,7 +9,7 @@ interface PermissionGateProps {
   requireAll?: boolean;
   fallback?: ReactNode;
   allowOwner?: boolean;
-  allowAdmin?: boolean;
+  allowSuperAdmin?: boolean;
 }
 
 /**
@@ -27,17 +27,22 @@ export const PermissionGate = ({
   requireAll = false,
   fallback = null,
   allowOwner = false,
-  allowAdmin = false,
+  allowSuperAdmin = false,
 }: PermissionGateProps) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading: permsLoading } = usePermissions();
   const { activeTenant, activeTenantId, isLoading: tenantLoading } = useTenantSwitcher();
   const isOwner = activeTenant?.roles?.name === "owner";
+  const isSuperAdmin = activeTenant?.roles?.name === "super_admin";
 
   if (permsLoading || tenantLoading || !activeTenantId) {
     return null;
   }
 
   if (allowOwner && isOwner) {
+    return <>{children}</>;
+  }
+
+  if (allowSuperAdmin && isSuperAdmin) {
     return <>{children}</>;
   }
 

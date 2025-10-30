@@ -124,14 +124,14 @@ const Approvals = () => {
       <RequireTenant>
         <PermissionGate
           allowOwner
-          allowAdmin
+          permissions={["approvals.view", "approvals.approve"]}
           fallback={
             <div className="p-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Access Denied</CardTitle>
                   <CardDescription>
-                    Only owners and admins can manage approvals
+                    Only owners and managers can manage approvals
                   </CardDescription>
                 </CardHeader>
               </Card>
