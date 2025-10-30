@@ -76,22 +76,28 @@ export const CreateUserDialog = () => {
   // Group permissions - each selection will grant multiple permissions
   const permissionGroups = [
     {
-      id: "deposits",
-      name: "สิทธิดูรายละเอียดการเติมเงิน",
-      description: "สิทธิ์ในการดูรายละเอียดคำขอฝากเงิน",
-      permissions: ["deposits.view"]
+      id: "deposits_manage",
+      name: "สิทธิการเติมเงิน",
+      description: "สิทธิ์ในการดูและสร้างคำขอฝากเงิน",
+      permissions: ["deposits.view", "deposits.create"]
     },
     {
-      id: "withdrawals",
-      name: "สิทธิดูรายละเอียดการถอนเงิน",
-      description: "สิทธิ์ในการดูรายละเอียดคำขอถอนเงิน",
-      permissions: ["withdrawals.view"]
+      id: "withdrawals_manage",
+      name: "สิทธิการถอนเงิน",
+      description: "สิทธิ์ในการดูและสร้างคำขอถอนเงิน",
+      permissions: ["withdrawals.view", "withdrawals.create"]
     },
     {
-      id: "payments",
-      name: "สิทธิรายการชำระเงิน",
-      description: "สิทธิ์ในการดู สร้าง และคืนเงินให้ลูกค้า",
-      permissions: ["payments.view", "payments.create", "payments.refund"]
+      id: "payments_view",
+      name: "สิทธิดูรายการชำระเงิน",
+      description: "สิทธิ์ในการดูรายการชำระเงินเท่านั้น",
+      permissions: ["payments.view"]
+    },
+    {
+      id: "financial_view_only",
+      name: "สิทธิดูความเคลื่อนไหวหน้าเติมเงินและถอนเงิน แต่ไม่มีสิทธิจัดการ",
+      description: "สิทธิ์ในการดูรายละเอียดการเติมเงินและถอนเงินเท่านั้น ไม่สามารถสร้างหรือจัดการได้",
+      permissions: ["deposits.view", "withdrawals.view"]
     },
     {
       id: "api_keys",
