@@ -490,7 +490,6 @@ export default function TenantManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 }
