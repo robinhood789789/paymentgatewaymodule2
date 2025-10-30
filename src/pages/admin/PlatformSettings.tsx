@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
 interface PlatformSettings {
-  payment_deposit_percentage: number;
-  payment_withdrawal_percentage: number;
+  default_fee_percentage: number;
+  default_fee_fixed: number;
   maintenance_mode: boolean;
   maintenance_message: string;
   new_tenant_auto_approve: boolean;
@@ -30,8 +30,8 @@ const PlatformSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<PlatformSettings>({
-    payment_deposit_percentage: 0,
-    payment_withdrawal_percentage: 0,
+    default_fee_percentage: 2.9,
+    default_fee_fixed: 3.0,
     maintenance_mode: false,
     maintenance_message: "ระบบอยู่ระหว่างการปรับปรุง กรุณากลับมาใหม่ภายหลัง",
     new_tenant_auto_approve: false,
@@ -64,8 +64,8 @@ const PlatformSettings = () => {
       
       if (data?.settings) {
         setSettings({
-          payment_deposit_percentage: data.settings.payment_deposit_percentage?.value || 0,
-          payment_withdrawal_percentage: data.settings.payment_withdrawal_percentage?.value || 0,
+          default_fee_percentage: data.settings.default_fee_percentage?.value || 2.9,
+          default_fee_fixed: data.settings.default_fee_fixed?.value || 3.0,
           maintenance_mode: data.settings.maintenance_mode?.enabled || false,
           maintenance_message: data.settings.maintenance_mode?.message || "ระบบอยู่ระหว่างการปรับปรุง กรุณากลับมาใหม่ภายหลัง",
           new_tenant_auto_approve: data.settings.new_tenant_auto_approve?.enabled || false,
@@ -86,8 +86,8 @@ const PlatformSettings = () => {
       setSaving(true);
       try {
         const settingsToSave = {
-          payment_deposit_percentage: { value: settings.payment_deposit_percentage },
-          payment_withdrawal_percentage: { value: settings.payment_withdrawal_percentage },
+          default_fee_percentage: { value: settings.default_fee_percentage },
+          default_fee_fixed: { value: settings.default_fee_fixed },
           maintenance_mode: { 
             enabled: settings.maintenance_mode, 
             message: settings.maintenance_message 
@@ -145,48 +145,44 @@ const PlatformSettings = () => {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="revenue" className="w-full">
+      <Tabs defaultValue="fees" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="revenue">การคำนวณรายได้</TabsTrigger>
+          <TabsTrigger value="fees">Fees & Billing</TabsTrigger>
           <TabsTrigger value="features">Feature Flags</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="revenue">
+        <TabsContent value="fees">
           <Card>
             <CardHeader>
-              <CardTitle>การคำนวณรายได้เป็นเปอร์เซนต์</CardTitle>
-              <CardDescription>กำหนดอัตราการคำนวณรายได้จากธุรกรรม</CardDescription>
+              <CardTitle>Default Fee Structure</CardTitle>
+              <CardDescription>ค่า fees เริ่มต้นสำหรับ tenant ใหม่</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Payment Deposit (%)</Label>
+                <Label>Percentage Fee (%)</Label>
                 <Input
                   type="number"
                   step="0.1"
-                  min="0"
-                  max="100"
-                  value={settings.payment_deposit_percentage}
+                  value={settings.default_fee_percentage}
                   onChange={(e) =>
-                    setSettings({ ...settings, payment_deposit_percentage: parseFloat(e.target.value) || 0 })
+                    setSettings({ ...settings, default_fee_percentage: parseFloat(e.target.value) })
                   }
                 />
-                <p className="text-sm text-muted-foreground">เปอร์เซ็นต์รายได้จากการฝากเงิน</p>
+                <p className="text-sm text-muted-foreground">ค่า fee เป็นเปอร์เซ็นต์ (เช่น 2.9%)</p>
               </div>
 
               <div className="space-y-2">
-                <Label>Payment Withdrawal (%)</Label>
+                <Label>Fixed Fee (THB)</Label>
                 <Input
                   type="number"
                   step="0.1"
-                  min="0"
-                  max="100"
-                  value={settings.payment_withdrawal_percentage}
+                  value={settings.default_fee_fixed}
                   onChange={(e) =>
-                    setSettings({ ...settings, payment_withdrawal_percentage: parseFloat(e.target.value) || 0 })
+                    setSettings({ ...settings, default_fee_fixed: parseFloat(e.target.value) })
                   }
                 />
-                <p className="text-sm text-muted-foreground">เปอร์เซ็นต์รายได้จากการถอนเงิน (Default: 0%)</p>
+                <p className="text-sm text-muted-foreground">ค่า fee คงที่ต่อ transaction (เช่น 3 บาท)</p>
               </div>
 
               <Separator />
