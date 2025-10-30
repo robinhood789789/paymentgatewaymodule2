@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -18,10 +25,13 @@ import {
 } from "@/components/ui/table";
 import { Building2, Search, Eye, Settings, Loader2 } from "lucide-react";
 import { ProvisionMerchantDialog } from "@/components/ProvisionMerchantDialog";
+import { toast } from "sonner";
+import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 
 export default function TenantManagement() {
   const { user, isSuperAdmin, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
 
   // Log page access
   useEffect(() => {
@@ -55,12 +65,36 @@ export default function TenantManagement() {
       tenant.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ tenantId, status }: { tenantId: string; status: string }) => {
+      const { data, error } = await invokeFunctionWithTenant("update-tenant-status", {
+        body: { tenant_id: tenantId, status },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });
+      toast.success("อัพเดทสถานะสำเร็จ");
+    },
+    onError: (error: Error) => {
+      toast.error("เกิดข้อผิดพลาด: " + error.message);
+    },
+  });
+
+  const handleStatusChange = (tenantId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ tenantId, status: newStatus });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-500/10 text-green-500";
       case "suspended":
         return "bg-red-500/10 text-red-500";
+      case "locked":
+        return "bg-orange-500/10 text-orange-500";
       case "pending":
         return "bg-yellow-500/10 text-yellow-500";
       default:
@@ -155,9 +189,39 @@ export default function TenantManagement() {
                         <TableRow key={tenant.id}>
                           <TableCell className="font-medium">{tenant.name}</TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(tenant.status)}>
-                              {tenant.status}
-                            </Badge>
+                            <Select
+                              value={tenant.status}
+                              onValueChange={(value) => handleStatusChange(tenant.id, value)}
+                              disabled={updateStatusMutation.isPending}
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue>
+                                  <Badge className={getStatusColor(tenant.status)}>
+                                    {tenant.status}
+                                  </Badge>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                                    Active
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="suspended">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                                    Suspended
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="locked">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                    Locked
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
                             <Badge className={getKYCColor(tenant.kyc_status || "pending")}>
