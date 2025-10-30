@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,6 +54,8 @@ export default function TenantManagement() {
   const [editBusinessType, setEditBusinessType] = useState("");
   const [editDepositPercent, setEditDepositPercent] = useState("");
   const [editWithdrawalPercent, setEditWithdrawalPercent] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const queryClient = useQueryClient();
 
   // Log page access
@@ -65,7 +75,7 @@ export default function TenantManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tenants")
-        .select("*, memberships(count), tenant_settings(payment_deposit_percentage, payment_withdrawal_percentage)")
+        .select("*, memberships(count), tenant_settings(payment_deposit_percentage, payment_withdrawal_percentage), tenant_wallets(balance)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -79,6 +89,25 @@ export default function TenantManagement() {
       tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil((filteredTenants?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTenants = filteredTenants?.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const formatBalance = (balance: number) => {
+    return new Intl.NumberFormat('th-TH', {
+      style: 'currency',
+      currency: 'THB',
+      minimumFractionDigits: 2,
+    }).format(balance / 100);
+  };
 
   const updateTenantMutation = useMutation({
     mutationFn: async ({ 
@@ -245,24 +274,25 @@ export default function TenantManagement() {
                       <TableHead>Status</TableHead>
                       <TableHead>Users</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Credit Balance</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center">
+                        <TableCell colSpan={6} className="text-center">
                           Loading...
                         </TableCell>
                       </TableRow>
-                    ) : filteredTenants?.length === 0 ? (
+                    ) : paginatedTenants?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center">
+                        <TableCell colSpan={6} className="text-center">
                           No tenants found
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredTenants?.map((tenant) => (
+                      paginatedTenants?.map((tenant) => (
                         <TableRow key={tenant.id}>
                           <TableCell className="font-medium">{tenant.name}</TableCell>
                           <TableCell>
@@ -273,6 +303,9 @@ export default function TenantManagement() {
                           <TableCell>{tenant.memberships?.[0]?.count || 0}</TableCell>
                           <TableCell>
                             {new Date(tenant.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatBalance(tenant.tenant_wallets?.[0]?.balance || 0)}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
@@ -294,6 +327,38 @@ export default function TenantManagement() {
                   </TableBody>
                 </Table>
               </div>
+
+              {totalPages > 1 && (
+                <Pagination className="mt-4">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           </CardContent>
         </Card>
