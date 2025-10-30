@@ -63,7 +63,6 @@ const AdminUsers = () => {
         .from("roles")
         .select("id, name")
         .eq("tenant_id", activeTenantId)
-        .eq("is_system", true)
         .order("name");
       
       if (error) throw error;
@@ -479,6 +478,14 @@ const AdminUsers = () => {
                                       </div>
                                     </SelectItem>
                                   ))}
+                                  {!roles.some((r) => r.name === (user.role || "")) && user.role && (
+                                    <SelectItem value={user.role}>
+                                      <div className="flex items-center gap-2">
+                                        <span className="capitalize">{user.role}</span>
+                                        <span className="text-muted-foreground text-xs">(current)</span>
+                                      </div>
+                                    </SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                               <Badge variant="outline" className="text-xs">
