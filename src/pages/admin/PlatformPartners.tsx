@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { Users, TrendingUp, Wallet, Clock, Search, Filter } from "lucide-react";
+import { Users, TrendingUp, Wallet, Clock, Search, Filter, Plus, Download } from "lucide-react";
+import { CreatePartnerDialog } from "@/components/admin/CreatePartnerDialog";
 
 export default function PlatformPartners() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function PlatformPartners() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [commissionTypeFilter, setCommissionTypeFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["platform-partners", page, statusFilter, commissionTypeFilter],
@@ -52,11 +54,23 @@ export default function PlatformPartners() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">จัดการพาร์ทเนอร์</h1>
-        <p className="text-muted-foreground mt-2">
-          ภาพรวมและจัดการพาร์ทเนอร์ (Shareholder) ทั้งหมดในระบบ
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">จัดการพาร์ทเนอร์</h1>
+          <p className="text-muted-foreground mt-2">
+            ภาพรวมและจัดการพาร์ทเนอร์ (Shareholder) ทั้งหมดในระบบ
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            สร้างพาร์ทเนอร์
+          </Button>
+          <Button variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            ส่งออก CSV
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -262,6 +276,8 @@ export default function PlatformPartners() {
           )}
         </CardContent>
       </Card>
+
+      <CreatePartnerDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </div>
   );
 }
