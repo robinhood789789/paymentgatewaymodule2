@@ -68,6 +68,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get current tenant status before update
+    const { data: currentTenant, error: fetchError } = await supabaseClient
+      .from("tenants")
+      .select("status")
+      .eq("id", tenant_id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current tenant:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Tenant not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const oldStatus = currentTenant.status;
+
     // Update tenant status
     const { data: tenant, error: updateError } = await supabaseClient
       .from("tenants")
@@ -89,7 +106,7 @@ Deno.serve(async (req) => {
       action: "super_admin.tenant.status_updated",
       actor_user_id: user.id,
       target: tenant_id,
-      before: { status: tenant.status },
+      before: { status: oldStatus },
       after: { status },
       ip: null,
       user_agent: req.headers.get("user-agent"),

@@ -67,8 +67,17 @@ export default function TenantManagement() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ tenantId, status }: { tenantId: string; status: string }) => {
-      const { data, error } = await invokeFunctionWithTenant("update-tenant-status", {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("ไม่พบ session");
+      }
+
+      const { data, error } = await supabase.functions.invoke("update-tenant-status", {
         body: { tenant_id: tenantId, status },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
@@ -79,6 +88,7 @@ export default function TenantManagement() {
       toast.success("อัพเดทสถานะสำเร็จ");
     },
     onError: (error: Error) => {
+      console.error("Update status error:", error);
       toast.error("เกิดข้อผิดพลาด: " + error.message);
     },
   });
