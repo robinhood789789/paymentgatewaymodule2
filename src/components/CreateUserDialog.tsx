@@ -77,15 +77,15 @@ export const CreateUserDialog = () => {
   const permissionGroups = [
     {
       id: "deposits",
-      name: "สิทธิการเติมเงิน",
-      description: "สิทธิ์ในการดูและสร้างคำขอฝากเงิน",
-      permissions: ["deposits.view", "deposits.create"]
+      name: "สิทธิดูรายละเอียดการเติมเงิน",
+      description: "สิทธิ์ในการดูรายละเอียดคำขอฝากเงิน",
+      permissions: ["deposits.view"]
     },
     {
       id: "withdrawals",
-      name: "สิทธิการถอนเงิน",
-      description: "สิทธิ์ในการดูและสร้างคำขอถอนเงิน",
-      permissions: ["withdrawals.view", "withdrawals.create"]
+      name: "สิทธิดูรายละเอียดการถอนเงิน",
+      description: "สิทธิ์ในการดูรายละเอียดคำขอถอนเงิน",
+      permissions: ["withdrawals.view"]
     },
     {
       id: "payments",
@@ -238,6 +238,7 @@ export const CreateUserDialog = () => {
                         <SelectItem value="finance">Finance</SelectItem>
                         <SelectItem value="developer">Developer</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
