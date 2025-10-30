@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     if (!stepUpResult.ok) {
       return new Response(
-        JSON.stringify({ error: stepUpResult.error, code: stepUpResult.code }),
+        JSON.stringify({ error: stepUpResult.message || 'MFA verification required', code: stepUpResult.code }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -126,8 +126,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Error in platform-settings-update:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
