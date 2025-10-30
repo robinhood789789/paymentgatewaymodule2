@@ -21,7 +21,7 @@ export default function PlatformPartnerReports() {
     to: new Date(),
   });
   const [groupBy, setGroupBy] = useState<"day" | "month" | "partner">("day");
-  const [partnerId, setPartnerId] = useState<string>("");
+  const [partnerId, setPartnerId] = useState<string>("all");
 
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
 
@@ -33,7 +33,7 @@ export default function PlatformPartnerReports() {
         end_date: format(dateRange.to, "yyyy-MM-dd"),
         group_by: groupBy,
       });
-      if (partnerId) params.append("partner_id", partnerId);
+      if (partnerId && partnerId !== "all") params.append("partner_id", partnerId);
 
       const { data, error } = await invokeFunctionWithTenant("platform-partner-reports-get", {
         body: {},
@@ -63,7 +63,7 @@ export default function PlatformPartnerReports() {
           start_date: format(dateRange.from, "yyyy-MM-dd"),
           end_date: format(dateRange.to, "yyyy-MM-dd"),
         });
-        if (partnerId) params.append("partner_id", partnerId);
+        if (partnerId && partnerId !== "all") params.append("partner_id", partnerId);
 
         const { supabase } = await import("@/integrations/supabase/client");
         const { data: { session } } = await supabase.auth.getSession();
@@ -151,7 +151,7 @@ export default function PlatformPartnerReports() {
                 <SelectValue placeholder="ทุกพาร์ทเนอร์" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทุกพาร์ทเนอร์</SelectItem>
+                <SelectItem value="all">ทุกพาร์ทเนอร์</SelectItem>
                 {partnersList?.partners?.map((p: any) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.full_name}
