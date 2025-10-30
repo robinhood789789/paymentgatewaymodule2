@@ -1246,6 +1246,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string
+          first_login_completed_at: string | null
           full_name: string | null
           google_email: string | null
           google_id: string | null
@@ -1254,6 +1255,8 @@ export type Database = {
           id: string
           is_super_admin: boolean | null
           mfa_last_verified_at: string | null
+          password_changed_at: string | null
+          requires_password_change: boolean | null
           totp_backup_codes: string[] | null
           totp_enabled: boolean | null
           totp_secret: string | null
@@ -1263,6 +1266,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          first_login_completed_at?: string | null
           full_name?: string | null
           google_email?: string | null
           google_id?: string | null
@@ -1271,6 +1275,8 @@ export type Database = {
           id: string
           is_super_admin?: boolean | null
           mfa_last_verified_at?: string | null
+          password_changed_at?: string | null
+          requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -1280,6 +1286,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          first_login_completed_at?: string | null
           full_name?: string | null
           google_email?: string | null
           google_id?: string | null
@@ -1288,6 +1295,8 @@ export type Database = {
           id?: string
           is_super_admin?: boolean | null
           mfa_last_verified_at?: string | null
+          password_changed_at?: string | null
+          requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
           totp_secret?: string | null
@@ -1864,6 +1873,62 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholder_invitations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          id: string
+          invalidated_at: string | null
+          invalidation_reason: string | null
+          last_resent_at: string | null
+          magic_token: string
+          resent_count: number
+          shareholder_id: string
+          temp_password_hash: string | null
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          last_resent_at?: string | null
+          magic_token: string
+          resent_count?: number
+          shareholder_id: string
+          temp_password_hash?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          last_resent_at?: string | null
+          magic_token?: string
+          resent_count?: number
+          shareholder_id?: string
+          temp_password_hash?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_invitations_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
             referencedColumns: ["id"]
           },
         ]

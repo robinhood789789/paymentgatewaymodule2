@@ -134,8 +134,6 @@ Deno.serve(async (req) => {
       email_confirm: true,
       user_metadata: {
         full_name: display_name,
-        requires_password_change: true,
-        requires_mfa_enrollment: true,
       },
     });
 
@@ -145,6 +143,19 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Update profile to set requires_password_change
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        requires_password_change: true,
+      })
+      .eq("id", newUser.user.id);
+
+    if (profileError) {
+      console.error('Failed to update profile:', profileError);
+      // Continue anyway - password change will be enforced at login
     }
 
     // Create shareholder record
@@ -207,9 +218,9 @@ Deno.serve(async (req) => {
       .from('shareholder_invitations')
       .insert({
         shareholder_id: shareholder.id,
-        token: magicToken,
+        email,
+        magic_token: magicToken,
         expires_at: expiresAt.toISOString(),
-        used: false,
       })
       .select()
       .single();
@@ -218,16 +229,24 @@ Deno.serve(async (req) => {
 
     // Send invitation email
     try {
-      await supabaseAdmin.functions.invoke('send-partner-invitation', {
+      const inviteResponse = await supabaseAdmin.functions.invoke('send-partner-invitation', {
         body: {
           email,
           display_name,
-          invite_link: inviteLink,
+          magic_link: inviteLink,
+          temp_password: tempPassword,
         },
       });
+
+      if (inviteResponse.error) {
+        console.error('[platform-partners-create] Failed to send invitation:', inviteResponse.error);
+        // Don't fail the entire operation if email fails
+      } else {
+        console.log('[platform-partners-create] Invitation email sent successfully');
+      }
     } catch (emailError) {
-      console.error('Failed to send invitation email:', emailError);
-      // Continue - Super Admin can copy link manually
+      console.error('[platform-partners-create] Email sending error:', emailError);
+      // Continue despite email error
     }
 
     // Audit log (mask email for security)
