@@ -44,6 +44,8 @@ export default function TenantManagement() {
   const [editStatus, setEditStatus] = useState("");
   const [editKycStatus, setEditKycStatus] = useState("");
   const [editBusinessType, setEditBusinessType] = useState("");
+  const [editDepositPercent, setEditDepositPercent] = useState("");
+  const [editWithdrawalPercent, setEditWithdrawalPercent] = useState("");
   const queryClient = useQueryClient();
 
   // Log page access
@@ -63,7 +65,7 @@ export default function TenantManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tenants")
-        .select("*, memberships(count)")
+        .select("*, memberships(count), tenant_settings(payment_deposit_percentage, payment_withdrawal_percentage)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -83,17 +85,29 @@ export default function TenantManagement() {
       tenantId, 
       status, 
       kycStatus, 
-      businessType 
+      businessType,
+      depositPercent,
+      withdrawalPercent
     }: { 
       tenantId: string; 
       status: string;
       kycStatus: string;
       businessType: string;
+      depositPercent: number;
+      withdrawalPercent: number;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         throw new Error("ไม่พบ session");
+      }
+
+      // Validate percentages
+      if (depositPercent < 0 || depositPercent > 100) {
+        throw new Error("Payment Deposit ต้องอยู่ระหว่าง 0-100%");
+      }
+      if (withdrawalPercent < 0 || withdrawalPercent > 100) {
+        throw new Error("Payment Withdrawal ต้องอยู่ระหว่าง 0-100%");
       }
 
       // Update tenant status
@@ -117,6 +131,17 @@ export default function TenantManagement() {
 
       if (updateError) throw updateError;
 
+      // Update payment percentages in tenant_settings
+      const { error: settingsError } = await supabase
+        .from("tenant_settings")
+        .update({
+          payment_deposit_percentage: depositPercent,
+          payment_withdrawal_percentage: withdrawalPercent
+        })
+        .eq("tenant_id", tenantId);
+
+      if (settingsError) throw settingsError;
+
       return statusData;
     },
     onSuccess: () => {
@@ -135,6 +160,8 @@ export default function TenantManagement() {
     setEditStatus(tenant.status);
     setEditKycStatus(tenant.kyc_status || "pending");
     setEditBusinessType(tenant.business_type || "");
+    setEditDepositPercent(String(tenant.tenant_settings?.[0]?.payment_deposit_percentage || 0));
+    setEditWithdrawalPercent(String(tenant.tenant_settings?.[0]?.payment_withdrawal_percentage || 0));
     setEditDialogOpen(true);
   };
 
@@ -146,6 +173,8 @@ export default function TenantManagement() {
       status: editStatus,
       kycStatus: editKycStatus,
       businessType: editBusinessType,
+      depositPercent: parseFloat(editDepositPercent) || 0,
+      withdrawalPercent: parseFloat(editWithdrawalPercent) || 0,
     });
   };
 
@@ -338,6 +367,34 @@ export default function TenantManagement() {
                   value={editBusinessType}
                   onChange={(e) => setEditBusinessType(e.target.value)}
                   placeholder="e.g., E-commerce, Retail, Services"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deposit-percent">Payment Deposit (%)</Label>
+                <Input 
+                  id="deposit-percent"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={editDepositPercent}
+                  onChange={(e) => setEditDepositPercent(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="withdrawal-percent">Payment Withdrawal (%)</Label>
+                <Input 
+                  id="withdrawal-percent"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={editWithdrawalPercent}
+                  onChange={(e) => setEditWithdrawalPercent(e.target.value)}
+                  placeholder="0.00"
                 />
               </div>
             </div>
