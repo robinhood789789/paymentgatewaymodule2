@@ -151,12 +151,12 @@ const DashboardSidebar = () => {
 
   // Settings menu items - filtered by permissions
   const allSettingsItems = [
-    { title: t('dashboard.settings'), url: "/settings", icon: Settings, permission: "settings.view" },
+    { title: t('dashboard.settings'), url: "/settings", icon: Settings }, // Available to all authenticated users
     { title: 'คู่มือการทดสอบ', url: "/testing-guide", icon: FileCheck, ownerOnly: true },
   ];
   
   const settingsMenuItems = allSettingsItems.filter((item: any) =>
-    (item.ownerOnly ? isOwner : (!item.permission || hasPermission(item.permission) || isOwner))
+    (item.ownerOnly ? isOwner : true) // Settings visible to all, testing guide for owner only
   );
 
   // Go-Live for owners
