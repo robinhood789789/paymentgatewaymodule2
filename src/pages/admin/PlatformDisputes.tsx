@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,11 +134,12 @@ const PlatformDisputes = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Disputes (Cross-Tenant View)</h1>
-        <p className="text-muted-foreground">ติดตาม disputes จากทุก tenant (read-only)</p>
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Disputes (Cross-Tenant View)</h1>
+          <p className="text-muted-foreground">ติดตาม disputes จากทุก tenant (read-only)</p>
+        </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -264,7 +266,8 @@ const PlatformDisputes = () => {
           </Table>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

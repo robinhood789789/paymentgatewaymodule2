@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
@@ -169,11 +170,12 @@ const PlatformWebhooks = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Webhook Management (Platform)</h1>
-        <p className="text-muted-foreground">จัดการ webhook events ที่ failed พร้อม DLQ และ replay</p>
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Webhook Management (Platform)</h1>
+          <p className="text-muted-foreground">จัดการ webhook events ที่ failed พร้อม DLQ และ replay</p>
+        </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -314,7 +316,8 @@ const PlatformWebhooks = () => {
           if (pendingAction) pendingAction();
         }}
       />
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

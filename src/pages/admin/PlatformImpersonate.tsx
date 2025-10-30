@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,13 +167,14 @@ const PlatformImpersonate = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Impersonate Tenant (View-As)</h1>
-        <p className="text-muted-foreground">
-          ดูข้อมูลในมุมมองของ tenant (Read-Only Mode เท่านั้น)
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Impersonate Tenant (View-As)</h1>
+          <p className="text-muted-foreground">
+            ดูข้อมูลในมุมมองของ tenant (Read-Only Mode เท่านั้น)
+          </p>
+        </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -286,7 +288,8 @@ const PlatformImpersonate = () => {
           if (pendingAction) pendingAction();
         }}
       />
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, AlertCircle, CheckCircle, XCircle, Activity } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -143,11 +144,12 @@ const PlatformStatus = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Platform Health & Status</h1>
-        <p className="text-muted-foreground">ติดตามสถานะของ platform components</p>
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Platform Health & Status</h1>
+          <p className="text-muted-foreground">ติดตามสถานะของ platform components</p>
+        </div>
 
       <Card className={overallStatus === "healthy" ? "border-green-200" : overallStatus === "degraded" ? "border-yellow-200" : "border-red-200"}>
         <CardHeader>
@@ -213,7 +215,8 @@ const PlatformStatus = () => {
           🔄 หน้านี้จะอัปเดตอัตโนมัติทุก 30 วินาที
         </AlertDescription>
       </Alert>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
