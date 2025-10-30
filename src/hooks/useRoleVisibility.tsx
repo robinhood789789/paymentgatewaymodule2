@@ -1,7 +1,7 @@
 import { useTenantSwitcher } from "./useTenantSwitcher";
 import { useAuth } from "./useAuth";
 
-export type UserRole = 'owner' | 'manager' | 'finance' | 'developer';
+export type UserRole = 'owner' | 'manager' | 'finance' | 'developer' | 'viewer';
 
 export const useRoleVisibility = () => {
   const { activeTenant } = useTenantSwitcher();
@@ -14,6 +14,7 @@ export const useRoleVisibility = () => {
   const isManager = currentRole === 'manager';
   const isFinance = currentRole === 'finance';
   const isDeveloper = currentRole === 'developer';
+  const isViewer = currentRole === 'viewer';
   
   return {
     currentRole,
@@ -21,18 +22,19 @@ export const useRoleVisibility = () => {
     isManager,
     isFinance,
     isDeveloper,
+    isViewer,
     isSuperAdmin,
     
-    // Widget visibility - Finance has access to financial operations
-    canViewFinancialOverview: isOwner || isManager || isFinance,
-    canViewPayments: isOwner || isManager || isFinance,
-    canViewPayouts: isOwner || isManager || isFinance,
+    // Widget visibility - Viewer can view financial data (read-only)
+    canViewFinancialOverview: isOwner || isManager || isFinance || isViewer,
+    canViewPayments: isOwner || isManager || isFinance || isViewer,
+    canViewPayouts: isOwner || isManager || isFinance || isViewer,
     canViewApprovals: isOwner || isManager,
     canViewRiskAlerts: isOwner || isManager,
     canViewAPIMetrics: isOwner || isDeveloper || isManager,
     canViewWebhooks: isOwner || isDeveloper || isManager,
     
-    // Quick actions - Finance can perform basic financial operations
+    // Quick actions - Viewer cannot perform any actions (read-only)
     canCreatePayout: isOwner || isManager || isFinance,
     canApprovePayout: isOwner || isManager,
     canCreatePaymentLink: isOwner || isManager,
