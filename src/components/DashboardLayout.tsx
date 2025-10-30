@@ -172,6 +172,8 @@ const DashboardSidebar = () => {
 
   const superAdminMenuItems = [
     { title: "Overview", url: "/admin", icon: LayoutDashboard },
+    { title: "จัดการพาร์ทเนอร์", url: "/platform/partners", icon: Users },
+    { title: "Partner Payouts", url: "/platform/partner-payouts", icon: Wallet },
     { title: "Tenants", url: "/admin/tenants", icon: Users },
     { title: "Providers", url: "/platform/providers", icon: KeyRound },
     { title: "Events", url: "/platform/events", icon: Activity },

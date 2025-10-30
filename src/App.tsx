@@ -68,6 +68,9 @@ import ShareholderDashboard from "./pages/shareholder/ShareholderDashboard";
 import ShareholderClients from "./pages/shareholder/ShareholderClients";
 import ShareholderEarnings from "./pages/shareholder/ShareholderEarnings";
 import ShareholderWithdrawals from "./pages/shareholder/ShareholderWithdrawals";
+import PlatformPartners from "./pages/admin/PlatformPartners";
+import PlatformPartnerDetail from "./pages/admin/PlatformPartnerDetail";
+import PlatformPartnerPayouts from "./pages/admin/PlatformPartnerPayouts";
 
 const queryClient = new QueryClient();
 
@@ -313,6 +316,30 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformSecurity />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/partners"
+              element={
+                <SuperAdminRoute>
+                  <PlatformPartners />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/partners/:id"
+              element={
+                <SuperAdminRoute>
+                  <PlatformPartnerDetail />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/partner-payouts"
+              element={
+                <SuperAdminRoute>
+                  <PlatformPartnerPayouts />
                 </SuperAdminRoute>
               }
             />
