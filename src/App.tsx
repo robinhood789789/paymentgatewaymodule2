@@ -71,6 +71,8 @@ import ShareholderWithdrawals from "./pages/shareholder/ShareholderWithdrawals";
 import PlatformPartners from "./pages/admin/PlatformPartners";
 import PlatformPartnerDetail from "./pages/admin/PlatformPartnerDetail";
 import PlatformPartnerPayouts from "./pages/admin/PlatformPartnerPayouts";
+import PlatformPartnerReports from "./pages/admin/PlatformPartnerReports";
+import PlatformPartnerSettings from "./pages/admin/PlatformPartnerSettings";
 
 const queryClient = new QueryClient();
 
@@ -340,6 +342,22 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformPartnerPayouts />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/partner-reports"
+              element={
+                <SuperAdminRoute>
+                  <PlatformPartnerReports />
+                </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/platform/partner-settings"
+              element={
+                <SuperAdminRoute>
+                  <PlatformPartnerSettings />
                 </SuperAdminRoute>
               }
             />
