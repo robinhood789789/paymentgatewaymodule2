@@ -1618,6 +1618,228 @@ export type Database = {
           },
         ]
       }
+      shareholder_clients: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          id: string
+          notes: string | null
+          referred_at: string
+          shareholder_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referred_at?: string
+          shareholder_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referred_at?: string
+          shareholder_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_clients_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shareholder_clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholder_earnings: {
+        Row: {
+          amount: number
+          base_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          payment_id: string | null
+          period_end: string
+          period_start: string
+          shareholder_id: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          commission_rate: number
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          period_end: string
+          period_start: string
+          shareholder_id: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          period_end?: string
+          period_start?: string
+          shareholder_id?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_earnings_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shareholder_earnings_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shareholder_earnings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholder_withdrawals: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          completed_at: string | null
+          id: string
+          notes: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          requested_at: string
+          shareholder_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          shareholder_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_name?: string
+          bank_account_number?: string
+          bank_name?: string
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          shareholder_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholder_withdrawals_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholders: {
+        Row: {
+          active_clients_count: number
+          balance: number
+          created_at: string
+          created_by: string | null
+          email: string
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          status: string
+          total_earnings: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_clients_count?: number
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          email: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          total_earnings?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_clients_count?: number
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          total_earnings?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tenant_provider_assignments: {
         Row: {
           assigned_at: string
@@ -2036,8 +2258,10 @@ export type Database = {
     }
     Functions: {
       cleanup_replay_cache: { Args: never; Returns: undefined }
+      get_shareholder_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
       is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean }
+      is_shareholder: { Args: { user_uuid: string }; Returns: boolean }
       is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
       request_tenant: { Args: never; Returns: string }
       user_has_role_in_tenant: {
