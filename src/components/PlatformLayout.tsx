@@ -1,0 +1,140 @@
+import { ReactNode } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Users,
+  Shield,
+  Activity,
+  Settings,
+  LogOut,
+  KeyRound,
+  Webhook,
+  AlertCircle,
+  RefreshCw,
+  UserCheck,
+  BarChart3,
+  Wallet,
+} from "lucide-react";
+
+interface PlatformLayoutProps {
+  children: ReactNode;
+}
+
+const PlatformSidebar = () => {
+  const { state } = useSidebar();
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+  const isCollapsed = state === "collapsed";
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth/sign-in");
+  };
+
+  const menuItems = [
+    { title: "Overview", url: "/admin", icon: LayoutDashboard },
+    { title: "จัดการพาร์ทเนอร์", url: "/platform/partners", icon: Users },
+    { title: "Partner Payouts", url: "/platform/partner-payouts", icon: Wallet },
+    { title: "รายงานพาร์ทเนอร์", url: "/platform/partner-reports", icon: BarChart3 },
+    { title: "ตั้งค่าพาร์ทเนอร์", url: "/platform/partner-settings", icon: Settings },
+    { title: "Tenants", url: "/admin/tenants", icon: Users },
+    { title: "Providers", url: "/platform/providers", icon: KeyRound },
+    { title: "Events", url: "/platform/events", icon: Activity },
+    { title: "Webhooks", url: "/platform/webhooks", icon: Webhook },
+    { title: "Disputes", url: "/platform/disputes", icon: AlertCircle },
+    { title: "Refunds", url: "/platform/refunds", icon: RefreshCw },
+    { title: "Settings", url: "/platform/settings", icon: Settings },
+    { title: "Security", url: "/platform/security", icon: Shield },
+    { title: "Audit", url: "/platform/audit", icon: Activity },
+    { title: "Impersonate", url: "/platform/impersonate", icon: UserCheck },
+    { title: "Status", url: "/platform/status", icon: Activity },
+  ];
+
+  return (
+    <Sidebar className="w-64" collapsible="icon">
+      <SidebarContent>
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-primary" />
+            </div>
+            {!isCollapsed && (
+              <div>
+                <h2 className="font-semibold text-sm">Platform Admin</h2>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin"}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mt-auto p-4 border-t border-sidebar-border">
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className="w-full justify-start"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {!isCollapsed && <span>Sign Out</span>}
+          </Button>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
+};
+
+export function PlatformLayout({ children }: PlatformLayoutProps) {
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full">
+        <PlatformSidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="sticky top-0 z-10 bg-background border-b border-border p-4">
+            <SidebarTrigger />
+          </div>
+          <div className="p-6">{children}</div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+}
