@@ -82,10 +82,16 @@ const AdminUsers = () => {
 
       console.log("🔍 Fetching users for tenant:", activeTenantId);
 
-      // Get memberships for current tenant only
+      // Get memberships for current tenant only with explicit inner joins
       const { data: memberships, error: membershipsError } = await supabase
         .from("memberships")
-        .select("user_id, tenant_id, role_id, roles(name), tenants(name)")
+        .select(`
+          user_id, 
+          tenant_id, 
+          role_id,
+          roles!inner(name),
+          tenants!inner(name)
+        `)
         .eq("tenant_id", activeTenantId);
 
       console.log("📊 Memberships fetched:", { count: memberships?.length, memberships, error: membershipsError });
