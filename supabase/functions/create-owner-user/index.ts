@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
       owner_type,
       tenant_name,
       business_type,
-      provider,
       force_2fa,
-      platform_fee_percent,
+      payment_deposit_percentage,
+      payment_withdrawal_percentage,
       features 
     } = await req.json();
 
@@ -77,14 +77,16 @@ Deno.serve(async (req) => {
 
     console.log('Tenant created successfully:', newTenant.id);
 
-    // Create tenant settings with provider
+    // Create tenant settings with revenue calculation
     await supabaseClient
       .from('tenant_settings')
       .insert({
         tenant_id: newTenant.id,
-        provider: provider || 'stripe',
+        provider: 'stripe', // Default provider
         features: features || {},
         enforce_2fa_roles: force_2fa ? ['owner'] : [],
+        payment_deposit_percentage: payment_deposit_percentage || 0,
+        payment_withdrawal_percentage: payment_withdrawal_percentage || 0,
       });
 
     // Get or create owner role for this tenant
@@ -191,11 +193,12 @@ Deno.serve(async (req) => {
         tenant: {
           id: newTenant.id,
           name: newTenant.name,
-          provider: provider || 'stripe',
         },
         temporary_password: temporaryPassword,
         api_key: apiKey,
         force_2fa,
+        payment_deposit_percentage: payment_deposit_percentage || 0,
+        payment_withdrawal_percentage: payment_withdrawal_percentage || 0,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

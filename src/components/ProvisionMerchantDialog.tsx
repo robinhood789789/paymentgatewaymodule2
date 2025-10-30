@@ -25,9 +25,9 @@ const formSchema = z.object({
   owner_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
   owner_type: z.enum(["Game1", "Game2", "Game3"], { required_error: "กรุณาเลือก Owner Type" }),
   business_type: z.string().min(1, "กรุณาเลือกประเภทธุรกิจ"),
-  provider: z.string().default("stripe"),
   force_2fa: z.boolean().default(true),
-  platform_fee_percent: z.number().min(0).max(100).default(2.5),
+  payment_deposit_percentage: z.number().min(0).max(100).default(0),
+  payment_withdrawal_percentage: z.number().min(0).max(100).default(0),
   features: z.array(z.string()).default([]),
 });
 
@@ -51,9 +51,9 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
       owner_name: "",
       owner_type: "Game1",
       business_type: "",
-      provider: "stripe",
       force_2fa: true,
-      platform_fee_percent: 2.5,
+      payment_deposit_percentage: 0,
+      payment_withdrawal_percentage: 0,
       features: ["payments", "refunds", "api_access"],
     },
   });
@@ -83,9 +83,9 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
           owner_type: data.owner_type,
           tenant_name: data.business_name,
           business_type: data.business_type,
-          provider: data.provider,
           force_2fa: data.force_2fa,
-          platform_fee_percent: data.platform_fee_percent,
+          payment_deposit_percentage: data.payment_deposit_percentage,
+          payment_withdrawal_percentage: data.payment_withdrawal_percentage,
           features: data.features,
         },
         headers: {
@@ -259,10 +259,13 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                       2FA: {provisionedTenant.force_2fa ? "บังคับ" : "ไม่บังคับ"}
                     </Badge>
                     <Badge variant="outline">
-                      Provider: {provisionedTenant.tenant.provider || "stripe"}
+                      Type: {provisionedTenant.owner_type}
                     </Badge>
                     <Badge variant="outline">
-                      Type: {provisionedTenant.owner_type}
+                      Deposit: {provisionedTenant.payment_deposit_percentage || 0}%
+                    </Badge>
+                    <Badge variant="outline">
+                      Withdrawal: {provisionedTenant.payment_withdrawal_percentage || 0}%
                     </Badge>
                   </div>
                 </div>
@@ -387,27 +390,27 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
                   </div>
 
                   <div className="space-y-4 border-t pt-4">
-                    <h3 className="text-lg font-semibold">การตั้งค่า</h3>
+                    <h3 className="text-lg font-semibold">การคำนวณรายได้</h3>
 
                     <FormField
                       control={form.control}
-                      name="provider"
+                      name="payment_deposit_percentage"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Payment Provider</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="stripe">Stripe</SelectItem>
-                              <SelectItem value="opn">Omise (OPN)</SelectItem>
-                              <SelectItem value="2c2p">2C2P</SelectItem>
-                              <SelectItem value="kbank">K-Bank</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Payment Deposit (%)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              min="0"
+                              max="100"
+                              {...field}
+                              onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            เปอร์เซ็นต์รายได้จากการฝากเงิน (0-100%)
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -415,20 +418,22 @@ export function ProvisionMerchantDialog({ children }: ProvisionMerchantDialogPro
 
                     <FormField
                       control={form.control}
-                      name="platform_fee_percent"
+                      name="payment_withdrawal_percentage"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ค่าธรรมเนียม Platform (%)</FormLabel>
+                          <FormLabel>Payment Withdrawal (%)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
                               step="0.1" 
+                              min="0"
+                              max="100"
                               {...field}
-                              onChange={e => field.onChange(parseFloat(e.target.value))}
+                              onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                             />
                           </FormControl>
                           <FormDescription>
-                            เปอร์เซ็นต์ค่าคอมมิชชั่น Platform (0-100%)
+                            เปอร์เซ็นต์รายได้จากการถอนเงิน (Default: 0%)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
