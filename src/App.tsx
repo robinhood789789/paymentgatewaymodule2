@@ -8,7 +8,6 @@ import { useCSRF } from "@/hooks/useCSRF";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SuperAdminRoute from "@/components/SuperAdminRoute";
 import { PermissionGate } from "@/components/PermissionGate";
-import PlatformLayout from "@/components/PlatformLayout";
 import Index from "./pages/Index";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
@@ -305,9 +304,7 @@ function AppContent() {
               path="/admin"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <SuperAdminDashboard />
-                  </PlatformLayout>
+                  <SuperAdminDashboard />
                 </SuperAdminRoute>
               }
             />
@@ -315,9 +312,7 @@ function AppContent() {
               path="/admin/tenants"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <TenantManagement />
-                  </PlatformLayout>
+                  <TenantManagement />
                 </SuperAdminRoute>
               }
             />
@@ -325,9 +320,7 @@ function AppContent() {
               path="/platform/security"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformSecurity />
-                  </PlatformLayout>
+                  <PlatformSecurity />
                 </SuperAdminRoute>
               }
             />
@@ -335,9 +328,7 @@ function AppContent() {
               path="/platform/partners"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformPartners />
-                  </PlatformLayout>
+                  <PlatformPartners />
                 </SuperAdminRoute>
               }
             />
@@ -345,9 +336,7 @@ function AppContent() {
               path="/platform/partners/:id"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformPartnerDetail />
-                  </PlatformLayout>
+                  <PlatformPartnerDetail />
                 </SuperAdminRoute>
               }
             />
@@ -355,9 +344,7 @@ function AppContent() {
               path="/platform/partner-payouts"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformPartnerPayouts />
-                  </PlatformLayout>
+                  <PlatformPartnerPayouts />
                 </SuperAdminRoute>
               }
             />
@@ -365,9 +352,7 @@ function AppContent() {
               path="/platform/partner-reports"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformPartnerReports />
-                  </PlatformLayout>
+                  <PlatformPartnerReports />
                 </SuperAdminRoute>
               }
             />
@@ -375,9 +360,7 @@ function AppContent() {
               path="/platform/partner-settings"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformPartnerSettings />
-                  </PlatformLayout>
+                  <PlatformPartnerSettings />
                 </SuperAdminRoute>
               }
             />
@@ -385,20 +368,18 @@ function AppContent() {
               path="/platform/audit"
               element={
                 <SuperAdminRoute>
-                  <PlatformLayout>
-                    <PlatformAudit />
-                  </PlatformLayout>
+                  <PlatformAudit />
                 </SuperAdminRoute>
               }
             />
-            <Route path="/platform/providers" element={<SuperAdminRoute><PlatformLayout><PlatformProviders /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/events" element={<SuperAdminRoute><PlatformLayout><PlatformEvents /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/webhooks" element={<SuperAdminRoute><PlatformLayout><PlatformWebhooks /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/disputes" element={<SuperAdminRoute><PlatformLayout><PlatformDisputes /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/refunds" element={<SuperAdminRoute><PlatformLayout><PlatformRefunds /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/settings" element={<SuperAdminRoute><PlatformLayout><PlatformSettings /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/impersonate" element={<SuperAdminRoute><PlatformLayout><PlatformImpersonate /></PlatformLayout></SuperAdminRoute>} />
-            <Route path="/platform/status" element={<SuperAdminRoute><PlatformLayout><PlatformStatus /></PlatformLayout></SuperAdminRoute>} />
+            <Route path="/platform/providers" element={<SuperAdminRoute><PlatformProviders /></SuperAdminRoute>} />
+            <Route path="/platform/events" element={<SuperAdminRoute><PlatformEvents /></SuperAdminRoute>} />
+            <Route path="/platform/webhooks" element={<SuperAdminRoute><PlatformWebhooks /></SuperAdminRoute>} />
+            <Route path="/platform/disputes" element={<SuperAdminRoute><PlatformDisputes /></SuperAdminRoute>} />
+            <Route path="/platform/refunds" element={<SuperAdminRoute><PlatformRefunds /></SuperAdminRoute>} />
+            <Route path="/platform/settings" element={<SuperAdminRoute><PlatformSettings /></SuperAdminRoute>} />
+            <Route path="/platform/impersonate" element={<SuperAdminRoute><PlatformImpersonate /></SuperAdminRoute>} />
+            <Route path="/platform/status" element={<SuperAdminRoute><PlatformStatus /></SuperAdminRoute>} />
       <Route
         path="/admin/users"
         element={
