@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Building2, Search, Eye, Settings, Loader2 } from "lucide-react";
-import { CreateOwnerDialog } from "@/components/CreateOwnerDialog";
+import { ProvisionMerchantDialog } from "@/components/ProvisionMerchantDialog";
 
 export default function TenantManagement() {
   const { user, isSuperAdmin, loading } = useAuth();
@@ -104,7 +104,7 @@ export default function TenantManagement() {
             </h1>
             <p className="text-muted-foreground">Manage and monitor all platform tenants</p>
           </div>
-          <CreateOwnerDialog />
+          <ProvisionMerchantDialog />
         </div>
 
         <Card>

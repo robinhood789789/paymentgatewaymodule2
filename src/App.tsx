@@ -58,7 +58,6 @@ import TwoFactorChecklist from "./pages/TwoFactorChecklist";
 import Approvals from "./pages/Approvals";
 import PlatformAudit from "./pages/admin/PlatformAudit";
 import GoLiveControls from "./pages/GoLiveControls";
-import ProvisionMerchant from "./pages/admin/ProvisionMerchant";
 import PyramidAuthority from "./pages/PyramidAuthority";
 import AlertManagement from "./pages/AlertManagement";
 import GapReport from "./pages/GapReport";
@@ -317,14 +316,6 @@ function AppContent() {
               element={
                 <SuperAdminRoute>
                   <PlatformAudit />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
-              path="/admin/provision-merchant"
-              element={
-                <SuperAdminRoute>
-                  <ProvisionMerchant />
                 </SuperAdminRoute>
               }
             />

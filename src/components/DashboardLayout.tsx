@@ -171,7 +171,6 @@ const DashboardSidebar = () => {
   const superAdminMenuItems = [
     { title: "Overview", url: "/admin", icon: LayoutDashboard },
     { title: "Tenants", url: "/admin/tenants", icon: Users },
-    { title: "Provision Merchant", url: "/admin/provision-merchant", icon: Users },
     { title: "Providers", url: "/platform/providers", icon: KeyRound },
     { title: "Events", url: "/platform/events", icon: Activity },
     { title: "Webhooks", url: "/platform/webhooks", icon: Webhook },
