@@ -77,9 +77,9 @@ export const ShareholderRoute = ({ children }: ShareholderRouteProps) => {
     return <Navigate to="/first-login/password" replace />;
   }
 
-  // Redirect to MFA setup if required
-  if (requiresMFA && !requiresPasswordChange && location.pathname !== "/settings") {
-    return <Navigate to="/settings?tab=security&force_mfa=true" replace />;
+  // Redirect to MFA enrollment if required
+  if (requiresMFA && !requiresPasswordChange && location.pathname !== "/auth/mfa-enroll") {
+    return <Navigate to="/auth/mfa-enroll" replace />;
   }
 
   return <>{children}</>;

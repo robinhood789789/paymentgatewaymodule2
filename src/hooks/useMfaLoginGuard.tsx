@@ -15,8 +15,10 @@ export function useMfaLoginGuard() {
   useEffect(() => {
     if (loading || !user) return;
     
-    // Skip if already on MFA challenge page or settings
-    if (location.pathname.includes('/mfa-challenge') || location.pathname.includes('/settings')) {
+    // Skip if already on MFA pages
+    if (location.pathname.includes('/mfa-challenge') || 
+        location.pathname.includes('/auth/mfa-enroll') ||
+        location.pathname.includes('/settings')) {
       return;
     }
 
