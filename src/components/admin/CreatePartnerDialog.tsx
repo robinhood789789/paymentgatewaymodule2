@@ -111,10 +111,14 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
     },
   });
 
-  const handleCreate = () => {
-    checkAndChallenge(() => {
+  const handleCreate = async () => {
+    const canProceed = await checkAndChallenge(() => {
       createMutation.mutate(formData);
     });
+    
+    if (!canProceed) {
+      console.log('MFA challenge required or failed - waiting for user action');
+    }
   };
 
   const isStep1Valid = formData.display_name.trim() && formData.email.trim();

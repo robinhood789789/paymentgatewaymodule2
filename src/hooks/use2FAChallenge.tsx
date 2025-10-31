@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function use2FAChallenge() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,7 +19,9 @@ export function use2FAChallenge() {
 
       // Super Admin must have MFA enabled
       if (profile?.is_super_admin && !profile?.totp_enabled) {
-        throw new Error('Super Admin ต้องเปิดใช้งาน MFA ก่อน กรุณาไปที่ Settings > Security เพื่อตั้งค่า');
+        const errorMsg = 'Super Admin ต้องเปิดใช้งาน MFA ก่อน กรุณาไปที่ Settings > Security เพื่อตั้งค่า';
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Non-super admin without MFA can proceed
@@ -48,6 +51,11 @@ export function use2FAChallenge() {
       return false;
     } catch (error) {
       console.error('2FA check failed:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('เกิดข้อผิดพลาดในการตรวจสอบ 2FA');
+      }
       return false;
     }
   };

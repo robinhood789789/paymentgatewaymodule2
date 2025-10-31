@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const mfaCheck = await requireStepUp({
       supabase,
       userId: user.id,
-      action: 'create-payment',
+      action: 'create-partner',
       userRole: 'super_admin',
       isSuperAdmin: true,
     });
