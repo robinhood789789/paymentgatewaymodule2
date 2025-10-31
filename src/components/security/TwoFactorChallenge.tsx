@@ -15,14 +15,16 @@ interface TwoFactorChallengeProps {
   onSuccess: () => void;
   title?: string;
   description?: string;
+  context?: string;
 }
 
 export function TwoFactorChallenge({ 
   open, 
   onOpenChange, 
   onSuccess,
-  title = "Two-Factor Authentication Required",
-  description = "Please enter your 6-digit authentication code or a recovery code to continue."
+  title = "ยืนยันตัวตนของคุณ",
+  description = "กรุณากรอกรหัสยืนยันตัวตน จากแอป Authenticator ของคุณเอง",
+  context
 }: TwoFactorChallengeProps) {
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -112,6 +114,13 @@ export function TwoFactorChallenge({
         </DialogHeader>
         
         <div className="space-y-4">
+          {context && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{context}</AlertDescription>
+            </Alert>
+          )}
+          
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />

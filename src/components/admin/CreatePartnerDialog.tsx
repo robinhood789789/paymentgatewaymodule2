@@ -431,7 +431,14 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
         </DialogContent>
       </Dialog>
 
-      <TwoFactorChallenge open={mfaOpen} onOpenChange={setMfaOpen} onSuccess={onSuccess} />
+      <TwoFactorChallenge 
+        open={mfaOpen} 
+        onOpenChange={setMfaOpen} 
+        onSuccess={onSuccess}
+        title="ยืนยันตัวตนก่อนสร้าง Partner"
+        description="กรุณากรอกรหัสยืนยันตัวตนจากแอป Authenticator ของคุณ (Super Admin)"
+        context="การสร้าง Partner เป็นการกระทำที่ละเอียดอ่อน - ระบบต้องยืนยันตัวตน Super Admin ก่อนดำเนินการ"
+      />
 
       {credentials && (
         <CredentialsDialog

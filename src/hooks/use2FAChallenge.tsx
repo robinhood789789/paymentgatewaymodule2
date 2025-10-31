@@ -12,10 +12,16 @@ export function use2FAChallenge() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('totp_enabled, mfa_last_verified_at')
+        .select('totp_enabled, mfa_last_verified_at, is_super_admin')
         .eq('id', user.id)
         .single();
 
+      // Super Admin must have MFA enabled
+      if (profile?.is_super_admin && !profile?.totp_enabled) {
+        throw new Error('Super Admin ต้องเปิดใช้งาน MFA ก่อน กรุณาไปที่ Settings > Security เพื่อตั้งค่า');
+      }
+
+      // Non-super admin without MFA can proceed
       if (!profile?.totp_enabled) {
         action();
         return true;
