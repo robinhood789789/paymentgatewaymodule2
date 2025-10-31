@@ -12,21 +12,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { Users, TrendingUp, Wallet, Clock, Search, Filter, Plus, Download } from "lucide-react";
 import { CreatePartnerDialog } from "@/components/admin/CreatePartnerDialog";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 export default function PlatformPartners() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [commissionTypeFilter, setCommissionTypeFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["platform-partners", page, statusFilter, commissionTypeFilter],
+    queryKey: ["platform-partners", page, pageSize, statusFilter, commissionTypeFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
-        pageSize: "50",
+        pageSize: pageSize.toString(),
       });
       
       if (statusFilter !== "all") params.append("status", statusFilter);
@@ -173,6 +175,23 @@ export default function PlatformPartners() {
                 <SelectItem value="hybrid">Hybrid</SelectItem>
               </SelectContent>
             </Select>
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(1); // Reset to first page when changing page size
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 แถว</SelectItem>
+                <SelectItem value="20">20 แถว</SelectItem>
+                <SelectItem value="30">30 แถว</SelectItem>
+                <SelectItem value="50">50 แถว</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {isLoading ? (
@@ -244,28 +263,84 @@ export default function PlatformPartners() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-muted-foreground">
-                    หน้า {pagination.page} จาก {pagination.totalPages} (รวม {pagination.total} รายการ)
+                    แสดง {((page - 1) * pageSize) + 1} ถึง {Math.min(page * pageSize, pagination.total)} จาก {pagination.total} รายการ
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page === 1}
-                      onClick={() => setPage(page - 1)}
-                    >
-                      ก่อนหน้า
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page === pagination.totalPages}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      ถัดไป
-                    </Button>
-                  </div>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => page > 1 && setPage(page - 1)}
+                          className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {/* Show first page */}
+                      {page > 2 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setPage(1)} className="cursor-pointer">
+                            1
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Show ellipsis if needed */}
+                      {page > 3 && (
+                        <PaginationItem>
+                          <span className="px-4">...</span>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Show previous page */}
+                      {page > 1 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setPage(page - 1)} className="cursor-pointer">
+                            {page - 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Current page */}
+                      <PaginationItem>
+                        <PaginationLink isActive>
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                      
+                      {/* Show next page */}
+                      {page < pagination.totalPages && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setPage(page + 1)} className="cursor-pointer">
+                            {page + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Show ellipsis if needed */}
+                      {page < pagination.totalPages - 2 && (
+                        <PaginationItem>
+                          <span className="px-4">...</span>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Show last page */}
+                      {page < pagination.totalPages - 1 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setPage(pagination.totalPages)} className="cursor-pointer">
+                            {pagination.totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => page < pagination.totalPages && setPage(page + 1)}
+                          className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </>
