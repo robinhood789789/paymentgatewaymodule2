@@ -7,14 +7,20 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Download, Eye, EyeOff, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { TemporaryCodeDisplay } from "@/components/TemporaryCodeDisplay";
+
 interface CredentialsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   credentials: {
-    temp_password: string;
-    invite_link: string;
+    temp_password?: string;
+    invite_link?: string;
     email: string;
     display_name: string;
+    invitation_code?: string;
+    code_id?: string;
+    code_expires_at?: string;
+    shareholder_id?: string;
   };
 }
 
@@ -45,16 +51,16 @@ export function CredentialsDialog({ open, onOpenChange, credentials }: Credentia
 ชื่อแสดงผล: ${credentials.display_name}
 อีเมล (User ID): ${credentials.email}
 
-รหัสผ่านชั่วคราว: ${credentials.temp_password}
+${credentials.invitation_code ? `รหัสเชิญ (Invitation Code): ${credentials.invitation_code}` : ''}
+${credentials.temp_password ? `รหัสผ่านชั่วคราว: ${credentials.temp_password}` : ''}
 
-ลิงก์เชิญเข้าสู่ระบบ:
-${credentials.invite_link}
+${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ระบบ:\n${credentials.invite_link}` : ''}
 
 ⚠️ คำเตือนด้านความปลอดภัย:
-- รหัสผ่านชั่วคราวนี้ใช้ได้เพียงครั้งเดียว
+- ${credentials.invitation_code ? 'ใช้รหัสเชิญที่ /auth/claim-code เพื่อตั้งรหัสผ่านใหม่' : 'รหัสผ่านชั่วคราวนี้ใช้ได้เพียงครั้งเดียว'}
 - ต้องเปลี่ยนรหัสผ่านและเปิด MFA เมื่อเข้าสู่ระบบครั้งแรก
 - ส่งข้อมูลนี้ผ่านช่องทางที่ปลอดภัยเท่านั้น
-- ลิงก์เชิญมีอายุ 72 ชั่วโมง
+- ${credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'ลิงก์เชิญมีอายุ 72 ชั่วโมง'}
 
 สร้างเมื่อ: ${new Date().toLocaleString('th-TH')}
     `.trim();
@@ -93,7 +99,7 @@ ${credentials.invite_link}
                   <li>• ข้อมูลนี้จะแสดงครั้งเดียวเท่านั้น</li>
                   <li>• ส่งข้อมูลให้พาร์ทเนอร์ผ่านช่องทางที่ปลอดภัย</li>
                   <li>• พาร์ทเนอร์ต้องเปลี่ยนรหัสผ่านและเปิด MFA เมื่อเข้าสู่ระบบครั้งแรก</li>
-                  <li>• ลิงก์เชิญมีอายุ 72 ชั่วโมง</li>
+                  <li>• {credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'ลิงก์เชิญมีอายุ 72 ชั่วโมง'}</li>
                 </ul>
               </div>
             </div>
@@ -113,63 +119,84 @@ ${credentials.invite_link}
 
             <Separator />
 
-            {/* Temp Password */}
-            <div className="space-y-2">
-              <Label>รหัสผ่านชั่วคราว</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={credentials.temp_password}
-                    readOnly
-                    className="pr-10 font-mono"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <Button onClick={handleCopyPassword} variant="outline">
-                  {copiedPassword ? (
-                    <CheckCircle2 className="h-4 w-4 text-success" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                16 ตัวอักษร - ตัวพิมพ์เล็ก/ใหญ่/ตัวเลข/สัญลักษณ์
-              </p>
-            </div>
+            {/* Invitation Code (New System) */}
+            {credentials.invitation_code && credentials.code_expires_at && (
+              <>
+                <TemporaryCodeDisplay
+                  code={credentials.invitation_code}
+                  codeId={credentials.code_id || ''}
+                  expiresAt={credentials.code_expires_at}
+                  userId={credentials.shareholder_id || ''}
+                />
+                <Separator />
+              </>
+            )}
 
-            <Separator />
+            {/* Temp Password (Fallback) */}
+            {credentials.temp_password && (
+              <>
+                <div className="space-y-2">
+                  <Label>รหัสผ่านชั่วคราว (Fallback)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={credentials.temp_password}
+                        readOnly
+                        className="pr-10 font-mono"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Button onClick={handleCopyPassword} variant="outline">
+                      {copiedPassword ? (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    16 ตัวอักษร - ตัวพิมพ์เล็ก/ใหญ่/ตัวเลข/สัญลักษณ์
+                  </p>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Invite Link */}
-            <div className="space-y-2">
-              <Label>ลิงก์เชิญเข้าสู่ระบบ</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={credentials.invite_link}
-                  readOnly
-                  className="flex-1 text-xs"
-                />
-                <Button onClick={handleCopyLink} variant="outline">
-                  {copiedLink ? (
-                    <CheckCircle2 className="h-4 w-4 text-success" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
+            {credentials.invite_link && (
+              <div className="space-y-2">
+                <Label>ลิงก์เชิญเข้าสู่ระบบ</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={credentials.invite_link}
+                    readOnly
+                    className="flex-1 text-xs"
+                  />
+                  <Button onClick={handleCopyLink} variant="outline">
+                    {copiedLink ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {credentials.invitation_code 
+                    ? `ผู้ใช้สามารถใช้รหัสเชิญที่หน้า /auth/claim-code`
+                    : `ลิงก์มีอายุ 72 ชั่วโมง - อีเมลเชิญถูกส่งไปยัง ${credentials.email} แล้ว`
+                  }
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                ลิงก์มีอายุ 72 ชั่วโมง - อีเมลเชิญถูกส่งไปยัง {credentials.email} แล้ว
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Actions */}

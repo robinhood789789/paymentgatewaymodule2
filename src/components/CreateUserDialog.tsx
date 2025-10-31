@@ -35,6 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 
+import { CredentialsDialog } from "@/components/admin/CredentialsDialog";
+
 const createUserSchema = z.object({
   email: z.string().email("กรุณาใส่อีเมลที่ถูกต้อง"),
   password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
@@ -47,6 +49,14 @@ type CreateUserFormData = z.infer<typeof createUserSchema>;
 export const CreateUserDialog = () => {
   const [open, setOpen] = useState(false);
   const [selectedPermissionGroups, setSelectedPermissionGroups] = useState<string[]>([]);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    email: string;
+    display_name: string;
+    invitation_code?: string;
+    code_id?: string;
+    code_expires_at?: string;
+  } | null>(null);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
 
@@ -154,11 +164,25 @@ export const CreateUserDialog = () => {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", activeTenantId] });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      
       const message = result?.message || "สร้างบัญชีผู้ใช้สำเร็จ!";
       toast.success(message);
+      
+      // Show credentials dialog if invitation code was generated
+      if (result?.invitation_code) {
+        setCredentials({
+          email: form.getValues('email'),
+          display_name: form.getValues('full_name'),
+          invitation_code: result.invitation_code,
+          code_id: result.code_id,
+          code_expires_at: result.code_expires_at,
+        });
+        setShowCredentials(true);
+      }
+      
       setOpen(false);
       form.reset();
-      setSelectedPermissionGroups([]); // Reset permission groups
+      setSelectedPermissionGroups([]);
     },
     onError: (error: any) => {
       toast.error("เกิดข้อผิดพลาด", {
@@ -309,6 +333,15 @@ export const CreateUserDialog = () => {
           </form>
         </Form>
       </DialogContent>
+
+      {/* Show credentials dialog if invitation code was generated */}
+      {credentials && (
+        <CredentialsDialog
+          open={showCredentials}
+          onOpenChange={setShowCredentials}
+          credentials={credentials}
+        />
+      )}
     </Dialog>
   );
 };

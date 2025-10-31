@@ -53,10 +53,14 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
 
   const [showCredentials, setShowCredentials] = useState(false);
   const [credentials, setCredentials] = useState<{
-    temp_password: string;
-    invite_link: string;
+    temp_password?: string;
+    invite_link?: string;
     email: string;
     display_name: string;
+    invitation_code?: string;
+    code_id?: string;
+    code_expires_at?: string;
+    shareholder_id?: string;
   } | null>(null);
 
   const { isOpen: mfaOpen, setIsOpen: setMfaOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
@@ -89,6 +93,10 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
         invite_link: result.invite_link,
         email: formData.email,
         display_name: formData.display_name,
+        invitation_code: result.invitation_code,
+        code_id: result.code_id,
+        code_expires_at: result.expires_at,
+        shareholder_id: result.shareholder_id,
       });
       setShowCredentials(true);
       onOpenChange(false);

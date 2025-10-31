@@ -106,6 +106,12 @@ Deno.serve(async (req) => {
 
       userId = newUser.user.id;
       console.log('New user created:', userId);
+
+      // Set requires_password_change for new users
+      await supabaseClient
+        .from('profiles')
+        .update({ requires_password_change: true })
+        .eq('id', userId);
     }
 
     // Get or create the role ID for the specified role in this tenant
@@ -284,6 +290,32 @@ Deno.serve(async (req) => {
 
     console.log('Admin user created/added successfully:', userId);
 
+    // Generate temporary code for new users only
+    let invitationCode = null;
+    let codeExpiresAt = null;
+    
+    if (!existingUser) {
+      const { data: tempCodeData, error: tempCodeError } = await supabaseClient.functions.invoke(
+        'temporary-code-generate',
+        {
+          body: {
+            user_id: userId,
+            tenant_id: tenant_id,
+            purpose: 'onboard_invite',
+            issued_from_context: 'owner_create_member',
+            expires_in_hours: 72,
+          },
+        }
+      );
+
+      if (tempCodeError) {
+        console.error('Failed to generate temporary code:', tempCodeError);
+      } else {
+        invitationCode = tempCodeData?.code;
+        codeExpiresAt = tempCodeData?.expires_at;
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -293,6 +325,8 @@ Deno.serve(async (req) => {
           full_name,
           role,
         },
+        invitation_code: invitationCode,
+        code_expires_at: codeExpiresAt,
         message: existingUser ? 'เพิ่มผู้ใช้เข้าเทนนันต์สำเร็จ' : 'สร้างผู้ใช้สำเร็จ',
       }),
       {

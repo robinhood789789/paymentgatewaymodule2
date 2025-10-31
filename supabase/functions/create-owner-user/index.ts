@@ -53,10 +53,23 @@ Deno.serve(async (req) => {
       throw new Error('Missing required fields: owner_user_id, owner_name, owner_type, tenant_name');
     }
 
-    // Generate automatic login password
+    // Generate temporary password
     const temporaryPassword = `${owner_type}${Math.random().toString(36).slice(-8)}${Date.now().toString(36).slice(-4)}`;
 
     console.log('Creating merchant for owner:', { owner_user_id, owner_name, owner_type, tenant_name });
+
+    // Check if owner user exists
+    const { data: ownerUser } = await supabaseClient.auth.admin.getUserById(owner_user_id);
+    
+    if (!ownerUser || !ownerUser.user) {
+      throw new Error('Owner user not found');
+    }
+
+    // Update owner profile to require password change
+    await supabaseClient
+      .from('profiles')
+      .update({ requires_password_change: true })
+      .eq('id', owner_user_id);
 
     // Create new tenant with additional info
     const { data: newTenant, error: tenantError } = await supabaseClient
@@ -184,6 +197,26 @@ Deno.serve(async (req) => {
       console.log('API key created successfully');
     }
 
+    // Generate temporary code
+    const { data: tempCodeData, error: tempCodeError } = await supabaseClient.functions.invoke(
+      'temporary-code-generate',
+      {
+        body: {
+          user_id: owner_user_id,
+          tenant_id: newTenant.id,
+          purpose: 'onboard_invite',
+          issued_from_context: 'shareholder_create_owner',
+          expires_in_hours: 72,
+        },
+      }
+    );
+
+    if (tempCodeError) {
+      console.error('Failed to generate temporary code:', tempCodeError);
+    }
+
+    const invitationCode = tempCodeData?.code || null;
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -194,11 +227,13 @@ Deno.serve(async (req) => {
           id: newTenant.id,
           name: newTenant.name,
         },
+        invitation_code: invitationCode,
         temporary_password: temporaryPassword,
         api_key: apiKey,
         force_2fa,
         payment_deposit_percentage: payment_deposit_percentage || 0,
         payment_withdrawal_percentage: payment_withdrawal_percentage || 0,
+        code_expires_at: tempCodeData?.expires_at,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
