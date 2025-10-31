@@ -46,6 +46,15 @@ serve(async (req) => {
       });
     }
 
+    // Validate code format (XXXX-XXXX pattern)
+    const sanitizedCode = code.trim().toUpperCase().replace(/\s+/g, '');
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(sanitizedCode)) {
+      return new Response(JSON.stringify({ error: 'Invalid code format. Expected format: XXXX-XXXX' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Password strength validation
     if (new_password.length < 10) {
       return new Response(JSON.stringify({ error: 'Password must be at least 10 characters' }), {
@@ -71,7 +80,7 @@ serve(async (req) => {
     const { data: tempCode, error: fetchError } = await supabaseAdmin
       .from('temporary_codes')
       .select('*')
-      .eq('code', code.toUpperCase())
+      .eq('code', sanitizedCode)
       .eq('is_active', true)
       .eq('user_id', user.id)
       .maybeSingle();

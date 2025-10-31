@@ -100,8 +100,20 @@ export const useTenantSwitcher = () => {
     if (memberships && memberships.length > 0 && !activeTenantId) {
       const preferred = memberships[0];
       if (preferred?.tenants) {
-        setActiveTenantId(preferred.tenant_id);
-        try { localStorage.setItem(getStorageKey(user?.id), preferred.tenant_id); } catch {}
+        // Validate stored tenant ID against actual memberships
+        const storedId = (() => {
+          try {
+            return localStorage.getItem(getStorageKey(user?.id));
+          } catch {
+            return null;
+          }
+        })();
+        
+        const validStored = storedId && memberships.some(m => m.tenant_id === storedId);
+        const targetTenantId = validStored ? storedId : preferred.tenant_id;
+        
+        setActiveTenantId(targetTenantId);
+        try { localStorage.setItem(getStorageKey(user?.id), targetTenantId); } catch {}
       }
     }
   }, [memberships, activeTenantId, user?.id]);
@@ -139,10 +151,40 @@ export const useTenantSwitcher = () => {
   }, [activeTenantId, memberships, isLoading, queryClient, user?.id]);
 
   // Switch active tenant
-  const switchTenant = (tenantId: string) => {
+  const switchTenant = async (tenantId: string) => {
+    // Validate tenant membership before switching
     const membership = memberships?.find((m) => m.tenant_id === tenantId);
     if (!membership || !membership.tenants) {
       toast.error("Invalid tenant selection");
+      return;
+    }
+
+    // Server-side validation: verify user actually has access to this tenant
+    try {
+      const { data: serverMembership, error } = await supabase
+        .from("memberships")
+        .select("id, tenant_id")
+        .eq("user_id", user?.id)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (error || !serverMembership) {
+        toast.error("Access denied to this workspace");
+        console.error("Tenant membership validation failed:", error);
+        return;
+      }
+
+      // Log tenant switch for audit trail
+      await supabase.from("audit_logs").insert({
+        tenant_id: tenantId,
+        actor_user_id: user?.id,
+        action: "tenant.switched",
+        target: tenantId,
+        metadata: { from_tenant: activeTenantId },
+      });
+    } catch (err) {
+      console.error("Error validating tenant membership:", err);
+      toast.error("Failed to validate workspace access");
       return;
     }
 
