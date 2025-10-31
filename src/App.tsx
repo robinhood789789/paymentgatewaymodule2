@@ -112,9 +112,7 @@ function AppContent() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <SecurityGuard>
-              <Dashboard />
-            </SecurityGuard>
+            <Dashboard />
           </ProtectedRoute>
         }
       />

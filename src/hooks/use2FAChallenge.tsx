@@ -17,28 +17,26 @@ export function use2FAChallenge() {
         .single();
 
       if (!profile?.totp_enabled) {
-        // No 2FA enabled, proceed directly
         action();
         return true;
       }
 
-      // Check if verification is still valid (within stepup window)
+      // Check stepup window (default 5 min = 300 sec)
       const lastVerified = profile.mfa_last_verified_at 
         ? new Date(profile.mfa_last_verified_at) 
         : null;
       const now = new Date();
-      const stepupWindow = 300; // 5 minutes in seconds
+      const stepupWindow = 300;
 
       if (lastVerified) {
         const diffInSeconds = (now.getTime() - lastVerified.getTime()) / 1000;
         if (diffInSeconds < stepupWindow) {
-          // Still within step-up window, proceed
           action();
           return true;
         }
       }
 
-      // Need to challenge
+      // Need Step-Up MFA challenge
       setPendingAction(() => action);
       setIsOpen(true);
       return false;

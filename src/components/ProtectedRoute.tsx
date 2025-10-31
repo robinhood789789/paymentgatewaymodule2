@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { SecurityGuard } from "@/components/SecurityGuard";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -27,7 +28,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return <SecurityGuard>{children}</SecurityGuard>;
 };
 
 export default ProtectedRoute;
