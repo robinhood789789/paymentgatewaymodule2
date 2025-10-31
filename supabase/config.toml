@@ -3,6 +3,9 @@ project_id = "xbbxgzccxudmnrmqkwzg"
 [functions.health]
 verify_jwt = false
 
+[functions.password-change]
+verify_jwt = true
+
 [functions.bootstrap-admin]
 verify_jwt = false
 

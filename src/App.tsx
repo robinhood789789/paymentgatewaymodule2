@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import SuperAdminRoute from "@/components/SuperAdminRoute";
 import { PlatformLayout } from "@/components/PlatformLayout";
 import { PermissionGate } from "@/components/PermissionGate";
+import { SecurityGuard } from "@/components/SecurityGuard";
 import Index from "./pages/Index";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
@@ -25,6 +26,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import TwoFactorVerification from "./pages/TwoFactorVerification";
 import MfaChallenge from "./pages/MfaChallenge";
+import MfaEnroll from "./pages/auth/MfaEnroll";
+import PasswordChange from "./pages/auth/PasswordChange";
 import FirstLoginPasswordChange from "./pages/FirstLoginPasswordChange";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
@@ -88,6 +91,8 @@ function AppContent() {
       <Route path="/auth/sign-up" element={<SignUp />} />
       <Route path="/auth/two-factor" element={<TwoFactorVerification />} />
       <Route path="/auth/mfa-challenge" element={<MfaChallenge />} />
+      <Route path="/auth/mfa-enroll" element={<MfaEnroll />} />
+      <Route path="/auth/password-change" element={<PasswordChange />} />
       <Route path="/auth/create-super-admin" element={<CreateSuperAdmin />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
       
@@ -107,7 +112,9 @@ function AppContent() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <SecurityGuard>
+              <Dashboard />
+            </SecurityGuard>
           </ProtectedRoute>
         }
       />

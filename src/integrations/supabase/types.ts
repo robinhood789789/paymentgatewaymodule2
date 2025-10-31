@@ -1099,6 +1099,9 @@ export type Database = {
           default_require_2fa_for_admin: boolean
           default_require_2fa_for_owner: boolean
           default_stepup_window_seconds: number
+          first_login_require_mfa: boolean | null
+          first_login_require_password_change: boolean | null
+          force_2fa_for_all_roles: boolean | null
           force_2fa_for_super_admin: boolean
           id: string
           updated_at: string
@@ -1108,6 +1111,9 @@ export type Database = {
           default_require_2fa_for_admin?: boolean
           default_require_2fa_for_owner?: boolean
           default_stepup_window_seconds?: number
+          first_login_require_mfa?: boolean | null
+          first_login_require_password_change?: boolean | null
+          force_2fa_for_all_roles?: boolean | null
           force_2fa_for_super_admin?: boolean
           id?: string
           updated_at?: string
@@ -1117,6 +1123,9 @@ export type Database = {
           default_require_2fa_for_admin?: boolean
           default_require_2fa_for_owner?: boolean
           default_stepup_window_seconds?: number
+          first_login_require_mfa?: boolean | null
+          first_login_require_password_change?: boolean | null
+          force_2fa_for_all_roles?: boolean | null
           force_2fa_for_super_admin?: boolean
           id?: string
           updated_at?: string
