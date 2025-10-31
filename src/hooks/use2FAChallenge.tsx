@@ -21,7 +21,7 @@ export function use2FAChallenge() {
       if (profile?.is_super_admin && !profile?.totp_enabled) {
         const errorMsg = 'Super Admin ต้องเปิดใช้งาน MFA ก่อน กรุณาไปที่ Settings > Security เพื่อตั้งค่า';
         toast.error(errorMsg);
-        throw new Error(errorMsg);
+        return false;
       }
 
       // Non-super admin without MFA can proceed
@@ -46,7 +46,7 @@ export function use2FAChallenge() {
       }
 
       // Need Step-Up MFA challenge
-      setPendingAction(() => action);
+      setPendingAction(() => () => action());
       setIsOpen(true);
       return false;
     } catch (error) {
