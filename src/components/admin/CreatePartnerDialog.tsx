@@ -80,10 +80,19 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
 
   const createMutation = useMutation({
     mutationFn: async (data: PartnerFormData) => {
+      console.log('[CreatePartner] Calling platform-partners-create with data:', data);
       const { data: result, error } = await invokeFunctionWithTenant("platform-partners-create", {
         body: data,
       });
-      if (error) throw error;
+      console.log('[CreatePartner] Response:', { result, error });
+      if (error) {
+        console.error('[CreatePartner] Error from edge function:', error);
+        throw error;
+      }
+      if (result?.error) {
+        console.error('[CreatePartner] Error in result:', result.error);
+        throw new Error(result.error);
+      }
       return result;
     },
     onSuccess: (result) => {
@@ -103,10 +112,14 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
       toast.success("สร้างบัญชีพาร์ทเนอร์สำเร็จ");
     },
     onError: (error: any) => {
+      console.error('[CreatePartner] Mutation error:', error);
       if (error?.code === "MFA_CHALLENGE_REQUIRED") {
         toast.error("ต้องการยืนยัน 2FA");
       } else {
-        toast.error(error?.message || "สร้างบัญชีล้มเหลว");
+        const errorMsg = error?.message || error?.error || "สร้างบัญชีล้มเหลว";
+        toast.error(errorMsg, {
+          description: error?.code ? `รหัสข้อผิดพลาด: ${error.code}` : undefined,
+        });
       }
     },
   });

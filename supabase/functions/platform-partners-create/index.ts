@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
     }
 
     // Step-Up MFA required
+    console.log('[platform-partners-create] Checking MFA for user:', user.id);
     const mfaCheck = await requireStepUp({
       supabase,
       userId: user.id,
@@ -89,11 +90,13 @@ Deno.serve(async (req) => {
     });
 
     if (!mfaCheck.ok) {
+      console.error('[platform-partners-create] MFA check failed:', mfaCheck);
       return new Response(JSON.stringify({ error: mfaCheck.message, code: mfaCheck.code }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('[platform-partners-create] MFA check passed');
 
     const {
       display_name,
@@ -107,6 +110,8 @@ Deno.serve(async (req) => {
       linked_tenants = [],
     } = await req.json();
 
+    console.log('[platform-partners-create] Creating partner:', { display_name, email, commission_type });
+
     // Validate inputs
     if (!display_name || !email) {
       return new Response(JSON.stringify({ error: 'Display name and email are required' }), {
@@ -116,8 +121,10 @@ Deno.serve(async (req) => {
     }
 
     // Check if email already exists
+    console.log('[platform-partners-create] Checking if email exists...');
     const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
     if (existingUser?.users.some(u => u.email === email)) {
+      console.error('[platform-partners-create] Email already exists:', email);
       return new Response(JSON.stringify({ error: 'Email already exists' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
