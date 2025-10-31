@@ -209,11 +209,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Generate magic link token
-    const magicToken = generateMagicToken();
-    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+    // Generate temporary code
+    const { data: tempCodeData, error: tempCodeError } = await supabaseAdmin.functions.invoke(
+      'temporary-code-generate',
+      {
+        body: {
+          user_id: newUser.user.id,
+          purpose: 'onboard_invite',
+          issued_from_context: 'platform_partners_create',
+          expires_in_hours: 72,
+        },
+      }
+    );
 
-    // Store invitation token (create invitations table if needed)
+    if (tempCodeError || !tempCodeData?.code) {
+      console.error('Failed to generate temporary code:', tempCodeError);
+      // Continue anyway - user can be given temp password
+    }
+
+    const invitationCode = tempCodeData?.code || null;
+
+    // Store invitation token for backwards compatibility
+    const magicToken = generateMagicToken();
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+
     await supabaseAdmin
       .from('shareholder_invitations')
       .insert({
@@ -225,7 +244,7 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    const inviteLink = `${supabaseUrl.replace('//', '//app.')}/partner/accept-invite?token=${magicToken}`;
+    const inviteLink = `${supabaseUrl.replace('//', '//app.')}/auth/claim-code`;
 
     // Send invitation email
     try {
@@ -233,8 +252,9 @@ Deno.serve(async (req) => {
         body: {
           email,
           display_name,
-          magic_link: inviteLink,
+          invitation_code: invitationCode,
           temp_password: tempPassword,
+          invite_link: inviteLink,
         },
       });
 
@@ -249,17 +269,18 @@ Deno.serve(async (req) => {
       // Continue despite email error
     }
 
-    // Audit log (mask email for security)
+    // Audit log
     await supabaseAdmin.from('audit_logs').insert({
       action: 'partner.create',
       actor_user_id: user.id,
       after: {
         shareholder_id: shareholder.id,
-        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // mask email
+        email: email.replace(/(.{2}).*(@.*)/, '$1***$2'),
         display_name,
         commission_type,
         commission_percent,
         linked_tenants_count: linked_tenants?.length || 0,
+        has_invitation_code: !!invitationCode,
       },
     });
 
@@ -267,9 +288,13 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         shareholder_id: shareholder.id,
-        temp_password: tempPassword, // SHOW ONCE - never persisted
+        invitation_code: invitationCode,
+        temp_password: tempPassword,
         invite_link: inviteLink,
         expires_at: expiresAt.toISOString(),
+        instructions: invitationCode 
+          ? 'User must sign in and use the invitation code to set their password'
+          : 'User must sign in with temporary password and will be prompted to change it',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

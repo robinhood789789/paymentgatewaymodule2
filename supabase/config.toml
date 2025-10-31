@@ -65,3 +65,12 @@ verify_jwt = true
 
 [functions.create-admin-user]
 verify_jwt = true
+
+[functions.temporary-code-generate]
+verify_jwt = true
+
+[functions.temporary-code-claim]
+verify_jwt = true
+
+[functions.temporary-code-revoke]
+verify_jwt = true

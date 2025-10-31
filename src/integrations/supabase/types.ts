@@ -1264,7 +1264,9 @@ export type Database = {
           id: string
           is_super_admin: boolean | null
           mfa_last_verified_at: string | null
+          onboard_completed: boolean | null
           password_changed_at: string | null
+          password_set_at: string | null
           requires_password_change: boolean | null
           totp_backup_codes: string[] | null
           totp_enabled: boolean | null
@@ -1284,7 +1286,9 @@ export type Database = {
           id: string
           is_super_admin?: boolean | null
           mfa_last_verified_at?: string | null
+          onboard_completed?: boolean | null
           password_changed_at?: string | null
+          password_set_at?: string | null
           requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
@@ -1304,7 +1308,9 @@ export type Database = {
           id?: string
           is_super_admin?: boolean | null
           mfa_last_verified_at?: string | null
+          onboard_completed?: boolean | null
           password_changed_at?: string | null
+          password_set_at?: string | null
           requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
@@ -2064,6 +2070,68 @@ export type Database = {
         }
         Relationships: []
       }
+      temporary_codes: {
+        Row: {
+          claimed_at: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          issued_by: string | null
+          issued_from_context: string | null
+          max_uses: number
+          metadata: Json | null
+          purpose: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          uses_count: number
+        }
+        Insert: {
+          claimed_at?: string | null
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          issued_by?: string | null
+          issued_from_context?: string | null
+          max_uses?: number
+          metadata?: Json | null
+          purpose: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          uses_count?: number
+        }
+        Update: {
+          claimed_at?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          issued_by?: string | null
+          issued_from_context?: string | null
+          max_uses?: number
+          metadata?: Json | null
+          purpose?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          uses_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporary_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_provider_assignments: {
         Row: {
           assigned_at: string
@@ -2481,6 +2549,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_codes: { Args: never; Returns: undefined }
       cleanup_replay_cache: { Args: never; Returns: undefined }
       get_shareholder_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }

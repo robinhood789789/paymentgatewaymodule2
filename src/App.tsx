@@ -28,6 +28,7 @@ import TwoFactorVerification from "./pages/TwoFactorVerification";
 import MfaChallenge from "./pages/MfaChallenge";
 import MfaEnroll from "./pages/auth/MfaEnroll";
 import PasswordChange from "./pages/auth/PasswordChange";
+import ClaimCode from "./pages/auth/ClaimCode";
 import FirstLoginPasswordChange from "./pages/FirstLoginPasswordChange";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
@@ -93,6 +94,7 @@ function AppContent() {
       <Route path="/auth/mfa-challenge" element={<MfaChallenge />} />
       <Route path="/auth/mfa-enroll" element={<MfaEnroll />} />
       <Route path="/auth/password-change" element={<PasswordChange />} />
+      <Route path="/auth/claim-code" element={<ClaimCode />} />
       <Route path="/auth/create-super-admin" element={<CreateSuperAdmin />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
       
