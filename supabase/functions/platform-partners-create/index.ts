@@ -3,7 +3,7 @@ import { requireStepUp } from '../_shared/mfa-guards.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tenant',
 };
 
 // Generate secure random password
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const mfaCheck = await requireStepUp({
       supabase,
       userId: user.id,
-      action: 'create-partner',
+      action: 'roles',
       userRole: 'super_admin',
       isSuperAdmin: true,
     });
