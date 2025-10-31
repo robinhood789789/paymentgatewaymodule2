@@ -14,6 +14,7 @@ import { invokeFunctionWithTenant } from "@/lib/supabaseFunctions";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 import { CredentialsDialog } from "./CredentialsDialog";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 interface CreatePartnerDialogProps {
   open: boolean;
@@ -87,13 +88,23 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
       console.log('[CreatePartner] Response:', { result, error });
       if (error) {
         console.error('[CreatePartner] Error from edge function:', error);
+        // Try to extract server-provided error message from non-2xx responses
+        try {
+          if (error instanceof FunctionsHttpError) {
+            const body = await (error as any).context?.json?.();
+            const serverMsg = body?.error || body?.message;
+            if (serverMsg) throw new Error(serverMsg);
+          }
+        } catch (parseErr) {
+          // fall through to throw original error
+        }
         throw error;
       }
-      if (result?.error) {
-        console.error('[CreatePartner] Error in result:', result.error);
-        throw new Error(result.error);
+      if ((result as any)?.error) {
+        console.error('[CreatePartner] Error in result:', (result as any).error);
+        throw new Error((result as any).error);
       }
-      return result;
+      return result as any;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["platform-partners"] });
