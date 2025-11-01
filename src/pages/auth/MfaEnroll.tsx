@@ -7,6 +7,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Download, Copy, CheckCircle, AlertCircle } from "lucide-react";
+import QRCode from "qrcode";
 
 export default function MfaEnroll() {
   const navigate = useNavigate();
@@ -65,7 +66,19 @@ export default function MfaEnroll() {
 
       if (error) throw error;
 
-      setQrCodeUrl(data.qrCodeUrl);
+      // Generate QR code from otpauthUrl
+      if (data.otpauthUrl) {
+        const qrDataUrl = await QRCode.toDataURL(data.otpauthUrl, {
+          width: 256,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeUrl(qrDataUrl);
+      }
+      
       setSecret(data.secret);
       setLoading(false);
     } catch (err: any) {
