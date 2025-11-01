@@ -105,7 +105,7 @@ export default function MfaEnroll() {
       if (error) throw error;
 
       if (data.success) {
-        setBackupCodes(data.backup_codes || []);
+        setBackupCodes(data.recovery_codes || []);
         setShowBackupCodes(true);
         toast.success("เปิดใช้งาน MFA สำเร็จ!");
       } else {
