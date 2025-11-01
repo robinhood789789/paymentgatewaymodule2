@@ -108,37 +108,33 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
       console.log('[CreatePartner] Calling platform-partners-create with data:', JSON.stringify(data, null, 2));
       
       try {
-        const response = await invokeFunctionWithTenant("platform-partners-create", {
+        const { data: result } = await invokeFunctionWithTenant("platform-partners-create", {
           body: data,
+          throwOnError: true,
         });
-        
-        console.log('[CreatePartner] Raw response:', response);
-        
-        const { data: result, error } = response;
-        
-        if (error) {
-          console.error('[CreatePartner] Error object:', error);
-          console.error('[CreatePartner] Error name:', error?.name);
-          console.error('[CreatePartner] Error message:', error?.message);
-          
-          // For FunctionsHttpError, the actual error is in the response body
-          // We need to make another request to get the error details
-          if (error?.name === 'FunctionsHttpError') {
-            throw new Error('เกิดข้อผิดพลาดจากระบบ กรุณาลองอีกครั้ง');
-          }
-          
-          throw error;
-        }
-        
-        if ((result as any)?.error) {
-          console.error('[CreatePartner] Error in result:', (result as any).error);
-          throw new Error((result as any).error);
-        }
         
         console.log('[CreatePartner] Success! Result:', result);
         return result as any;
-      } catch (err) {
+      } catch (err: any) {
         console.error('[CreatePartner] Caught error:', err);
+        
+        // Surface server error details from Edge Function
+        if (err instanceof FunctionsHttpError) {
+          let serverMsg = 'เกิดข้อผิดพลาดจากระบบ กรุณาลองอีกครั้ง';
+          let serverCode: string | undefined = undefined;
+          try {
+            const body = await err.context.json();
+            serverMsg = body?.error || serverMsg;
+            serverCode = body?.code;
+          } catch {}
+          
+          if (serverCode === 'MFA_CHALLENGE_REQUIRED' || serverCode === 'MFA_ENROLL_REQUIRED') {
+            // Re-open MFA dialog if backend says step-up is needed
+            setMfaOpen(true);
+          }
+          throw { message: serverMsg, code: serverCode };
+        }
+        
         throw err;
       }
     },

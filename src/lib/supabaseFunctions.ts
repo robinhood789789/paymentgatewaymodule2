@@ -11,6 +11,7 @@ export const invokeFunctionWithTenant = async <T = any>(
   options?: {
     body?: any;
     headers?: Record<string, string>;
+    throwOnError?: boolean;
   }
 ): Promise<{ data: T | null; error: any }> => {
   // Resolve active tenant from localStorage (supports generic and per-user keys)
