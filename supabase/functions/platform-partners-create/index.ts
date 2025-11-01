@@ -3,7 +3,7 @@ import { requireStepUp } from '../_shared/mfa-guards.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tenant',
+  'Access-Control-Allow-Headers': 'authorization, Authorization, x-client-info, apikey, content-type, x-tenant',
 };
 
 // Generate secure random password
@@ -66,8 +66,11 @@ Deno.serve(async (req) => {
       },
     });
 
-    console.log('[platform-partners-create] Getting user...');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('[platform-partners-create] Getting user (admin verify)...');
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    const { data: userRes, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const user = userRes?.user;
     console.log('[platform-partners-create] Auth result:', { userId: user?.id, hasError: !!authError });
     
     if (authError || !user) {
@@ -78,7 +81,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('is_super_admin')
       .eq('id', user.id)
@@ -94,7 +97,7 @@ Deno.serve(async (req) => {
     // Step-Up MFA required
     console.log('[platform-partners-create] Checking MFA for user:', user.id);
     const mfaCheck = await requireStepUp({
-      supabase,
+      supabase: supabaseAdmin,
       userId: user.id,
       action: 'roles',
       userRole: 'super_admin',
