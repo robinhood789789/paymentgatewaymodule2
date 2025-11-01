@@ -188,15 +188,15 @@ Deno.serve(async (req) => {
       .insert({
         user_id: newUser.user.id,
         full_name: display_name,
+        email: email,
         status: 'active',
         default_commission_type: commission_type,
         default_commission_value: commission_percent,
-        default_bounty_amount: bounty_amount,
         allow_self_adjust,
         adjust_min_percent,
         adjust_max_percent,
         balance: 0,
-        pending_balance: 0,
+        created_by: user.id,
       })
       .select()
       .single();
