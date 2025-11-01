@@ -47,8 +47,37 @@ export const invokeFunctionWithTenant = async <T = any>(
     ...authHeader,
   } as Record<string, string>;
 
-  return await supabase.functions.invoke(functionName, {
+  const resp = await supabase.functions.invoke(functionName, {
     ...options,
     headers,
   });
+
+  if ((resp as any)?.error) {
+    let serverMsg = 'Edge function error';
+    let serverCode: string | undefined;
+    try {
+      const ctx: any = (resp as any).error?.context;
+      if (ctx && typeof ctx.text === 'function') {
+        const txt = await ctx.text();
+        try {
+          const json = JSON.parse(txt);
+          serverMsg = json?.error || json?.message || serverMsg;
+          serverCode = json?.code;
+        } catch {
+          serverMsg = txt || serverMsg;
+        }
+      }
+    } catch {}
+
+    if (options?.throwOnError) {
+      const err: any = new Error(serverMsg);
+      if (serverCode) err.code = serverCode;
+      err.cause = (resp as any).error;
+      throw err;
+    }
+
+    return { data: null, error: { message: serverMsg, code: serverCode, raw: (resp as any).error } } as any;
+  }
+
+  return { data: (resp as any).data, error: null } as any;
 };
