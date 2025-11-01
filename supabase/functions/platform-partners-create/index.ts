@@ -59,18 +59,16 @@ Deno.serve(async (req) => {
     // Client with service role for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Client with user auth for verification
+    // Client with user auth for verification (inject Authorization header only if present)
+    const authBearer = req.headers.get('Authorization') || req.headers.get('authorization') || '';
+    const userHeaders: Record<string, string> = {};
+    if (authBearer) userHeaders['Authorization'] = authBearer.trim();
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: req.headers.get('Authorization')! },
-      },
+      global: { headers: userHeaders },
     });
 
-    console.log('[platform-partners-create] Getting user (admin verify)...');
-    const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-    const { data: userRes, error: authError } = await supabaseAdmin.auth.getUser(token);
-    const user = userRes?.user;
+    console.log('[platform-partners-create] Getting user...');
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     console.log('[platform-partners-create] Auth result:', { userId: user?.id, hasError: !!authError });
     
     if (authError || !user) {
