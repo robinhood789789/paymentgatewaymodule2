@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('[platform-partners-create] === FATAL ERROR ===');
     console.error('[platform-partners-create] Error type:', error?.constructor?.name);
     console.error('[platform-partners-create] Error message:', error?.message);
