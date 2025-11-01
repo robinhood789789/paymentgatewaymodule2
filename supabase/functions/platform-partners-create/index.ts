@@ -59,16 +59,20 @@ Deno.serve(async (req) => {
     // Client with service role for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Client with user auth for verification (inject Authorization header only if present)
+    // Get JWT token from header
     const authBearer = req.headers.get('Authorization') || req.headers.get('authorization') || '';
-    const userHeaders: Record<string, string> = {};
-    if (authBearer) userHeaders['Authorization'] = authBearer.trim();
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: userHeaders },
-    });
-
-    console.log('[platform-partners-create] Getting user...');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (!authBearer || !authBearer.startsWith('Bearer ')) {
+      console.error('[platform-partners-create] Missing or invalid Authorization header');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const token = authBearer.replace('Bearer ', '').trim();
+    
+    console.log('[platform-partners-create] Verifying JWT token...');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     console.log('[platform-partners-create] Auth result:', { userId: user?.id, hasError: !!authError });
     
     if (authError || !user) {
