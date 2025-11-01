@@ -31,20 +31,11 @@ export const invokeFunctionWithTenant = async <T = any>(
     }
   } catch {}
 
-  // Ensure we always send the current access token to avoid 401 before function runs
-  let authHeader: Record<string, string> = {};
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (token) {
-      authHeader = { Authorization: `Bearer ${token}` };
-    }
-  } catch {}
-  
+  // supabase.functions.invoke automatically includes Authorization header from session
+  // We only need to add custom headers like x-tenant
   const headers = {
     ...(options?.headers || {}),
     ...(activeTenantId ? { "x-tenant": activeTenantId } : {}),
-    ...authHeader,
   } as Record<string, string>;
 
   const resp = await supabase.functions.invoke(functionName, {
