@@ -39,14 +39,22 @@ function generateMagicToken(): string {
 }
 
 Deno.serve(async (req) => {
+  console.log('[platform-partners-create] === REQUEST RECEIVED ===');
+  console.log('[platform-partners-create] Method:', req.method);
+  console.log('[platform-partners-create] Headers:', Object.fromEntries(req.headers));
+  
   if (req.method === 'OPTIONS') {
+    console.log('[platform-partners-create] Handling CORS preflight');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('[platform-partners-create] Starting main handler...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    console.log('[platform-partners-create] Environment check - URL exists:', !!supabaseUrl);
     
     // Client with service role for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -58,8 +66,12 @@ Deno.serve(async (req) => {
       },
     });
 
+    console.log('[platform-partners-create] Getting user...');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('[platform-partners-create] Auth result:', { userId: user?.id, hasError: !!authError });
+    
     if (authError || !user) {
+      console.error('[platform-partners-create] Auth failed:', authError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -306,8 +318,16 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in platform-partners-create:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    console.error('[platform-partners-create] === FATAL ERROR ===');
+    console.error('[platform-partners-create] Error type:', error?.constructor?.name);
+    console.error('[platform-partners-create] Error message:', error?.message);
+    console.error('[platform-partners-create] Error stack:', error?.stack);
+    console.error('[platform-partners-create] Full error:', error);
+    
+    return new Response(JSON.stringify({ 
+      error: error?.message || 'Internal server error',
+      details: error?.toString()
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

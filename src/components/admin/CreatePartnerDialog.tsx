@@ -105,30 +105,42 @@ export function CreatePartnerDialog({ open, onOpenChange }: CreatePartnerDialogP
 
   const createMutation = useMutation({
     mutationFn: async (data: PartnerFormData) => {
-      console.log('[CreatePartner] Calling platform-partners-create with data:', data);
-      const { data: result, error } = await invokeFunctionWithTenant("platform-partners-create", {
-        body: data,
-      });
-      console.log('[CreatePartner] Response:', { result, error });
-      if (error) {
-        console.error('[CreatePartner] Error from edge function:', error);
-        // Try to extract server-provided error message from non-2xx responses
-        try {
-          if (error instanceof FunctionsHttpError) {
-            const body = await (error as any).context?.json?.();
-            const serverMsg = body?.error || body?.message;
-            if (serverMsg) throw new Error(serverMsg);
+      console.log('[CreatePartner] Calling platform-partners-create with data:', JSON.stringify(data, null, 2));
+      
+      try {
+        const response = await invokeFunctionWithTenant("platform-partners-create", {
+          body: data,
+        });
+        
+        console.log('[CreatePartner] Raw response:', response);
+        
+        const { data: result, error } = response;
+        
+        if (error) {
+          console.error('[CreatePartner] Error object:', error);
+          console.error('[CreatePartner] Error name:', error?.name);
+          console.error('[CreatePartner] Error message:', error?.message);
+          
+          // For FunctionsHttpError, the actual error is in the response body
+          // We need to make another request to get the error details
+          if (error?.name === 'FunctionsHttpError') {
+            throw new Error('เกิดข้อผิดพลาดจากระบบ กรุณาลองอีกครั้ง');
           }
-        } catch (parseErr) {
-          // fall through to throw original error
+          
+          throw error;
         }
-        throw error;
+        
+        if ((result as any)?.error) {
+          console.error('[CreatePartner] Error in result:', (result as any).error);
+          throw new Error((result as any).error);
+        }
+        
+        console.log('[CreatePartner] Success! Result:', result);
+        return result as any;
+      } catch (err) {
+        console.error('[CreatePartner] Caught error:', err);
+        throw err;
       }
-      if ((result as any)?.error) {
-        console.error('[CreatePartner] Error in result:', (result as any).error);
-        throw new Error((result as any).error);
-      }
-      return result as any;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["platform-partners"] });
