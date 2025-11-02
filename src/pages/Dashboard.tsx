@@ -34,12 +34,14 @@ import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { useRoleVisibility } from "@/hooks/useRoleVisibility";
 import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
 import { toast } from "sonner";
+import { useShareholder } from "@/hooks/useShareholder";
 
 const Dashboard = () => {
   const { user, isSuperAdmin } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const roleVisibility = useRoleVisibility();
   const mfaChallenge = use2FAChallenge();
+  const { isShareholder } = useShareholder();
   
   useMfaLoginGuard();
   useMfaGuard({ required: false });
@@ -261,13 +263,14 @@ const Dashboard = () => {
               <h1 className="text-3xl font-bold text-foreground">
                 แดชบอร์ด
                 <Badge className={`ml-3 text-xs font-semibold ${
+                  isShareholder ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0' :
                   roleVisibility.currentRole === 'owner' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0' :
                   roleVisibility.currentRole === 'manager' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0' :
                   roleVisibility.currentRole === 'finance' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0' :
                   roleVisibility.currentRole === 'developer' ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white border-0' :
                   ''
                 }`}>
-                  {roleVisibility.currentRole?.toUpperCase()}
+                  {isShareholder ? 'SHAREHOLDER' : roleVisibility.currentRole?.toUpperCase()}
                 </Badge>
               </h1>
               <p className="text-muted-foreground mt-1">
