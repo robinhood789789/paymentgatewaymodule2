@@ -1,5 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { requireStepUp } from '../_shared/mfa-guards.ts';
+import { 
+  createSecureErrorResponse, 
+  logSecureAction, 
+  validateEmail, 
+  validateLength 
+} from '../_shared/error-handling.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -127,15 +133,41 @@ Deno.serve(async (req) => {
       linked_tenants = [],
     } = await req.json();
 
-    console.log('[platform-partners-create] Creating partner:', { display_name, email, commission_type });
-
     // Validate inputs
     if (!display_name || !email) {
-      return new Response(JSON.stringify({ error: 'Display name and email are required' }), {
+      return new Response(JSON.stringify({ error: 'Display name and email are required', code: 'VALIDATION_ERROR' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      return new Response(JSON.stringify({ error: emailValidation.error, code: 'VALIDATION_ERROR' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate display name length
+    const nameValidation = validateLength(display_name, 'Display name', 100);
+    if (!nameValidation.valid) {
+      return new Response(JSON.stringify({ error: nameValidation.error, code: 'VALIDATION_ERROR' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate commission percent
+    if (commission_percent < 0 || commission_percent > 100) {
+      return new Response(JSON.stringify({ error: 'Commission percentage must be between 0 and 100', code: 'VALIDATION_ERROR' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    logSecureAction('platform-partners-create', 'Creating partner', { display_name, email, commission_type });
 
     // Check if email already exists
     console.log('[platform-partners-create] Checking if email exists...');
@@ -308,33 +340,21 @@ Deno.serve(async (req) => {
       },
     });
 
+    // DO NOT return temp_password in production - credentials sent via email only
     return new Response(
       JSON.stringify({
         success: true,
         shareholder_id: shareholder.id,
         invitation_code: invitationCode,
-        temp_password: tempPassword,
         invite_link: inviteLink,
         expires_at: expiresAt.toISOString(),
         instructions: invitationCode 
-          ? 'User must sign in and use the invitation code to set their password'
-          : 'User must sign in with temporary password and will be prompted to change it',
+          ? 'Invitation email sent. User must sign in and use the invitation code to set their password.'
+          : 'Invitation email sent. User must sign in with temporary password and will be prompted to change it.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('[platform-partners-create] === FATAL ERROR ===');
-    console.error('[platform-partners-create] Error type:', error?.constructor?.name);
-    console.error('[platform-partners-create] Error message:', error?.message);
-    console.error('[platform-partners-create] Error stack:', error?.stack);
-    console.error('[platform-partners-create] Full error:', error);
-    
-    return new Response(JSON.stringify({ 
-      error: error?.message || 'Internal server error',
-      details: error?.toString()
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return createSecureErrorResponse(error, 'platform-partners-create', corsHeaders);
   }
 });
