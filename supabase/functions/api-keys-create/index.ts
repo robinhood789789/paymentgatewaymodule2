@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
+import { createSecureErrorResponse, validateLength, createFriendlyErrorResponse } from "../_shared/error-handling.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -177,9 +178,11 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Error creating API key:', insertError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create API key', details: insertError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return createFriendlyErrorResponse(
+        'Failed to create API key',
+        'API_KEY_CREATE_ERROR',
+        500,
+        corsHeaders
       );
     }
 
@@ -216,11 +219,6 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createSecureErrorResponse(error, 'api-keys-create', corsHeaders);
   }
 });

@@ -3,6 +3,7 @@ import { getPaymentProvider } from "../_shared/providerFactory.ts";
 import { requireStepUp, createMfaError } from "../_shared/mfa-guards.ts";
 import { evaluateGuardrails, createApprovalRequest } from "../_shared/guardrails.ts";
 import { checkRefundConcurrency, checkRateLimit } from "../_shared/concurrency.ts";
+import { createSecureErrorResponse, logSecureAction } from "../_shared/error-handling.ts";
 
 // Rate limiting: Critical endpoint - strict rate limits enforced
 // 5 requests per minute per tenant
@@ -331,18 +332,10 @@ Deno.serve(async (req) => {
           user_agent: req.headers.get('user-agent') || null
         });
 
-      return new Response(
-        JSON.stringify({ error: 'Refund failed', details: (error as Error).message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return createSecureErrorResponse(error, 'refunds-create', corsHeaders);
     }
 
   } catch (error) {
-    // Secure error logging - no sensitive data
-    console.error('[Refund] Error:', (error as Error).message);
-    return new Response(
-      JSON.stringify({ error: 'Failed to process refund' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createSecureErrorResponse(error, 'refunds-create', corsHeaders);
   }
 });
