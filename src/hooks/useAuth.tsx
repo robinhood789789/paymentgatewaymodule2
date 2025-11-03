@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (userIdOrEmail: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string, referralCode?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isSuperAdmin: boolean;
@@ -134,8 +134,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (userIdOrEmail: string, password: string) => {
     try {
+      // Convert user ID (6 digits) to email format if needed
+      const email = /^\d{6}$/.test(userIdOrEmail) 
+        ? `${userIdOrEmail}@owner.local` 
+        : userIdOrEmail;
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

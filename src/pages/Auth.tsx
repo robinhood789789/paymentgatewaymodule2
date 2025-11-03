@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 const signInSchema = z.object({
-  email: z.string().email({ message: "กรุณากรอกอีเมลให้ถูกต้อง" }),
+  userId: z.string().regex(/^\d{6}$/, { message: "User ID ต้องเป็นตัวเลข 6 หลักเท่านั้น" }),
   password: z.string().min(6, { message: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" }),
 });
 
@@ -37,7 +37,7 @@ const Auth = () => {
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: "",
+      userId: "",
       password: "",
     },
   });
@@ -60,7 +60,7 @@ const Auth = () => {
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
     setIsLoading(true);
-    await signIn(values.email, values.password);
+    await signIn(values.userId, values.password);
     setIsLoading(false);
   };
 
@@ -93,14 +93,14 @@ const Auth = () => {
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <FormField
                     control={signInForm.control}
-                    name="email"
+                    name="userId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>อีเมล</FormLabel>
+                        <FormLabel>User ID</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="your@email.com" className="pl-10" {...field} />
+                            <Input placeholder="123456" maxLength={6} className="pl-10" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
