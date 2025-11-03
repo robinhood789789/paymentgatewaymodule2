@@ -424,7 +424,7 @@ function AppContent() {
       <Route path="/alerts" element={<ProtectedRoute><AlertManagement /></ProtectedRoute>} />
       <Route path="/reports/gap" element={<ProtectedRoute><GapReport /></ProtectedRoute>} />
       
-      {/* Shareholder Routes - New Structure */}
+      {/* Shareholder Routes */}
       <Route
         path="/shareholder"
         element={
@@ -435,19 +435,19 @@ function AppContent() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/shareholder/overview" replace />} />
-        <Route path="overview" element={<ShareholderOverview />} />
+        <Route index element={<Navigate to="/shareholder/dashboard" replace />} />
+        <Route path="dashboard" element={<ShareholderDashboard />} />
+        <Route path="clients" element={<ShareholderClients />} />
+        <Route path="earnings" element={<ShareholderEarnings />} />
+        <Route path="withdrawals" element={<ShareholderWithdrawals />} />
         <Route path="team" element={<ShareholderTeam />} />
-        <Route path="reports" element={<ShareholderReports />} />
-        <Route path="reports/:ownerId" element={<ShareholderReports />} />
         <Route path="settings" element={<ShareholderSettings />} />
       </Route>
 
       {/* Legacy Shareholder Routes - Redirect to new structure */}
-      <Route path="/shareholder/dashboard" element={<Navigate to="/shareholder/overview" replace />} />
-      <Route path="/shareholder/clients" element={<Navigate to="/shareholder/team" replace />} />
-      <Route path="/shareholder/earnings" element={<Navigate to="/shareholder/reports" replace />} />
-      <Route path="/shareholder/withdrawals" element={<Navigate to="/shareholder/settings" replace />} />
+      <Route path="/shareholder/overview" element={<Navigate to="/shareholder/dashboard" replace />} />
+      <Route path="/shareholder/reports" element={<Navigate to="/shareholder/earnings" replace />} />
+      <Route path="/shareholder/reports/:ownerId" element={<Navigate to="/shareholder/earnings" replace />} />
       
       {/* Auth Status Test Page */}
       <Route path="/auth-status" element={<ProtectedRoute><AuthStatus /></ProtectedRoute>} />

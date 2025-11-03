@@ -1,69 +1,123 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Settings, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { LayoutDashboard, Users, Wallet, TrendingUp, UserPlus, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-const navItems = [
-  { icon: LayoutDashboard, label: "ภาพรวม", path: "/shareholder/overview" },
-  { icon: Users, label: "ทีมงาน", path: "/shareholder/team" },
-  { icon: FileText, label: "รายงาน", path: "/shareholder/reports" },
+const mainMenuItems = [
+  { icon: LayoutDashboard, label: "แดชบอร์ด", path: "/shareholder/dashboard" },
+  { icon: Users, label: "ลูกค้าของฉัน", path: "/shareholder/clients" },
+  { icon: TrendingUp, label: "รายได้", path: "/shareholder/earnings" },
+  { icon: Wallet, label: "การถอนเงิน", path: "/shareholder/withdrawals" },
+];
+
+const secondaryMenuItems = [
+  { icon: UserPlus, label: "ทีมงาน", path: "/shareholder/team" },
   { icon: Settings, label: "ตั้งค่า", path: "/shareholder/settings" },
 ];
 
-export default function ShareholderLayout() {
+function ShareholderSidebar() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { open } = useSidebar();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      {/* Persistent Sidebar */}
-      <aside className="w-64 border-r bg-card flex flex-col">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold">Shareholder Portal</h2>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="border-b px-4 py-4">
+        {open && <h2 className="text-lg font-semibold">Shareholder Portal</h2>}
+      </SidebarHeader>
 
-        <div className="p-4 border-t">
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            <span>ออกจากระบบ</span>
-          </Button>
-        </div>
-      </aside>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>เมนูหลัก</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainMenuItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild isActive={isActive(item.path)}>
+                    <NavLink to={item.path}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
-    </div>
+        <Separator className="my-2" />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>จัดการ</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {secondaryMenuItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild isActive={isActive(item.path)}>
+                    <NavLink to={item.path}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+              <span>ออกจากระบบ</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+export default function ShareholderLayout() {
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <ShareholderSidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4">
+            <SidebarTrigger />
+          </div>
+          <div className="p-6">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
