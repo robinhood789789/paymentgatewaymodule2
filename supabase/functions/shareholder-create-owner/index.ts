@@ -140,9 +140,6 @@ Deno.serve(async (req) => {
         name: business_name,
         user_id: user_id,
         status: 'trial',
-        referred_by_code: shareholder.referral_code,
-        referred_by_shareholder_id: shareholder.id,
-        referral_accepted_at: new Date().toISOString(),
       });
 
     if (tenantError) {
@@ -178,7 +175,33 @@ Deno.serve(async (req) => {
       console.error('Membership creation error:', membershipError);
     }
 
-    // Note: shareholder_clients link is created automatically by track_referral_signup() trigger
+    // Link shareholder to tenant manually to avoid trigger ordering issues
+    const { error: linkError } = await supabaseClient
+      .from('shareholder_clients')
+      .insert({
+        shareholder_id: shareholder.id,
+        tenant_id: tenantId,
+        commission_rate: 5.0,
+        status: 'active',
+        referral_source: 'shareholder_portal',
+      });
+    if (linkError) {
+      console.error('Shareholder link error:', linkError);
+      throw new Error(`Failed to link shareholder: ${linkError.message}`);
+    }
+
+    // Update tenant with referral info after link is created
+    const { error: tenantReferralError } = await supabaseClient
+      .from('tenants')
+      .update({
+        referred_by_code: shareholder.referral_code,
+        referred_by_shareholder_id: shareholder.id,
+        referral_accepted_at: new Date().toISOString(),
+      })
+      .eq('id', tenantId);
+    if (tenantReferralError) {
+      console.warn('Failed to update tenant referral info:', tenantReferralError);
+    }
 
     // Create tenant settings
     await supabaseClient
