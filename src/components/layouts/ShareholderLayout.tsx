@@ -1,6 +1,8 @@
-import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Settings } from "lucide-react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, FileText, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { icon: LayoutDashboard, label: "ภาพรวม", path: "/shareholder/overview" },
@@ -10,6 +12,14 @@ const navItems = [
 ];
 
 export default function ShareholderLayout() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-background">
       {/* Persistent Sidebar */}
@@ -37,6 +47,17 @@ export default function ShareholderLayout() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="p-4 border-t">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            <span>ออกจากระบบ</span>
+          </Button>
+        </div>
       </aside>
 
       {/* Main Content */}
