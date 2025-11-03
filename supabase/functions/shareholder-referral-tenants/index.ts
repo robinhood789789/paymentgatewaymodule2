@@ -113,9 +113,16 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
-    console.error('Error in shareholder-referral-tenants:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+  } catch (error: any) {
+    console.error('[shareholder-referral-tenants] Full error:', error);
+    const errorMessage = error?.message || error?.msg || 'Unknown error occurred';
+    const errorDetails = {
+      message: errorMessage,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint
+    };
+    console.error('[shareholder-referral-tenants] Error details:', errorDetails);
     return new Response(
       JSON.stringify({
         success: false,
