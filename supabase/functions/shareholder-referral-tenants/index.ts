@@ -90,12 +90,35 @@ serve(async (req) => {
       }, {});
     }
 
+    // Get public_ids for all tenants (from profiles via owner membership)
+    let publicIdsMap: Record<string, string> = {};
+    if (tenantIds.length > 0) {
+      const { data: memberships, error: membershipsError } = await supabaseClient
+        .from('memberships')
+        .select(`
+          tenant_id,
+          profiles:user_id (
+            public_id
+          )
+        `)
+        .in('tenant_id', tenantIds);
+      
+      if (!membershipsError && memberships) {
+        memberships.forEach((m: any) => {
+          if (m.profiles?.public_id) {
+            publicIdsMap[m.tenant_id] = m.profiles.public_id;
+          }
+        });
+      }
+    }
+
     const owners = (clientLinks || []).map((link: any) => {
       const tenant = tenantsById[link.tenant_id] || {};
       return {
         ownerId: tenant.id || link.tenant_id,
         businessName: tenant.name || 'Unknown',
         userId: tenant.user_id || '',
+        publicId: publicIdsMap[link.tenant_id] || tenant.user_id || '',
         createdAt: link.referred_at || tenant.created_at || null,
         status: link.status === 'active' ? 'Active' : link.status === 'trial' ? 'Trial' : (link.status || 'Churned'),
         mrr: link.status === 'active' ? Math.round(Math.random() * 5000 + 1000) : 0, // TODO: Replace with real MRR when available
