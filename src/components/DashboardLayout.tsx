@@ -203,7 +203,7 @@ const DashboardSidebar = () => {
   ];
 
   return (
-    <Sidebar className="w-64" collapsible="offcanvas"  scrollWithContent>
+    <Sidebar className="w-64" collapsible="icon" scrollWithContent>
       <SidebarContent>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
@@ -555,7 +555,7 @@ const DashboardSidebar = () => {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <SidebarProvider defaultOpen={true} open={true}>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         <DashboardSidebar />
         
