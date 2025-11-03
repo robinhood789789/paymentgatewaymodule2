@@ -49,50 +49,59 @@ serve(async (req) => {
       throw new Error('Not a shareholder');
     }
 
-    // Get query params
+    // Get filters from URL or request body
     const url = new URL(req.url);
-    const statusFilter = url.searchParams.get('status') || 'All';
+    let statusFilter = url.searchParams.get('status') || 'All';
+    try {
+      if (req.method === 'POST') {
+        const body = await req.json().catch(() => null);
+        if (body && typeof body.status === 'string') {
+          statusFilter = body.status;
+        }
+      }
+    } catch (_) {/* ignore body parse errors */}
 
-    // Get tenants linked to this shareholder
-    let query = supabaseClient
+
+    // Get tenants linked to this shareholder (2-step to avoid PostgREST relation issues)
+    let baseQuery = supabaseClient
       .from('shareholder_clients')
-      .select(`
-        id,
-        tenant_id,
-        status,
-        referred_at,
-        commission_rate,
-        tenants!inner (
-          id,
-          name,
-          created_at,
-          status
-        )
-      `)
+      .select('tenant_id, status, referred_at, commission_rate')
       .eq('shareholder_id', shareholder.id);
 
     if (statusFilter !== 'All') {
-      query = query.eq('status', statusFilter.toLowerCase());
+      baseQuery = baseQuery.eq('status', statusFilter.toLowerCase());
     }
 
-    const { data: linkedTenants, error: tenantsError } = await query;
+    const { data: clientLinks, error: clientLinksError } = await baseQuery;
+    if (clientLinksError) throw clientLinksError;
 
-    if (tenantsError) throw tenantsError;
+    const tenantIds = (clientLinks || []).map((l: any) => l.tenant_id).filter(Boolean);
 
-    // Calculate MRR for each tenant (simplified - you may want to add real MRR tracking)
-    const owners = linkedTenants?.map(link => {
-      const tenant = link.tenants as any;
+    let tenantsById: Record<string, any> = {};
+    if (tenantIds.length > 0) {
+      const { data: tenants, error: tenantsError } = await supabaseClient
+        .from('tenants')
+        .select('id, name, created_at, status')
+        .in('id', tenantIds);
+      if (tenantsError) throw tenantsError;
+      tenantsById = (tenants || []).reduce((acc: Record<string, any>, t: any) => {
+        acc[t.id] = t;
+        return acc;
+      }, {});
+    }
+
+    const owners = (clientLinks || []).map((link: any) => {
+      const tenant = tenantsById[link.tenant_id] || {};
       return {
-        ownerId: tenant.id,
+        ownerId: tenant.id || link.tenant_id,
         businessName: tenant.name || 'Unknown',
         email: '',
-        createdAt: link.referred_at || tenant.created_at,
-        status: link.status === 'active' ? 'Active' : link.status === 'trial' ? 'Trial' : 'Churned',
-        mrr: link.status === 'active' ? Math.round(Math.random() * 5000 + 1000) : 0, // TODO: Calculate real MRR
+        createdAt: link.referred_at || tenant.created_at || null,
+        status: link.status === 'active' ? 'Active' : link.status === 'trial' ? 'Trial' : (link.status || 'Churned'),
+        mrr: link.status === 'active' ? Math.round(Math.random() * 5000 + 1000) : 0, // TODO: Replace with real MRR when available
         commission_rate: link.commission_rate
       };
-    }) || [];
-
+    });
     return new Response(
       JSON.stringify({
         success: true,
