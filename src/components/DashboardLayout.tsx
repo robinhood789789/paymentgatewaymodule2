@@ -203,7 +203,7 @@ const DashboardSidebar = () => {
   ];
 
   return (
-    <Sidebar className="w-64 border-r" collapsible="none">
+    <Sidebar className="w-64 border-r" collapsible="icon">
       <SidebarContent>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
@@ -560,7 +560,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <DashboardSidebar />
         
         <div className="flex-1 flex flex-col w-full">
-          <header className="h-14 border-b border-border bg-background flex items-center justify-end px-4 gap-4 sticky top-0 z-10">
+          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4 sticky top-0 z-10">
+            <SidebarTrigger className="ml-2" />
           </header>
           
           <main className="flex-1 w-full">
