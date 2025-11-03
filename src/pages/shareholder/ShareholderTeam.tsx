@@ -30,8 +30,6 @@ export default function ShareholderTeam() {
   const [formData, setFormData] = useState({
     business_name: "",
     email: "",
-    contact_name: "",
-    phone: "",
   });
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export default function ShareholderTeam() {
   };
 
   const handleCreate = async () => {
-    if (!formData.business_name || !formData.email || !formData.contact_name) {
+    if (!formData.business_name || !formData.email) {
       toast({ title: "กรุณากรอกข้อมูลให้ครบ", variant: "destructive" });
       return;
     }
@@ -85,8 +83,6 @@ export default function ShareholderTeam() {
       setFormData({
         business_name: "",
         email: "",
-        contact_name: "",
-        phone: "",
       });
 
       fetchOwners();
@@ -187,6 +183,12 @@ export default function ShareholderTeam() {
               </div>
             ) : (
               <div className="space-y-4">
+                <Alert>
+                  <AlertDescription>
+                    กรอกข้อมูลพื้นฐาน ระบบจะสร้างรหัสผ่านชั่วคราวให้อัตโนมัติ
+                  </AlertDescription>
+                </Alert>
+
                 <div>
                   <Label>ชื่อธุรกิจ *</Label>
                   <Input 
@@ -204,24 +206,9 @@ export default function ShareholderTeam() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="owner@example.com"
                   />
-                </div>
-
-                <div>
-                  <Label>ชื่อผู้ติดต่อ *</Label>
-                  <Input 
-                    value={formData.contact_name}
-                    onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                    placeholder="สมชาย ใจดี"
-                  />
-                </div>
-
-                <div>
-                  <Label>เบอร์โทรศัพท์</Label>
-                  <Input 
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="0812345678"
-                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ใช้สำหรับเข้าสู่ระบบ
+                  </p>
                 </div>
 
                 <Button 

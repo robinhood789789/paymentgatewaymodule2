@@ -43,10 +43,10 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { business_name, email, contact_name, phone, locale = 'en' } = await req.json();
+    const { business_name, email } = await req.json();
 
-    if (!business_name || !email || !contact_name) {
-      throw new Error('Missing required fields: business_name, email, contact_name');
+    if (!business_name || !email) {
+      throw new Error('Missing required fields: business_name, email');
     }
 
     // Generate temporary password (12 characters)
@@ -60,8 +60,7 @@ Deno.serve(async (req) => {
       password: tempPassword,
       email_confirm: true,
       user_metadata: {
-        full_name: contact_name,
-        phone: phone || '',
+        full_name: business_name,
       }
     });
 
@@ -170,7 +169,6 @@ Deno.serve(async (req) => {
         after: {
           business_name,
           email,
-          contact_name,
           created_by_shareholder: shareholder.id,
         },
       });
