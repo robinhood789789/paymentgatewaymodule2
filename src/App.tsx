@@ -29,7 +29,6 @@ import MfaChallenge from "./pages/MfaChallenge";
 import MfaEnroll from "./pages/auth/MfaEnroll";
 import PasswordChange from "./pages/auth/PasswordChange";
 import ClaimCode from "./pages/auth/ClaimCode";
-import FirstLoginPasswordChange from "./pages/FirstLoginPasswordChange";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
@@ -70,10 +69,17 @@ import GapReport from "./pages/GapReport";
 import AuthStatus from "./pages/AuthStatus";
 import TestingGuide from "./pages/TestingGuide";
 import { ShareholderRoute } from "./components/ShareholderRoute";
+import ShareholderLayout from "./components/layouts/ShareholderLayout";
+import ShareholderOverview from "./pages/shareholder/ShareholderOverview";
+import ShareholderTeam from "./pages/shareholder/ShareholderTeam";
+import ShareholderReports from "./pages/shareholder/ShareholderReports";
+import ShareholderSettings from "./pages/shareholder/ShareholderSettings";
 import ShareholderDashboard from "./pages/shareholder/ShareholderDashboard";
 import ShareholderClients from "./pages/shareholder/ShareholderClients";
 import ShareholderEarnings from "./pages/shareholder/ShareholderEarnings";
 import ShareholderWithdrawals from "./pages/shareholder/ShareholderWithdrawals";
+import FirstLogin2FASetup from "./pages/auth/FirstLogin2FASetup";
+import FirstLoginPasswordChange from "./pages/auth/FirstLoginPasswordChange";
 import PlatformPartners from "./pages/admin/PlatformPartners";
 import PlatformPartnerDetail from "./pages/admin/PlatformPartnerDetail";
 import PlatformPartnerPayouts from "./pages/admin/PlatformPartnerPayouts";
@@ -96,9 +102,9 @@ function AppContent() {
       <Route path="/auth/password-change" element={<PasswordChange />} />
       <Route path="/auth/claim-code" element={<ClaimCode />} />
       <Route path="/auth/create-super-admin" element={<CreateSuperAdmin />} />
+      <Route path="/first-login/2fa-setup" element={<FirstLogin2FASetup />} />
+      <Route path="/first-login/change-password" element={<FirstLoginPasswordChange />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />
-      
-      <Route path="/first-login/password" element={<FirstLoginPasswordChange />} />
       
       <Route path="/setup/super-admin" element={<CreateSuperAdmin />} />
       

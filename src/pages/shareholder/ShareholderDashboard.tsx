@@ -301,103 +301,37 @@ export default function ShareholderDashboard() {
         />
       </div>
 
-      {/* Chart & Referral Tools */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="rounded-2xl shadow-sm lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between">
-              <span>แนวโน้มคอมมิชชัน</span>
-              <Select value={range} onValueChange={(v: any) => setRange(v)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3M">3M</SelectItem>
-                  <SelectItem value="6M">6M</SelectItem>
-                  <SelectItem value="12M">12M</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={series} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} THB`} />
-                  <Line type="monotone" dataKey="commissionTHB" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border-green-200 bg-gradient-to-br from-green-50 to-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-green-700">
-              <LinkIcon className="h-5 w-5" /> เครื่องมือแชร์ลิงก์
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!shareholderDetails?.referral_code ? (
-              <div className="text-sm text-muted-foreground">กำลังโหลด referral code...</div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-green-700 font-semibold">รหัส Referral ของคุณ</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={shareholderDetails.referral_code} 
-                      readOnly 
-                      className="font-mono text-lg font-bold text-center bg-white border-green-300" 
-                    />
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => {
-                        navigator.clipboard.writeText(shareholderDetails.referral_code);
-                        toast({ title: "คัดลอกโค้ดแล้ว!", description: shareholderDetails.referral_code });
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">ให้ลูกค้ากรอกโค้ดนี้ตอนสมัคร</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-green-700 font-semibold">ลิงก์สมัครใช้งาน</Label>
-                  <div className="flex gap-2">
-                    <Input value={refUrl} readOnly className="font-mono text-xs bg-white border-green-300" />
-                    <Button variant="secondary" onClick={handleCopy}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">แชร์ลิงก์นี้ ลูกค้าไม่ต้องกรอกโค้ด</p>
-                </div>
-
-                <div className="pt-2">
-                  <Label className="mb-2 block text-green-700 font-semibold">QR Code สำหรับงานอีเวนต์</Label>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-white p-3 rounded-xl border-2 border-green-300 shadow-sm">
-                      <QRCodeCanvas value={refUrl} size={120} includeMargin />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <Button variant="outline" onClick={downloadQR} className="w-full">
-                        <QrCode className="h-4 w-4 mr-2" /> ดาวน์โหลด QR
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        ให้ลูกค้าสแกน QR นี้เพื่อสมัครผ่านคุณ
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Chart - ลบ Referral Tools ออกแล้ว */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center justify-between">
+            <span>แนวโน้มคอมมิชชัน</span>
+            <Select value={range} onValueChange={(v: any) => setRange(v)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3M">3M</SelectItem>
+                <SelectItem value="6M">6M</SelectItem>
+                <SelectItem value="12M">12M</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={series} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(v: number) => `${v.toLocaleString()} THB`} />
+                <Line type="monotone" dataKey="commissionTHB" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Owners Table */}
       <Card className="rounded-2xl shadow-sm">
