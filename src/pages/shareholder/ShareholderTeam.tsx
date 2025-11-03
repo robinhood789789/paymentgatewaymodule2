@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 type Owner = {
   ownerId: string;
   businessName: string;
-  userId: string;
+  publicId: string;
   createdAt: string;
   status: string;
 };
@@ -26,9 +26,11 @@ export default function ShareholderTeam() {
   const [creating, setCreating] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [createdPublicId, setCreatedPublicId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    user_id: "",
+    business_name: "",
+    email: "",
   });
 
   useEffect(() => {
@@ -57,14 +59,14 @@ export default function ShareholderTeam() {
   };
 
   const handleCreate = async () => {
-    if (!formData.user_id) {
-      toast({ title: "กรุณากรอก User ID", variant: "destructive" });
+    if (!formData.business_name) {
+      toast({ title: "กรุณากรอกชื่อธุรกิจ", variant: "destructive" });
       return;
     }
 
-    // Validate user_id format (6 digits)
-    if (!/^\d{6}$/.test(formData.user_id)) {
-      toast({ title: "User ID ต้องเป็นตัวเลข 6 หลัก", variant: "destructive" });
+    // Validate email format if provided
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast({ title: "รูปแบบอีเมลไม่ถูกต้อง", variant: "destructive" });
       return;
     }
 
@@ -82,11 +84,13 @@ export default function ShareholderTeam() {
       if (!response.data.success) throw new Error(response.data.error || 'Failed to create owner');
 
       setTempPassword(response.data.data.temporary_password);
-      toast({ title: "สร้าง Owner สำเร็จ!", description: "กรุณาคัดลอกรหัสผ่านชั่วคราว" });
+      setCreatedPublicId(response.data.data.public_id);
+      toast({ title: "สร้าง Owner สำเร็จ!", description: `Public ID: ${response.data.data.public_id}` });
       
       // Reset form
       setFormData({
-        user_id: "",
+        business_name: "",
+        email: "",
       });
 
       fetchOwners();
@@ -112,6 +116,7 @@ export default function ShareholderTeam() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setTempPassword(null);
+    setCreatedPublicId(null);
     setShowPassword(false);
   };
 
@@ -156,6 +161,32 @@ export default function ShareholderTeam() {
                   </AlertDescription>
                 </Alert>
 
+                {createdPublicId && (
+                  <div className="space-y-2">
+                    <Label>Public ID</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={createdPublicId} 
+                        readOnly 
+                        className="font-mono text-lg font-semibold"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(createdPublicId);
+                          toast({ title: "คัดลอกแล้ว", description: "Public ID ถูกคัดลอกไปยังคลิปบอร์ด" });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      ใช้ Public ID นี้ในการเข้าสู่ระบบ
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>รหัสผ่านชั่วคราว</Label>
                   <div className="flex gap-2">
@@ -189,24 +220,32 @@ export default function ShareholderTeam() {
               <div className="space-y-4">
                 <Alert>
                   <AlertDescription>
-                    กำหนด User ID (6 หลัก) ระบบจะสร้างรหัสผ่านชั่วคราวให้อัตโนมัติ
+                    กรอกชื่อธุรกิจและอีเมล (ถ้ามี) ระบบจะสร้าง Public ID และรหัสผ่านชั่วคราวให้อัตโนมัติ
                   </AlertDescription>
                 </Alert>
 
                 <div>
-                  <Label>User ID *</Label>
+                  <Label>ชื่อธุรกิจ *</Label>
                   <Input 
-                    value={formData.user_id}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setFormData({ ...formData, user_id: value });
-                    }}
-                    placeholder="123456"
-                    maxLength={6}
-                    className="font-mono text-lg tracking-wider"
+                    value={formData.business_name}
+                    onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                    placeholder="บริษัท ABC จำกัด"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    ตัวเลข 6 หลัก สำหรับระบุตัวตน Owner
+                    ชื่อธุรกิจหรือองค์กร
+                  </p>
+                </div>
+
+                <div>
+                  <Label>อีเมล (ไม่บังคับ)</Label>
+                  <Input 
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="owner@example.com"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    หากไม่ระบุ ระบบจะสร้างอีเมลภายในให้อัตโนมัติ
                   </p>
                 </div>
 
@@ -239,8 +278,8 @@ export default function ShareholderTeam() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left p-3">Public ID</th>
                   <th className="text-left p-3">ธุรกิจ</th>
-                  <th className="text-left p-3">User ID</th>
                   <th className="text-left p-3">วันที่สร้าง</th>
                   <th className="text-left p-3">สถานะ</th>
                 </tr>
@@ -255,8 +294,8 @@ export default function ShareholderTeam() {
                 ) : (
                   owners.map((owner) => (
                     <tr key={owner.ownerId} className="border-b">
+                      <td className="p-3 font-mono font-semibold text-primary">{owner.publicId}</td>
                       <td className="p-3 font-medium">{owner.businessName}</td>
-                      <td className="p-3 text-muted-foreground font-mono">{owner.userId}</td>
                       <td className="p-3 text-sm text-muted-foreground">
                         {new Date(owner.createdAt).toLocaleDateString('th-TH')}
                       </td>

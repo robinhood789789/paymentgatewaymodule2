@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 const signInSchema = z.object({
-  userId: z.string().regex(/^\d{6}$/, { message: "User ID must be exactly 6 digits" }),
+  publicId: z.string().min(1, { message: "Public ID is required" }).regex(/^(SH|OW|SA)-\d{6}$/, { message: "Invalid Public ID format (e.g., OW-000001)" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
@@ -25,7 +25,7 @@ const SignIn = () => {
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      userId: "",
+      publicId: "",
       password: "",
     },
   });
@@ -38,7 +38,7 @@ const SignIn = () => {
 
   const handleSubmit = async (values: z.infer<typeof signInSchema>) => {
     setIsLoading(true);
-    await signIn(values.userId, values.password);
+    await signIn(values.publicId, values.password);
     setIsLoading(false);
   };
 
@@ -58,14 +58,14 @@ const SignIn = () => {
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="userId"
+                name="publicId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>User ID</FormLabel>
+                    <FormLabel>Public ID</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="123456" maxLength={6} className="pl-10" {...field} />
+                        <Input placeholder="OW-000001 or SH-000001" className="pl-10 uppercase" {...field} onChange={(e) => field.onChange(e.target.value.toUpperCase())} />
                       </div>
                     </FormControl>
                     <FormMessage />

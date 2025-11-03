@@ -134,12 +134,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signIn = async (userIdOrEmail: string, password: string) => {
+  const signIn = async (publicIdOrEmail: string, password: string) => {
     try {
-      // Convert user ID (6 digits) to email format if needed
-      const email = /^\d{6}$/.test(userIdOrEmail) 
-        ? `${userIdOrEmail}@owner.local` 
-        : userIdOrEmail;
+      // Convert public_id to email format if it matches pattern
+      let email = publicIdOrEmail;
+      if (/^(SH|OW|SA)-\d{6}$/.test(publicIdOrEmail)) {
+        // Remove hyphen and convert to email format
+        email = `${publicIdOrEmail.replace('-', '')}@owner.local`;
+      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,

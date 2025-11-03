@@ -607,6 +607,27 @@ export type Database = {
         }
         Relationships: []
       }
+      id_sequences: {
+        Row: {
+          current_value: number
+          id: string
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          current_value?: number
+          id?: string
+          prefix: string
+          updated_at?: string
+        }
+        Update: {
+          current_value?: number
+          id?: string
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       idempotency_keys: {
         Row: {
           created_at: string | null
@@ -1267,6 +1288,7 @@ export type Database = {
           onboard_completed: boolean | null
           password_changed_at: string | null
           password_set_at: string | null
+          public_id: string | null
           requires_password_change: boolean | null
           totp_backup_codes: string[] | null
           totp_enabled: boolean | null
@@ -1289,6 +1311,7 @@ export type Database = {
           onboard_completed?: boolean | null
           password_changed_at?: string | null
           password_set_at?: string | null
+          public_id?: string | null
           requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
@@ -1311,6 +1334,7 @@ export type Database = {
           onboard_completed?: boolean | null
           password_changed_at?: string | null
           password_set_at?: string | null
+          public_id?: string | null
           requires_password_change?: boolean | null
           totp_backup_codes?: string[] | null
           totp_enabled?: boolean | null
@@ -2580,6 +2604,7 @@ export type Database = {
     Functions: {
       cleanup_expired_codes: { Args: never; Returns: undefined }
       cleanup_replay_cache: { Args: never; Returns: undefined }
+      generate_public_id: { Args: { prefix_code: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_shareholder_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }

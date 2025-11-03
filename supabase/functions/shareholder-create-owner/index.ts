@@ -43,92 +43,65 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { user_id } = await req.json();
+    const { business_name, email } = await req.json();
 
-    if (!user_id) {
-      throw new Error('Missing required field: user_id');
+    if (!business_name) {
+      throw new Error('Missing required field: business_name');
     }
 
-    // Validate user_id format (6 digits)
-    if (!/^\d{6}$/.test(user_id)) {
-      throw new Error('User ID must be exactly 6 digits');
+    // Generate public_id using database function
+    const { data: publicIdData, error: publicIdError } = await supabaseClient
+      .rpc('generate_public_id', { prefix_code: 'OW' });
+
+    if (publicIdError || !publicIdData) {
+      throw new Error(`Failed to generate public ID: ${publicIdError?.message || 'Unknown error'}`);
     }
 
-    // Check if user_id already exists
-    const { data: existingTenant } = await supabaseClient
-      .from('tenants')
-      .select('id')
-      .eq('user_id', user_id)
-      .maybeSingle();
+    const public_id = publicIdData as string;
+    const generated_email = email || `${public_id.replace('-', '')}@owner.local`;
 
-    if (existingTenant) {
-      throw new Error('User ID already exists');
+    // Check if email already exists
+    const { data: existingUser } = await supabaseClient.auth.admin.listUsers();
+    const emailExists = existingUser?.users?.some(
+      (u: any) => (u.email || '').toLowerCase() === generated_email.toLowerCase()
+    );
+
+    if (emailExists && !email) {
+      throw new Error('Generated email already exists. Please provide a custom email.');
     }
-
-    // Generate email from user_id
-    const email = `${user_id}@owner.local`;
-    const business_name = `Owner-${user_id}`;
 
     // Generate temporary password (12 characters)
     const tempPassword = Array.from({ length: 12 }, () => 
       'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 56)]
     ).join('');
 
-    // Create auth user or reuse existing one if email already exists
-    let ownerUserId: string;
+    // Create auth user
     const { data: createdUser, error: createUserError } = await supabaseClient.auth.admin.createUser({
-      email,
+      email: generated_email,
       password: tempPassword,
       email_confirm: true,
       user_metadata: { full_name: business_name }
     });
 
-    if (createUserError) {
-      const msg = createUserError.message || '';
-      const isEmailExists = msg.includes('already been registered') || msg.toLowerCase().includes('email_exists') || createUserError.status === 422;
-      if (!isEmailExists) {
-        throw new Error(`Failed to create user: ${msg}`);
-      }
-      // Email exists: find the user by scanning admin list and then reset password
-      let foundUser: any = null;
-      let page = 1;
-      while (!foundUser) {
-        const { data: list, error: listErr } = await supabaseClient.auth.admin.listUsers({ page, perPage: 1000 });
-        if (listErr) break;
-        foundUser = list?.users?.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase());
-        if (foundUser || !list || list.users.length < 1000) break;
-        page += 1;
-      }
-      if (!foundUser) {
-        throw new Error('Email already exists, but cannot resolve existing user');
-      }
-      ownerUserId = foundUser.id as string;
-      const { error: updateUserError } = await supabaseClient.auth.admin.updateUserById(ownerUserId, {
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: { full_name: business_name }
-      });
-      if (updateUserError) {
-        throw new Error(`Failed to update existing user: ${updateUserError.message}`);
-      }
-    } else {
-      if (!createdUser?.user?.id) {
-        throw new Error('User creation returned no user id');
-      }
-      ownerUserId = createdUser.user.id;
+    if (createUserError || !createdUser?.user?.id) {
+      throw new Error(`Failed to create user: ${createUserError?.message || 'No user ID returned'}`);
     }
 
-    // Set security flags
+    const ownerUserId = createdUser.user.id;
+
+    // Set security flags and public_id
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .update({
         requires_password_change: true,
         totp_enabled: false,
+        public_id: public_id,
       })
       .eq('id', ownerUserId);
 
     if (profileError) {
       console.error('Profile update error:', profileError);
+      throw new Error(`Failed to set public_id: ${profileError.message}`);
     }
 
     // Create tenant with referral tracking
@@ -138,7 +111,7 @@ Deno.serve(async (req) => {
       .insert({
         id: tenantId,
         name: business_name,
-        user_id: user_id,
+        user_id: public_id,
         status: 'trial',
       });
 
@@ -240,7 +213,9 @@ Deno.serve(async (req) => {
         data: {
           owner_id: ownerUserId,
           tenant_id: tenantId,
-          user_id,
+          public_id: public_id,
+          business_name: business_name,
+          email: generated_email,
           temporary_password: tempPassword,
           message: 'Owner user created successfully. Please provide the temporary password securely.',
         }

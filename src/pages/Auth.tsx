@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 const signInSchema = z.object({
-  userId: z.string().regex(/^\d{6}$/, { message: "User ID ต้องเป็นตัวเลข 6 หลักเท่านั้น" }),
+  publicId: z.string().min(1, { message: "กรุณากรอก Public ID" }).regex(/^(SH|OW|SA)-\d{6}$/, { message: "รูปแบบ Public ID ไม่ถูกต้อง (เช่น OW-000001)" }),
   password: z.string().min(6, { message: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" }),
 });
 
@@ -37,7 +37,7 @@ const Auth = () => {
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      userId: "",
+      publicId: "",
       password: "",
     },
   });
@@ -60,7 +60,7 @@ const Auth = () => {
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
     setIsLoading(true);
-    await signIn(values.userId, values.password);
+    await signIn(values.publicId, values.password);
     setIsLoading(false);
   };
 
@@ -93,14 +93,14 @@ const Auth = () => {
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <FormField
                     control={signInForm.control}
-                    name="userId"
+                    name="publicId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>User ID</FormLabel>
+                        <FormLabel>Public ID</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="123456" maxLength={6} className="pl-10" {...field} />
+                            <Input placeholder="OW-000001 หรือ SH-000001" className="pl-10 uppercase" {...field} onChange={(e) => field.onChange(e.target.value.toUpperCase())} />
                           </div>
                         </FormControl>
                         <FormMessage />
