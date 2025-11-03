@@ -148,20 +148,7 @@ Deno.serve(async (req) => {
       console.error('Membership creation error:', membershipError);
     }
 
-    // Link to shareholder_clients
-    const { error: linkError } = await supabaseClient
-      .from('shareholder_clients')
-      .insert({
-        shareholder_id: shareholder.id,
-        tenant_id: tenantId,
-        commission_rate: 5.0,
-        status: 'active',
-        referral_source: 'shareholder_portal',
-      });
-
-    if (linkError) {
-      console.error('Shareholder link error:', linkError);
-    }
+    // Note: shareholder_clients link is created automatically by track_referral_signup() trigger
 
     // Create tenant settings
     await supabaseClient
