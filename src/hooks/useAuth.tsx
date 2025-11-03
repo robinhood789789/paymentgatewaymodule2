@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (userIdOrEmail: string, password: string) => Promise<{ error: any }>;
+  signIn: (publicIdOrEmail: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string, referralCode?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isSuperAdmin: boolean;
@@ -136,11 +136,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (publicIdOrEmail: string, password: string) => {
     try {
-      // Convert public_id to email format if it matches pattern (PREFIX-NNNNNN)
       let email = publicIdOrEmail;
+      
+      // Check if it's a Public ID format (PREFIX-NNNNNN)
       if (/^[A-Z0-9]{2,6}-\d{6}$/.test(publicIdOrEmail)) {
-        // Remove hyphen and convert to email format
-        email = `${publicIdOrEmail.replace('-', '')}@owner.local`;
+        // Query profiles to get the actual email for this public_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('public_id', publicIdOrEmail)
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('Error looking up public_id:', profileError);
+          return { error: { message: 'Failed to lookup Public ID' } };
+        }
+        
+        if (!profile || !profile.email) {
+          return { error: { message: 'Public ID not found. Please check your Public ID or contact support.' } };
+        }
+        
+        email = profile.email;
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
