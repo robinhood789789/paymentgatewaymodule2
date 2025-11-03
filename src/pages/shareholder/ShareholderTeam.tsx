@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Copy, Eye, EyeOff } from "lucide-react";
+import { Plus, Loader2, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,9 @@ export default function ShareholderTeam() {
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [createdPublicId, setCreatedPublicId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ownerToDelete, setOwnerToDelete] = useState<Owner | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -145,6 +149,47 @@ export default function ShareholderTeam() {
     setTempPassword(null);
     setCreatedPublicId(null);
     setShowPassword(false);
+  };
+
+  const handleDeleteClick = (owner: Owner) => {
+    setOwnerToDelete(owner);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!ownerToDelete) return;
+
+    try {
+      setDeleting(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await supabase.functions.invoke('delete-user', {
+        headers: { Authorization: `Bearer ${token}` },
+        body: { user_id: ownerToDelete.ownerId },
+      });
+
+      if (response.error) throw new Error(response.error.message || 'Failed to delete owner');
+      if (!response.data.success) throw new Error(response.data.error || 'Failed to delete owner');
+
+      toast({
+        title: "ลบ Owner สำเร็จ",
+        description: `${ownerToDelete.businessName} ถูกลบออกจากระบบแล้ว`,
+      });
+
+      setDeleteDialogOpen(false);
+      setOwnerToDelete(null);
+      fetchOwners();
+    } catch (error: any) {
+      console.error('Error deleting owner:', error);
+      toast({
+        title: "ลบ Owner ไม่สำเร็จ",
+        description: error.message || "เกิดข้อผิดพลาด",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -350,12 +395,13 @@ export default function ShareholderTeam() {
                   <th className="text-left p-3">ธุรกิจ</th>
                   <th className="text-left p-3">วันที่สร้าง</th>
                   <th className="text-left p-3">สถานะ</th>
+                  <th className="text-left p-3">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
                 {owners.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <td colSpan={5} className="text-center py-8 text-muted-foreground">
                       ยังไม่มี Owner user
                     </td>
                   </tr>
@@ -374,6 +420,16 @@ export default function ShareholderTeam() {
                           {owner.status}
                         </Badge>
                       </td>
+                      <td className="p-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(owner)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -382,6 +438,36 @@ export default function ShareholderTeam() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ยืนยันการลบ Owner</AlertDialogTitle>
+            <AlertDialogDescription>
+              คุณแน่ใจหรือไม่ที่จะลบ <span className="font-semibold">{ownerToDelete?.businessName}</span> (Public ID: <span className="font-mono font-semibold">{ownerToDelete?.publicId}</span>)?
+              <br /><br />
+              <span className="text-destructive font-semibold">การกระทำนี้ไม่สามารถย้อนกลับได้</span> และจะลบข้อมูลทั้งหมดของ Owner นี้ออกจากระบบ
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  กำลังลบ...
+                </>
+              ) : (
+                "ลบ Owner"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
