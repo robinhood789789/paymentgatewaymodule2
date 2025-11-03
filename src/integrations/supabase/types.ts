@@ -2333,6 +2333,7 @@ export type Database = {
           risk_rules: Json | null
           status: string
           tax_id: string | null
+          user_id: string | null
         }
         Insert: {
           brand_logo_url?: string | null
@@ -2358,6 +2359,7 @@ export type Database = {
           risk_rules?: Json | null
           status?: string
           tax_id?: string | null
+          user_id?: string | null
         }
         Update: {
           brand_logo_url?: string | null
@@ -2383,6 +2385,7 @@ export type Database = {
           risk_rules?: Json | null
           status?: string
           tax_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

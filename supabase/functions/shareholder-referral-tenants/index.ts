@@ -81,7 +81,7 @@ serve(async (req) => {
     if (tenantIds.length > 0) {
       const { data: tenants, error: tenantsError } = await supabaseClient
         .from('tenants')
-        .select('id, name, created_at, status')
+        .select('id, name, user_id, created_at, status')
         .in('id', tenantIds);
       if (tenantsError) throw tenantsError;
       tenantsById = (tenants || []).reduce((acc: Record<string, any>, t: any) => {
@@ -95,7 +95,7 @@ serve(async (req) => {
       return {
         ownerId: tenant.id || link.tenant_id,
         businessName: tenant.name || 'Unknown',
-        email: '',
+        userId: tenant.user_id || '',
         createdAt: link.referred_at || tenant.created_at || null,
         status: link.status === 'active' ? 'Active' : link.status === 'trial' ? 'Trial' : (link.status || 'Churned'),
         mrr: link.status === 'active' ? Math.round(Math.random() * 5000 + 1000) : 0, // TODO: Replace with real MRR when available
