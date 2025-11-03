@@ -143,15 +143,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (/^[A-Z0-9]{2,6}-\d{6}$/.test(publicIdOrEmail)) {
         console.log('Looking up email for public_id:', publicIdOrEmail);
         
-        // Query profiles to get the actual email for this public_id
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('public_id', publicIdOrEmail)
-          .maybeSingle();
+        // Use database function to lookup email (bypasses RLS)
+        const { data: emailData, error: lookupError } = await supabase
+          .rpc('get_email_by_public_id', { input_public_id: publicIdOrEmail });
         
-        if (profileError) {
-          console.error('Error looking up public_id:', profileError);
+        if (lookupError) {
+          console.error('Error looking up public_id:', lookupError);
           toast({
             title: "เกิดข้อผิดพลาด",
             description: "ไม่สามารถค้นหา Public ID ได้",
@@ -160,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return { error: { message: 'Failed to lookup Public ID' } };
         }
         
-        if (!profile || !profile.email) {
+        if (!emailData) {
           console.error('Public ID not found:', publicIdOrEmail);
           toast({
             title: "Public ID ไม่ถูกต้อง",
@@ -170,8 +167,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return { error: { message: 'Public ID not found' } };
         }
         
-        console.log('Found email for public_id:', profile.email);
-        email = profile.email;
+        console.log('Found email for public_id:', emailData);
+        email = emailData as string;
       }
 
       console.log('Attempting sign in with email:', email);
