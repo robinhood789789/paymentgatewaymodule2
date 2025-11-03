@@ -2023,7 +2023,10 @@ export type Database = {
           id: string
           notes: string | null
           phone: string | null
+          referral_code: string | null
+          referral_count: number | null
           status: string
+          total_commission_earned: number | null
           total_earnings: number
           updated_at: string
           user_id: string
@@ -2043,7 +2046,10 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
           status?: string
+          total_commission_earned?: number | null
           total_earnings?: number
           updated_at?: string
           user_id: string
@@ -2063,7 +2069,10 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_count?: number | null
           status?: string
+          total_commission_earned?: number | null
           total_earnings?: number
           updated_at?: string
           user_id?: string
@@ -2318,6 +2327,9 @@ export type Database = {
           payout_bank_account: string | null
           payout_bank_name: string | null
           payout_schedule: string | null
+          referral_accepted_at: string | null
+          referred_by_code: string | null
+          referred_by_shareholder_id: string | null
           risk_rules: Json | null
           status: string
           tax_id: string | null
@@ -2340,6 +2352,9 @@ export type Database = {
           payout_bank_account?: string | null
           payout_bank_name?: string | null
           payout_schedule?: string | null
+          referral_accepted_at?: string | null
+          referred_by_code?: string | null
+          referred_by_shareholder_id?: string | null
           risk_rules?: Json | null
           status?: string
           tax_id?: string | null
@@ -2362,11 +2377,22 @@ export type Database = {
           payout_bank_account?: string | null
           payout_bank_name?: string | null
           payout_schedule?: string | null
+          referral_accepted_at?: string | null
+          referred_by_code?: string | null
+          referred_by_shareholder_id?: string | null
           risk_rules?: Json | null
           status?: string
           tax_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_referred_by_shareholder_id_fkey"
+            columns: ["referred_by_shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_dlq: {
         Row: {
@@ -2551,6 +2577,7 @@ export type Database = {
     Functions: {
       cleanup_expired_codes: { Args: never; Returns: undefined }
       cleanup_replay_cache: { Args: never; Returns: undefined }
+      generate_referral_code: { Args: never; Returns: string }
       get_shareholder_id: { Args: { user_uuid: string }; Returns: string }
       get_user_tenant_id: { Args: { user_uuid: string }; Returns: string }
       is_member_of_tenant: { Args: { tenant_uuid: string }; Returns: boolean }
