@@ -219,8 +219,8 @@ const DashboardSidebar = () => {
           </div>
         </div>
 
-        {/* Main Menu - Hidden for Super Admin */}
-        {!isSuperAdmin && userMenuItems.length > 0 && (
+        {/* Main Menu - Hidden for Super Admin and Shareholder */}
+        {!isSuperAdmin && !isShareholder && userMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-primary bg-primary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-primary font-semibold">{t('dashboard.overview')}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -248,8 +248,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Transaction Menu - Hidden for Super Admin */}
-        {!isSuperAdmin && (transactionMenuItems.length > 0 || showSystemDeposit) && (
+        {/* Transaction Menu - Hidden for Super Admin and Shareholder */}
+        {!isSuperAdmin && !isShareholder && (transactionMenuItems.length > 0 || showSystemDeposit) && (
           <SidebarGroup className="border-l-[6px] border-secondary bg-secondary/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-secondary font-semibold">ธุรกรรม</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -323,8 +323,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Owner Menu (Tenant Management) - Hidden for Super Admin */}
-        {!isSuperAdmin && ownerMenuItems.length > 0 && (
+        {/* Owner Menu (Tenant Management) - Hidden for Super Admin and Shareholder */}
+        {!isSuperAdmin && !isShareholder && ownerMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-accent font-semibold">Organization</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -351,8 +351,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Management Menu - Hidden for Super Admin */}
-        {!isSuperAdmin && managementMenuItems.length > 0 && (
+        {/* Management Menu - Hidden for Super Admin and Shareholder */}
+        {!isSuperAdmin && !isShareholder && managementMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-warning bg-warning/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-warning font-semibold">Management</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -379,8 +379,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Developers Menu - H-3: แยก API/Webhooks/Docs */}
-        {!isSuperAdmin && developersMenuItems.length > 0 && (
+        {/* Developers Menu - H-3: แยก API/Webhooks/Docs - Hidden for Shareholder */}
+        {!isSuperAdmin && !isShareholder && developersMenuItems.length > 0 && (
           <SidebarGroup className="border-l-[6px] border-blue-500 bg-blue-500/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-blue-600 font-semibold">Developers</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -407,8 +407,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Settings & Docs - Hidden for Super Admin */}
-        {!isSuperAdmin && (settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
+        {/* Settings & Docs - Hidden for Super Admin and Shareholder */}
+        {!isSuperAdmin && !isShareholder && (settingsMenuItems.length > 0 || goLiveItems.length > 0) && (
           <SidebarGroup className="border-l-[6px] border-accent bg-accent/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupContent>
               <SidebarMenu>
@@ -497,8 +497,8 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Debug Menu - Available for testing (not for limited role users) */}
-        {!isSuperAdmin && (isOwner || hasPermission("api_keys.view")) && (
+        {/* Debug Menu - Available for testing (not for limited role users or shareholder) */}
+        {!isSuperAdmin && !isShareholder && (isOwner || hasPermission("api_keys.view")) && (
           <SidebarGroup className="border-l-[6px] border-yellow-500 bg-yellow-500/5 pl-3 py-2 rounded-r-lg">
             <SidebarGroupLabel className="text-yellow-600 font-semibold">Debug</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -562,7 +562,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex-1 flex flex-col w-full">
           <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4 sticky top-0 z-10">
             <SidebarTrigger />
-            <TenantSwitcher />
           </header>
           
           <main className="flex-1 w-full">
