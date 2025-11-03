@@ -466,10 +466,13 @@ const DashboardSidebar = () => {
           </SidebarGroup>
         )}
 
-        {/* Shareholder Menu */}
+        {/* Shareholder Menu - Always show at top for visibility */}
         {isShareholder && !isSuperAdmin && (
-          <SidebarGroup className="border-l-[6px] border-blue-500 bg-blue-500/5 pl-3 py-2 rounded-r-lg">
-            <SidebarGroupLabel className="text-blue-600 font-semibold">Shareholder</SidebarGroupLabel>
+          <SidebarGroup className="border-l-[6px] border-green-500 bg-green-500/10 pl-3 py-2 rounded-r-lg shadow-md">
+            <SidebarGroupLabel className="text-green-700 font-bold flex items-center gap-2">
+              💰 Shareholder Portal
+              <Badge variant="default" className="bg-green-600 text-white text-xs">Active</Badge>
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {shareholderMenuItems.map((item) => (
