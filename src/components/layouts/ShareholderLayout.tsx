@@ -47,7 +47,14 @@ function ShareholderSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b px-4 py-4">
-        {open && <h2 className="text-lg font-semibold">Shareholder Portal</h2>}
+        {open && (
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="text-sm font-bold text-primary">SH</span>
+            </div>
+            <span className="font-semibold">Shareholder</span>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
