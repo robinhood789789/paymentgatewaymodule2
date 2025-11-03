@@ -136,9 +136,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (publicIdOrEmail: string, password: string) => {
     try {
-      // Convert public_id to email format if it matches pattern
+      // Convert public_id to email format if it matches pattern (PREFIX-NNNNNN)
       let email = publicIdOrEmail;
-      if (/^(SH|OW|SA)-\d{6}$/.test(publicIdOrEmail)) {
+      if (/^[A-Z0-9]{2,6}-\d{6}$/.test(publicIdOrEmail)) {
         // Remove hyphen and convert to email format
         email = `${publicIdOrEmail.replace('-', '')}@owner.local`;
       }

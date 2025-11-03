@@ -43,32 +43,38 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { business_name, email } = await req.json();
+    const { business_name, email, public_id } = await req.json();
 
     if (!business_name) {
       throw new Error('Missing required field: business_name');
     }
 
-    // Generate public_id using database function
-    const { data: publicIdData, error: publicIdError } = await supabaseClient
-      .rpc('generate_public_id', { prefix_code: 'OW' });
-
-    if (publicIdError || !publicIdData) {
-      throw new Error(`Failed to generate public ID: ${publicIdError?.message || 'Unknown error'}`);
+    if (!public_id) {
+      throw new Error('Missing required field: public_id');
     }
 
-    const public_id = publicIdData as string;
+    // Validate public_id format (PREFIX-NNNNNN)
+    const publicIdRegex = /^[A-Z0-9]{2,6}-\d{6}$/;
+    if (!publicIdRegex.test(public_id)) {
+      throw new Error('Invalid public_id format. Must be PREFIX-NNNNNN (e.g., OWN-123456)');
+    }
+
+    // Check if public_id already exists
+    const { data: existingProfile, error: checkError } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('public_id', public_id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(`Failed to check public_id uniqueness: ${checkError.message}`);
+    }
+
+    if (existingProfile) {
+      throw new Error(`Public ID "${public_id}" already exists. Please choose a different one.`);
+    }
+
     const generated_email = email || `${public_id.replace('-', '')}@owner.local`;
-
-    // Check if email already exists
-    const { data: existingUser } = await supabaseClient.auth.admin.listUsers();
-    const emailExists = existingUser?.users?.some(
-      (u: any) => (u.email || '').toLowerCase() === generated_email.toLowerCase()
-    );
-
-    if (emailExists && !email) {
-      throw new Error('Generated email already exists. Please provide a custom email.');
-    }
 
     // Generate temporary password (12 characters)
     const tempPassword = Array.from({ length: 12 }, () => 

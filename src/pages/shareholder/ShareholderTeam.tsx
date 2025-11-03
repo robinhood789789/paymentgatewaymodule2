@@ -31,6 +31,8 @@ export default function ShareholderTeam() {
   const [formData, setFormData] = useState({
     business_name: "",
     email: "",
+    prefix: "",
+    number: "",
   });
 
   useEffect(() => {
@@ -64,6 +66,23 @@ export default function ShareholderTeam() {
       return;
     }
 
+    if (!formData.prefix || !formData.number) {
+      toast({ title: "กรุณากรอก Public ID ให้ครบถ้วน", variant: "destructive" });
+      return;
+    }
+
+    // Validate prefix (2-6 uppercase letters/numbers)
+    if (!/^[A-Z0-9]{2,6}$/.test(formData.prefix)) {
+      toast({ title: "Prefix ต้องเป็นตัวอักษร/ตัวเลขภาษาอังกฤษ 2-6 ตัว", variant: "destructive" });
+      return;
+    }
+
+    // Validate number (exactly 6 digits)
+    if (!/^\d{6}$/.test(formData.number)) {
+      toast({ title: "Number ต้องเป็นตัวเลข 6 หลักเท่านั้น", variant: "destructive" });
+      return;
+    }
+
     // Validate email format if provided
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       toast({ title: "รูปแบบอีเมลไม่ถูกต้อง", variant: "destructive" });
@@ -75,9 +94,15 @@ export default function ShareholderTeam() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
+      const public_id = `${formData.prefix}-${formData.number}`;
+
       const response = await supabase.functions.invoke('shareholder-create-owner', {
         headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        body: {
+          business_name: formData.business_name,
+          email: formData.email,
+          public_id: public_id,
+        },
       });
 
       if (response.error) throw new Error(response.error.message || 'Failed to create owner');
@@ -91,6 +116,8 @@ export default function ShareholderTeam() {
       setFormData({
         business_name: "",
         email: "",
+        prefix: "",
+        number: "",
       });
 
       fetchOwners();
@@ -220,7 +247,7 @@ export default function ShareholderTeam() {
               <div className="space-y-4">
                 <Alert>
                   <AlertDescription>
-                    กรอกชื่อธุรกิจและอีเมล (ถ้ามี) ระบบจะสร้าง Public ID และรหัสผ่านชั่วคราวให้อัตโนมัติ
+                    กำหนด Public ID ของ Owner ด้วยตัวเอง (เช่น OWN-123456)
                   </AlertDescription>
                 </Alert>
 
@@ -234,6 +261,47 @@ export default function ShareholderTeam() {
                   <p className="text-xs text-muted-foreground mt-1">
                     ชื่อธุรกิจหรือองค์กร
                   </p>
+                </div>
+
+                <div>
+                  <Label>Public ID *</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input 
+                        value={formData.prefix}
+                        onChange={(e) => setFormData({ ...formData, prefix: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) })}
+                        placeholder="OWN"
+                        maxLength={6}
+                        className="uppercase font-mono text-center"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Prefix (2-6 ตัว)
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center px-2 text-2xl font-bold text-muted-foreground">
+                      -
+                    </div>
+                    <div className="flex-1">
+                      <Input 
+                        value={formData.number}
+                        onChange={(e) => setFormData({ ...formData, number: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                        placeholder="123456"
+                        maxLength={6}
+                        className="font-mono text-center"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ตัวเลข (6 หลัก)
+                      </p>
+                    </div>
+                  </div>
+                  {formData.prefix && formData.number && (
+                    <div className="mt-2 p-2 bg-muted rounded-md">
+                      <p className="text-sm text-muted-foreground">Preview:</p>
+                      <p className="font-mono font-bold text-lg text-primary">
+                        {formData.prefix}-{formData.number}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
