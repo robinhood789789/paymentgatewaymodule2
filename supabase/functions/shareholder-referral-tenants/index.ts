@@ -65,7 +65,6 @@ serve(async (req) => {
         tenants!inner (
           id,
           name,
-          email,
           created_at,
           status
         )
@@ -86,7 +85,7 @@ serve(async (req) => {
       return {
         ownerId: tenant.id,
         businessName: tenant.name || 'Unknown',
-        email: tenant.email || '',
+        email: '',
         createdAt: link.referred_at || tenant.created_at,
         status: link.status === 'active' ? 'Active' : link.status === 'trial' ? 'Trial' : 'Churned',
         mrr: link.status === 'active' ? Math.round(Math.random() * 5000 + 1000) : 0, // TODO: Calculate real MRR
