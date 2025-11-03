@@ -74,18 +74,48 @@ Deno.serve(async (req) => {
       'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 56)]
     ).join('');
 
-    // Create auth user
-    const { data: authUser, error: createUserError } = await supabaseClient.auth.admin.createUser({
+    // Create auth user or reuse existing one if email already exists
+    let ownerUserId: string;
+    const { data: createdUser, error: createUserError } = await supabaseClient.auth.admin.createUser({
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: {
-        full_name: business_name,
-      }
+      user_metadata: { full_name: business_name }
     });
 
-    if (createUserError || !authUser.user) {
-      throw new Error(`Failed to create user: ${createUserError?.message}`);
+    if (createUserError) {
+      const msg = createUserError.message || '';
+      const isEmailExists = msg.includes('already been registered') || msg.toLowerCase().includes('email_exists') || createUserError.status === 422;
+      if (!isEmailExists) {
+        throw new Error(`Failed to create user: ${msg}`);
+      }
+      // Email exists: find the user by scanning admin list and then reset password
+      let foundUser: any = null;
+      let page = 1;
+      while (!foundUser) {
+        const { data: list, error: listErr } = await supabaseClient.auth.admin.listUsers({ page, perPage: 1000 });
+        if (listErr) break;
+        foundUser = list?.users?.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase());
+        if (foundUser || !list || list.users.length < 1000) break;
+        page += 1;
+      }
+      if (!foundUser) {
+        throw new Error('Email already exists, but cannot resolve existing user');
+      }
+      ownerUserId = foundUser.id as string;
+      const { error: updateUserError } = await supabaseClient.auth.admin.updateUserById(ownerUserId, {
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: business_name }
+      });
+      if (updateUserError) {
+        throw new Error(`Failed to update existing user: ${updateUserError.message}`);
+      }
+    } else {
+      if (!createdUser?.user?.id) {
+        throw new Error('User creation returned no user id');
+      }
+      ownerUserId = createdUser.user.id;
     }
 
     // Set security flags
@@ -95,7 +125,7 @@ Deno.serve(async (req) => {
         requires_password_change: true,
         totp_enabled: false,
       })
-      .eq('id', authUser.user.id);
+      .eq('id', ownerUserId);
 
     if (profileError) {
       console.error('Profile update error:', profileError);
@@ -139,7 +169,7 @@ Deno.serve(async (req) => {
     const { error: membershipError } = await supabaseClient
       .from('memberships')
       .insert({
-        user_id: authUser.user.id,
+        user_id: ownerUserId,
         tenant_id: tenantId,
         role_id: ownerRoleId,
       });
@@ -173,7 +203,7 @@ Deno.serve(async (req) => {
         tenant_id: tenantId,
         actor_user_id: user.id,
         action: 'owner.create',
-        target: `user:${authUser.user.id}`,
+        target: `user:${ownerUserId}`,
         after: {
           business_name,
           email,
@@ -185,7 +215,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          owner_id: authUser.user.id,
+          owner_id: ownerUserId,
           tenant_id: tenantId,
           user_id,
           temporary_password: tempPassword,
