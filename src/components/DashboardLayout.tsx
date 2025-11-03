@@ -470,7 +470,7 @@ const DashboardSidebar = () => {
         {isShareholder && !isSuperAdmin && (
           <SidebarGroup className="border-l-[6px] border-green-500 bg-green-500/10 pl-3 py-2 rounded-r-lg shadow-md">
             <SidebarGroupLabel className="text-green-700 font-bold flex items-center gap-2">
-              💰 Shareholder Portal
+              💰 Shareholder
               <Badge variant="default" className="bg-green-600 text-white text-xs">Active</Badge>
             </SidebarGroupLabel>
             <SidebarGroupContent>
