@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Mail, Lock, User } from "lucide-react";
+import { Shield, Mail, Lock, User, Tag } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
+  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -24,6 +26,8 @@ const SignUp = () => {
   const { user, signUp } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref");
 
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
@@ -32,6 +36,7 @@ const SignUp = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      referralCode: referralCode || "",
     },
   });
 
@@ -43,7 +48,7 @@ const SignUp = () => {
 
   const handleSubmit = async (values: z.infer<typeof signUpSchema>) => {
     setIsLoading(true);
-    await signUp(values.email, values.password, values.fullName);
+    await signUp(values.email, values.password, values.fullName, values.referralCode);
     setIsLoading(false);
   };
 
@@ -59,6 +64,15 @@ const SignUp = () => {
         </CardHeader>
 
         <CardContent>
+          {referralCode && (
+            <Alert className="mb-4 bg-green-50 border-green-200">
+              <Tag className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700">
+                Referred by code: <strong>{referralCode}</strong>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <FormField
@@ -128,6 +142,25 @@ const SignUp = () => {
                   </FormItem>
                 )}
               />
+
+              {!referralCode && (
+                <FormField
+                  control={form.control}
+                  name="referralCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Referral Code (Optional)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input placeholder="SH123456" className="pl-10 uppercase" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <Button type="submit" variant="gradient" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating account..." : "Sign Up"}

@@ -142,8 +142,30 @@ export default function ShareholderDashboard() {
   const [range, setRange] = useState<"3M" | "6M" | "12M">("6M");
   const [series, setSeries] = useState<CommissionPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareholderDetails, setShareholderDetails] = useState<{ referral_code: string } | null>(null);
 
-  const refUrl = shareholder ? `${window.location.origin}/auth/sign-up?ref=${shareholder.id}` : "";
+  const refUrl = shareholderDetails?.referral_code 
+    ? `${window.location.origin}/auth/sign-up?ref=${shareholderDetails.referral_code}` 
+    : "";
+
+  // Fetch shareholder details including referral_code
+  useEffect(() => {
+    if (!shareholder?.id) return;
+    
+    const fetchShareholderDetails = async () => {
+      const { data, error } = await supabase
+        .from('shareholders')
+        .select('referral_code')
+        .eq('id', shareholder.id)
+        .single();
+      
+      if (!error && data) {
+        setShareholderDetails(data);
+      }
+    };
+    
+    fetchShareholderDetails();
+  }, [shareholder?.id]);
 
   useEffect(() => {
     if (!shareholder) return;
@@ -244,10 +266,17 @@ export default function ShareholderDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Shareholder Dashboard</h1>
-          <p className="text-muted-foreground">
-            {shareholder.full_name} - <Badge variant="secondary">{shareholder.id}</Badge>
+          <h1 className="text-2xl md:text-3xl font-bold">💰 Shareholder Portal</h1>
+          <p className="text-muted-foreground mt-1">
+            {shareholder.full_name}
           </p>
+          {shareholderDetails?.referral_code && (
+            <div className="mt-2">
+              <Badge variant="outline" className="font-mono text-base px-3 py-1">
+                🏷️ {shareholderDetails.referral_code}
+              </Badge>
+            </div>
+          )}
         </div>
       </div>
 
@@ -305,31 +334,67 @@ export default function ShareholderDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-2xl shadow-sm border-green-200 bg-gradient-to-br from-green-50 to-white">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" /> Referral Tools
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <LinkIcon className="h-5 w-5" /> เครื่องมือแชร์ลิงก์
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <Label>ลิงก์สมัครใช้งาน (Owner)</Label>
-            <div className="flex gap-2">
-              <Input value={refUrl} readOnly className="font-mono text-xs" />
-              <Button variant="secondary" onClick={handleCopy}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="pt-2">
-              <Label className="mb-2 block">QR สำหรับออฟไลน์อีเวนต์</Label>
-              <div className="flex items-center gap-3">
-                <div className="bg-white p-3 rounded-xl border">
-                  <QRCodeCanvas value={refUrl} size={112} includeMargin />
+          <CardContent className="space-y-4">
+            {!shareholderDetails?.referral_code ? (
+              <div className="text-sm text-muted-foreground">กำลังโหลด referral code...</div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-green-700 font-semibold">รหัส Referral ของคุณ</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={shareholderDetails.referral_code} 
+                      readOnly 
+                      className="font-mono text-lg font-bold text-center bg-white border-green-300" 
+                    />
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareholderDetails.referral_code);
+                        toast({ title: "คัดลอกโค้ดแล้ว!", description: shareholderDetails.referral_code });
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">ให้ลูกค้ากรอกโค้ดนี้ตอนสมัคร</p>
                 </div>
-                <Button variant="outline" onClick={downloadQR}>
-                  <QrCode className="h-4 w-4 mr-2" /> ดาวน์โหลด QR
-                </Button>
-              </div>
-            </div>
+
+                <div className="space-y-2">
+                  <Label className="text-green-700 font-semibold">ลิงก์สมัครใช้งาน</Label>
+                  <div className="flex gap-2">
+                    <Input value={refUrl} readOnly className="font-mono text-xs bg-white border-green-300" />
+                    <Button variant="secondary" onClick={handleCopy}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">แชร์ลิงก์นี้ ลูกค้าไม่ต้องกรอกโค้ด</p>
+                </div>
+
+                <div className="pt-2">
+                  <Label className="mb-2 block text-green-700 font-semibold">QR Code สำหรับงานอีเวนต์</Label>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-white p-3 rounded-xl border-2 border-green-300 shadow-sm">
+                      <QRCodeCanvas value={refUrl} size={120} includeMargin />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Button variant="outline" onClick={downloadQR} className="w-full">
+                        <QrCode className="h-4 w-4 mr-2" /> ดาวน์โหลด QR
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        ให้ลูกค้าสแกน QR นี้เพื่อสมัครผ่านคุณ
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
