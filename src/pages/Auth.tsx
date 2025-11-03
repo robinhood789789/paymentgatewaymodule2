@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useShareholder } from "@/hooks/useShareholder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ const signUpSchema = z.object({
 const Auth = () => {
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { isShareholder, isLoading: shLoading } = useShareholder();
   const [isLoading, setIsLoading] = useState(false);
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
@@ -51,10 +53,10 @@ const Auth = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    if (user && !shLoading) {
+      navigate(isShareholder ? "/shareholder/dashboard" : "/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, isShareholder, shLoading, navigate]);
 
   const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
     setIsLoading(true);

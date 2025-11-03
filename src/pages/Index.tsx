@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useShareholder } from "@/hooks/useShareholder";
 import PaymentHero from "@/components/PaymentHero";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,13 @@ import { ArrowRight } from "lucide-react";
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isShareholder, isLoading: shLoading } = useShareholder();
 
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    if (user && !shLoading) {
+      navigate(isShareholder ? "/shareholder/dashboard" : "/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, isShareholder, shLoading, navigate]);
 
   const products = [
     {

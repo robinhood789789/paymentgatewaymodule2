@@ -184,6 +184,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const tenantId = membership?.tenant_id;
       const isSuperAdmin = profile?.is_super_admin || false;
 
+      // Determine destination: shareholder users go directly to their dashboard
+      let destination = "/dashboard";
+      try {
+        const { data: sh } = await supabase
+          .from("shareholders")
+          .select("status")
+          .eq("user_id", data.user?.id)
+          .eq("status", "active")
+          .maybeSingle();
+        if (sh) destination = "/shareholder/dashboard";
+      } catch {}
+
       // Check if MFA is required
       let mfaRequired = false;
 
@@ -220,7 +232,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast.info("กรุณายืนยันตัวตนด้วย 2FA");
         navigate("/auth/mfa-challenge", { 
           state: { 
-            returnTo: "/dashboard" 
+            returnTo: destination 
           } 
         });
         return { error: null };
@@ -231,13 +243,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast.info("กรุณายืนยันตัวตนด้วย 2FA");
         navigate("/auth/mfa-challenge", { 
           state: { 
-            returnTo: "/dashboard" 
+            returnTo: destination 
           } 
         });
       } else {
         // No MFA, proceed to dashboard
         toast.success("Sign in successful!");
-        navigate("/dashboard");
+        navigate(destination);
       }
       
       return { error: null };
