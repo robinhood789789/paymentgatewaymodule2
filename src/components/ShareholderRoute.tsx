@@ -73,13 +73,13 @@ export const ShareholderRoute = ({ children }: ShareholderRouteProps) => {
   }
 
   // Redirect to password change if required
-  if (requiresPasswordChange && location.pathname !== "/first-login/password") {
-    return <Navigate to="/first-login/password" replace />;
+  if (requiresPasswordChange && location.pathname !== "/first-login/change-password") {
+    return <Navigate to="/first-login/change-password" replace />;
   }
 
   // Redirect to MFA enrollment if required
-  if (requiresMFA && !requiresPasswordChange && location.pathname !== "/auth/mfa-enroll") {
-    return <Navigate to="/auth/mfa-enroll" replace />;
+  if (requiresMFA && !requiresPasswordChange && location.pathname !== "/first-login/2fa-setup") {
+    return <Navigate to="/first-login/2fa-setup" replace />;
   }
 
   return <>{children}</>;

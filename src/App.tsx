@@ -424,47 +424,30 @@ function AppContent() {
       <Route path="/alerts" element={<ProtectedRoute><AlertManagement /></ProtectedRoute>} />
       <Route path="/reports/gap" element={<ProtectedRoute><GapReport /></ProtectedRoute>} />
       
-      {/* Shareholder Routes */}
+      {/* Shareholder Routes - New Structure */}
       <Route
-        path="/shareholder/dashboard"
+        path="/shareholder"
         element={
           <ProtectedRoute>
             <ShareholderRoute>
-              <ShareholderDashboard />
+              <ShareholderLayout />
             </ShareholderRoute>
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/shareholder/clients"
-        element={
-          <ProtectedRoute>
-            <ShareholderRoute>
-              <ShareholderClients />
-            </ShareholderRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shareholder/earnings"
-        element={
-          <ProtectedRoute>
-            <ShareholderRoute>
-              <ShareholderEarnings />
-            </ShareholderRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shareholder/withdrawals"
-        element={
-          <ProtectedRoute>
-            <ShareholderRoute>
-              <ShareholderWithdrawals />
-            </ShareholderRoute>
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route index element={<Navigate to="/shareholder/overview" replace />} />
+        <Route path="overview" element={<ShareholderOverview />} />
+        <Route path="team" element={<ShareholderTeam />} />
+        <Route path="reports" element={<ShareholderReports />} />
+        <Route path="reports/:ownerId" element={<ShareholderReports />} />
+        <Route path="settings" element={<ShareholderSettings />} />
+      </Route>
+
+      {/* Legacy Shareholder Routes - Redirect to new structure */}
+      <Route path="/shareholder/dashboard" element={<Navigate to="/shareholder/overview" replace />} />
+      <Route path="/shareholder/clients" element={<Navigate to="/shareholder/team" replace />} />
+      <Route path="/shareholder/earnings" element={<Navigate to="/shareholder/reports" replace />} />
+      <Route path="/shareholder/withdrawals" element={<Navigate to="/shareholder/settings" replace />} />
       
       {/* Auth Status Test Page */}
       <Route path="/auth-status" element={<ProtectedRoute><AuthStatus /></ProtectedRoute>} />
