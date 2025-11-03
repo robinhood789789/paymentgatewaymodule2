@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,7 @@ const PlatformSidebar = () => {
   ];
 
   return (
-    <Sidebar className="w-64" collapsible="icon">
+    <Sidebar className="w-64 border-r" collapsible="none">
       <SidebarContent>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
@@ -125,13 +124,11 @@ const PlatformSidebar = () => {
 
 export function PlatformLayout({ children }: PlatformLayoutProps) {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <PlatformSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 bg-background border-b border-border p-4">
-            <SidebarTrigger />
-          </div>
+          <div className="sticky top-0 z-10 bg-background border-b border-border p-4" />
           <div className="p-6">{children}</div>
         </main>
       </div>
