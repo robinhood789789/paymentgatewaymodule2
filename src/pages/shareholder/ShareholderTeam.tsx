@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 type Owner = {
   ownerId: string;
   businessName: string;
-  email: string;
+  userId: string;
   createdAt: string;
   status: string;
 };
@@ -28,8 +28,7 @@ export default function ShareholderTeam() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
-    business_name: "",
-    email: "",
+    user_id: "",
   });
 
   useEffect(() => {
@@ -58,8 +57,14 @@ export default function ShareholderTeam() {
   };
 
   const handleCreate = async () => {
-    if (!formData.business_name || !formData.email) {
-      toast({ title: "กรุณากรอกข้อมูลให้ครบ", variant: "destructive" });
+    if (!formData.user_id) {
+      toast({ title: "กรุณากรอก User ID", variant: "destructive" });
+      return;
+    }
+
+    // Validate user_id format (6 digits)
+    if (!/^\d{6}$/.test(formData.user_id)) {
+      toast({ title: "User ID ต้องเป็นตัวเลข 6 หลัก", variant: "destructive" });
       return;
     }
 
@@ -81,8 +86,7 @@ export default function ShareholderTeam() {
       
       // Reset form
       setFormData({
-        business_name: "",
-        email: "",
+        user_id: "",
       });
 
       fetchOwners();
@@ -185,29 +189,24 @@ export default function ShareholderTeam() {
               <div className="space-y-4">
                 <Alert>
                   <AlertDescription>
-                    กรอกข้อมูลพื้นฐาน ระบบจะสร้างรหัสผ่านชั่วคราวให้อัตโนมัติ
+                    กำหนด User ID (6 หลัก) ระบบจะสร้างรหัสผ่านชั่วคราวให้อัตโนมัติ
                   </AlertDescription>
                 </Alert>
 
                 <div>
-                  <Label>ชื่อธุรกิจ *</Label>
+                  <Label>User ID *</Label>
                   <Input 
-                    value={formData.business_name}
-                    onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                    placeholder="บริษัท ABC จำกัด"
-                  />
-                </div>
-
-                <div>
-                  <Label>อีเมล *</Label>
-                  <Input 
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="owner@example.com"
+                    value={formData.user_id}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setFormData({ ...formData, user_id: value });
+                    }}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="font-mono text-lg tracking-wider"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    ใช้สำหรับเข้าสู่ระบบ
+                    ตัวเลข 6 หลัก สำหรับระบุตัวตน Owner
                   </p>
                 </div>
 
@@ -241,7 +240,7 @@ export default function ShareholderTeam() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-3">ธุรกิจ</th>
-                  <th className="text-left p-3">อีเมล</th>
+                  <th className="text-left p-3">User ID</th>
                   <th className="text-left p-3">วันที่สร้าง</th>
                   <th className="text-left p-3">สถานะ</th>
                 </tr>
@@ -257,7 +256,7 @@ export default function ShareholderTeam() {
                   owners.map((owner) => (
                     <tr key={owner.ownerId} className="border-b">
                       <td className="p-3 font-medium">{owner.businessName}</td>
-                      <td className="p-3 text-muted-foreground">{owner.email}</td>
+                      <td className="p-3 text-muted-foreground font-mono">{owner.userId}</td>
                       <td className="p-3 text-sm text-muted-foreground">
                         {new Date(owner.createdAt).toLocaleDateString('th-TH')}
                       </td>

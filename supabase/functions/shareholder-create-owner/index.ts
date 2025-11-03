@@ -43,11 +43,31 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { business_name, email } = await req.json();
+    const { user_id } = await req.json();
 
-    if (!business_name || !email) {
-      throw new Error('Missing required fields: business_name, email');
+    if (!user_id) {
+      throw new Error('Missing required field: user_id');
     }
+
+    // Validate user_id format (6 digits)
+    if (!/^\d{6}$/.test(user_id)) {
+      throw new Error('User ID must be exactly 6 digits');
+    }
+
+    // Check if user_id already exists
+    const { data: existingTenant } = await supabaseClient
+      .from('tenants')
+      .select('id')
+      .eq('user_id', user_id)
+      .maybeSingle();
+
+    if (existingTenant) {
+      throw new Error('User ID already exists');
+    }
+
+    // Generate email from user_id
+    const email = `${user_id}@owner.local`;
+    const business_name = `Owner-${user_id}`;
 
     // Generate temporary password (12 characters)
     const tempPassword = Array.from({ length: 12 }, () => 
@@ -88,6 +108,7 @@ Deno.serve(async (req) => {
       .insert({
         id: tenantId,
         name: business_name,
+        user_id: user_id,
         status: 'trial',
         referred_by_code: shareholder.referral_code,
         referred_by_shareholder_id: shareholder.id,
@@ -179,9 +200,8 @@ Deno.serve(async (req) => {
         data: {
           owner_id: authUser.user.id,
           tenant_id: tenantId,
-          email,
+          user_id,
           temporary_password: tempPassword,
-          business_name,
           message: 'Owner user created successfully. Please provide the temporary password securely.',
         }
       }),
