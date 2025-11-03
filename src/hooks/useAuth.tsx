@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -140,6 +141,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Check if it's a Public ID format (PREFIX-NNNNNN)
       if (/^[A-Z0-9]{2,6}-\d{6}$/.test(publicIdOrEmail)) {
+        console.log('Looking up email for public_id:', publicIdOrEmail);
+        
         // Query profiles to get the actual email for this public_id
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -149,19 +152,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (profileError) {
           console.error('Error looking up public_id:', profileError);
+          toast({
+            title: "เกิดข้อผิดพลาด",
+            description: "ไม่สามารถค้นหา Public ID ได้",
+            variant: "destructive",
+          });
           return { error: { message: 'Failed to lookup Public ID' } };
         }
         
         if (!profile || !profile.email) {
-          return { error: { message: 'Public ID not found. Please check your Public ID or contact support.' } };
+          console.error('Public ID not found:', publicIdOrEmail);
+          toast({
+            title: "Public ID ไม่ถูกต้อง",
+            description: "ไม่พบ Public ID นี้ในระบบ กรุณาตรวจสอบอีกครั้ง",
+            variant: "destructive",
+          });
+          return { error: { message: 'Public ID not found' } };
         }
         
+        console.log('Found email for public_id:', profile.email);
         email = profile.email;
       }
 
+      console.log('Attempting sign in with email:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+      });
+
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          title: "เข้าสู่ระบบไม่สำเร็จ",
+          description: error.message === 'Invalid login credentials' 
+            ? "รหัสผ่านไม่ถูกต้อง" 
+            : error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      console.log('Sign in successful');
+      toast({
+        title: "เข้าสู่ระบบสำเร็จ",
+        description: "กำลังโหลดข้อมูล...",
       });
 
       if (error) throw error;
@@ -246,13 +280,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mfaRequired) {
         if (!profile?.totp_enabled) {
           // MFA required but not enrolled, redirect to settings
-          toast.info("Two-Factor Authentication is required for your role. Please enable it.");
+          toast({
+            title: "Two-Factor Authentication Required",
+            description: "Two-Factor Authentication is required for your role. Please enable it.",
+          });
           navigate("/settings", { state: { tab: 'security' } });
           return { error: null };
         }
 
         // MFA enabled, redirect to challenge
-        toast.info("กรุณายืนยันตัวตนด้วย 2FA");
+        toast({
+          title: "ยืนยันตัวตน",
+          description: "กรุณายืนยันตัวตนด้วย 2FA",
+        });
         navigate("/auth/mfa-challenge", { 
           state: { 
             returnTo: destination 
@@ -263,7 +303,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Check if user has 2FA enabled (optional MFA)
       if (profile?.totp_enabled) {
-        toast.info("กรุณายืนยันตัวตนด้วย 2FA");
+        toast({
+          title: "ยืนยันตัวตน",
+          description: "กรุณายืนยันตัวตนด้วย 2FA",
+        });
         navigate("/auth/mfa-challenge", { 
           state: { 
             returnTo: destination 
@@ -271,14 +314,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         // No MFA, proceed to dashboard
-        toast.success("Sign in successful!");
+        toast({
+          title: "เข้าสู่ระบบสำเร็จ",
+          description: "กำลังโหลดข้อมูล...",
+        });
         navigate(destination);
       }
       
       return { error: null };
     } catch (error: any) {
-      toast.error("เข้าสู่ระบบไม่สำเร็จ", {
+      toast({
+        title: "เข้าสู่ระบบไม่สำเร็จ",
         description: error.message,
+        variant: "destructive",
       });
       return { error };
     }
@@ -300,11 +348,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
-      toast.error("Sign up failed", {
+      toast({
+        title: "Sign up failed",
         description: error.message,
+        variant: "destructive",
       });
     } else {
-      toast.success("Sign up successful!", {
+      toast({
+        title: "Sign up successful!",
         description: "Logging you in...",
       });
       navigate("/dashboard");
