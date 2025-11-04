@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserPlus, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { UserPlus, RefreshCw, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -66,6 +66,7 @@ export const CreateUserDialog = () => {
   const [showCredentials, setShowCredentials] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [temporaryPassword, setTemporaryPassword] = useState("");
+  const [copiedPassword, setCopiedPassword] = useState(false);
   const [credentials, setCredentials] = useState<{
     email: string;
     user_id: string;
@@ -217,6 +218,17 @@ export const CreateUserDialog = () => {
     },
   });
 
+  const handleCopyPassword = () => {
+    if (temporaryPassword) {
+      navigator.clipboard.writeText(temporaryPassword);
+      setCopiedPassword(true);
+      toast.success("คัดลอกรหัสผ่านแล้ว! พร้อมส่งให้ลูกน้องในทีม");
+      setTimeout(() => setCopiedPassword(false), 3000);
+    } else {
+      toast.error("กรุณาสร้างรหัสผ่านก่อน");
+    }
+  };
+
   const onSubmit = (data: CreateUserFormData) => {
     createUserMutation.mutate(data);
   };
@@ -338,10 +350,24 @@ export const CreateUserDialog = () => {
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCopyPassword}
+                        disabled={!temporaryPassword}
+                        title="คัดลอกรหัสผ่านเพื่อส่งให้ลูกน้อง"
+                      >
+                        {copiedPassword ? (
+                          <Check className="h-4 w-4 text-success" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                     <FormMessage />
                     <p className="text-xs text-muted-foreground">
-                      คลิกปุ่มรีเฟรชเพื่อสร้างรหัสผ่านสุ่ม หรือกรอกรหัสผ่านเอง
+                      คลิกปุ่มรีเฟรชเพื่อสร้างรหัสผ่านสุ่ม หรือกรอกเอง • คลิกปุ่มคัดลอกเพื่อส่งให้ทีม
                     </p>
                   </FormItem>
                 )}
