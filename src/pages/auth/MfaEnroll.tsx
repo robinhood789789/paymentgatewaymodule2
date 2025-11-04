@@ -88,6 +88,17 @@ export default function MfaEnroll() {
     }
   };
 
+  const handleReset = async () => {
+    setCode("");
+    setError("");
+    setQrCodeUrl("");
+    setSecret("");
+    setLoading(true);
+    
+    toast.info("เริ่มต้นใหม่...");
+    await initEnrollment();
+  };
+
   const handleVerify = async () => {
     if (code.length !== 6) {
       setError("กรุณากรอกรหัส 6 หลัก");
@@ -286,17 +297,33 @@ export default function MfaEnroll() {
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error}
+                <p className="text-xs mt-2 opacity-80">
+                  หากยืนยันไม่สำเร็จหลายครั้ง กรุณาเริ่มต้นใหม่ด้วยปุ่มด้านล่าง
+                </p>
+              </AlertDescription>
             </Alert>
           )}
 
-          <Button
-            className="w-full"
-            onClick={handleVerify}
-            disabled={enrolling || code.length !== 6}
-          >
-            {enrolling ? "กำลังยืนยัน..." : "ยืนยันและเปิดใช้งาน MFA"}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              className="w-full"
+              onClick={handleVerify}
+              disabled={enrolling || code.length !== 6}
+            >
+              {enrolling ? "กำลังยืนยัน..." : "ยืนยันและเปิดใช้งาน MFA"}
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleReset}
+              disabled={enrolling}
+            >
+              เริ่มต้นใหม่ (สร้าง QR Code ใหม่)
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
