@@ -225,10 +225,10 @@ export default function ShareholderTeam() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-gradient">
             👥 ทีมงาน
           </h1>
           <p className="text-muted-foreground mt-2">
@@ -238,7 +238,7 @@ export default function ShareholderTeam() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white border-0 shadow-lg">
+            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all">
               <Plus className="h-4 w-4 mr-2" />
               สร้าง Owner ใหม่
             </Button>
@@ -411,20 +411,20 @@ export default function ShareholderTeam() {
       </div>
 
       {/* Search and Filter */}
-      <Card className="shadow-lg hover:shadow-xl transition-all">
+      <Card className="border-purple-100 shadow-md hover:shadow-lg transition-all bg-gradient-to-br from-background to-purple-50/30 dark:from-card dark:to-purple-950/10">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-purple-400" />
               <Input
                 placeholder="ค้นหาด้วยชื่อธุรกิจ, Public ID หรืออีเมล..."
-                className="pl-10"
+                className="pl-10 border-purple-200 focus-visible:ring-purple-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] border-purple-200 focus:ring-purple-400">
                 <SelectValue placeholder="กรองตามสถานะ" />
               </SelectTrigger>
               <SelectContent>
@@ -438,28 +438,31 @@ export default function ShareholderTeam() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg hover:shadow-xl transition-all">
-        <CardHeader>
+      <Card className="border-purple-100 shadow-md hover:shadow-xl transition-all bg-gradient-to-br from-background to-purple-50/20 dark:from-card dark:to-purple-950/10">
+        <CardHeader className="border-b border-purple-100">
           <CardTitle className="text-xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span>📋 Owner ทั้งหมด</span>
-              <Badge variant="secondary" className="text-sm">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                <span className="text-lg">👥</span>
+              </div>
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Owner ทั้งหมด</span>
+              <Badge className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-700 dark:text-purple-300 border-purple-200">
                 {filteredOwners.length} / {owners.length} คน
               </Badge>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg">
             <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3">Public ID</th>
-                  <th className="text-left p-3">ธุรกิจ</th>
-                  <th className="text-left p-3">อีเมล</th>
-                  <th className="text-left p-3">วันที่สร้าง</th>
-                  <th className="text-left p-3">สถานะ</th>
-                  <th className="text-center p-3">จัดการ</th>
+              <thead className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <tr className="border-b border-purple-100">
+                  <th className="text-left p-4 font-semibold text-purple-900 dark:text-purple-100">Public ID</th>
+                  <th className="text-left p-4 font-semibold text-purple-900 dark:text-purple-100">ธุรกิจ</th>
+                  <th className="text-left p-4 font-semibold text-purple-900 dark:text-purple-100">อีเมล</th>
+                  <th className="text-left p-4 font-semibold text-purple-900 dark:text-purple-100">วันที่สร้าง</th>
+                  <th className="text-left p-4 font-semibold text-purple-900 dark:text-purple-100">สถานะ</th>
+                  <th className="text-center p-4 font-semibold text-purple-900 dark:text-purple-100">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -473,8 +476,8 @@ export default function ShareholderTeam() {
                   </tr>
                 ) : (
                   filteredOwners.map((owner) => (
-                    <tr key={owner.ownerId} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="p-3 font-mono font-semibold text-primary">{owner.publicId}</td>
+                    <tr key={owner.ownerId} className="border-b border-purple-50 hover:bg-purple-50/50 dark:hover:bg-purple-950/10 transition-all">
+                      <td className="p-3 font-mono font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{owner.publicId}</td>
                       <td className="p-3 font-medium">{owner.businessName}</td>
                       <td className="p-3 text-sm text-muted-foreground">
                         {owner.email || "-"}
@@ -486,13 +489,16 @@ export default function ShareholderTeam() {
                           day: "numeric",
                         })}
                       </td>
-                      <td className="p-3">
+                       <td className="p-3">
                         <Badge
-                          variant={owner.status === "Active" ? "default" : "secondary"}
                           className={
                             owner.status === "Active"
-                              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0"
-                              : ""
+                              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-sm"
+                              : owner.status === "Trial"
+                              ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-sm"
+                              : owner.status === "Churned"
+                              ? "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-sm"
+                              : "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm"
                           }
                         >
                           {owner.status}
@@ -503,7 +509,7 @@ export default function ShareholderTeam() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-300 hover:text-amber-700 dark:hover:text-amber-400 transition-all"
+                            className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-950/20 dark:text-purple-300 transition-all shadow-sm hover:shadow-md"
                             onClick={() => handleEditClick(owner)}
                           >
                             <Edit className="h-4 w-4 mr-1" />
@@ -512,7 +518,7 @@ export default function ShareholderTeam() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0"
+                            className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0 shadow-sm hover:shadow-md transition-all"
                             onClick={() => handleDeleteClick(owner)}
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
