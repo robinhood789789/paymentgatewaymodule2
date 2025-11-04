@@ -274,7 +274,7 @@ const Dashboard = () => {
                 </Badge>
               </h1>
               <p className="text-muted-foreground mt-1">
-                ยินดีต้อนรับ {user?.email}
+                ยินดีต้อนรับ <span className="font-mono">{(user as any)?.public_id || "-"}</span>
               </p>
             </div>
             <div className="flex gap-2 flex-wrap">
