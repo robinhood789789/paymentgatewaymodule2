@@ -482,61 +482,17 @@ const AdminUsers = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <PermissionGate 
-                            allowOwner={true}
-                            fallback={
-                              <Badge variant={
-                                user.role === "super_admin" ? "default" : 
-                                user.role === "owner" ? "secondary" : 
-                                user.role === "manager" ? "secondary" :
-                                user.role === "finance" ? "secondary" :
-                                user.role === "developer" ? "secondary" :
-                                user.role === "viewer" ? "outline" :
-                                "outline"
-                              }>
-                                {user.role || "No Role"}
-                              </Badge>
-                            }
-                          >
-                            <div className="flex items-center gap-2">
-                              <Select
-                                value={user.role || "finance"}
-                                onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                              >
-                                <SelectTrigger className="w-[150px] border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors">
-                                  <div className="flex items-center gap-2">
-                                    <Edit className="w-3.5 h-3.5 text-primary" />
-                                    <SelectValue />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {roles.map((role) => (
-                                    <SelectItem key={role.id} value={role.name}>
-                                      <div className="flex items-center gap-2">
-                                        {role.name === "owner" && <Shield className="w-4 h-4 text-green-600" />}
-                                        {role.name === "finance" && <ShieldCheck className="w-4 h-4 text-blue-600" />}
-                                        {role.name === "developer" && <Code className="w-4 h-4 text-cyan-600" />}
-                                        {role.name === "manager" && <ShieldCheck className="w-4 h-4 text-purple-600" />}
-                                        {role.name === "viewer" && <Eye className="w-4 h-4 text-gray-600" />}
-                                        <span className="capitalize">{role.name}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                  {!roles.some((r) => r.name === (user.role || "")) && user.role && (
-                                    <SelectItem value={user.role}>
-                                      <div className="flex items-center gap-2">
-                                        <span className="capitalize">{user.role}</span>
-                                        <span className="text-muted-foreground text-xs">(current)</span>
-                                      </div>
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <Badge variant="outline" className="text-xs">
-                                Owner can edit
-                              </Badge>
-                            </div>
-                          </PermissionGate>
+                          <Badge variant={
+                            user.role === "super_admin" ? "default" : 
+                            user.role === "owner" ? "secondary" : 
+                            user.role === "manager" ? "secondary" :
+                            user.role === "finance" ? "secondary" :
+                            user.role === "developer" ? "secondary" :
+                            user.role === "viewer" ? "outline" :
+                            "outline"
+                          }>
+                            {user.role || "No Role"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={user.status === "active" ? "default" : "destructive"}>
