@@ -559,12 +559,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex min-h-screen w-full">
         <DashboardSidebar />
         
-        <div className="flex-1 flex flex-col w-full">
-          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4 sticky top-0 z-10">
+        <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
+          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4 sticky top-0 z-10 transition-all duration-300">
             <SidebarTrigger className="ml-2" />
           </header>
           
-          <main className="flex-1 w-full">
+          <main className="flex-1 w-full transition-all duration-300">
             {children}
           </main>
         </div>

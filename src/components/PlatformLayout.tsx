@@ -128,11 +128,11 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <PlatformSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 bg-background border-b border-border p-4">
+        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out">
+          <div className="sticky top-0 z-10 bg-background border-b border-border p-4 transition-all duration-300">
             <SidebarTrigger className="ml-2" />
           </div>
-          <div className="p-6">{children}</div>
+          <div className="p-6 transition-all duration-300">{children}</div>
         </main>
       </div>
     </SidebarProvider>
