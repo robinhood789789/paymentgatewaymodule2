@@ -331,6 +331,8 @@ const AdminUsers = () => {
       email: user.email,
       status: user.status,
       tenant_id: user.tenant_id,
+      role: user.role,
+      role_id: user.role_id,
     });
     setEditMemberDialogOpen(true);
   };
