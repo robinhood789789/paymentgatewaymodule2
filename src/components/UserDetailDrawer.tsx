@@ -121,6 +121,13 @@ export const UserDetailDrawer = ({ userId, open, onOpenChange }: UserDetailDrawe
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Public ID</p>
+                      <p className="font-medium font-mono text-xs">{profile?.public_id || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Role</p>

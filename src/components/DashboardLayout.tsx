@@ -211,9 +211,14 @@ const DashboardSidebar = () => {
               <Shield className="w-4 h-4 text-primary" />
             </div>
             {!isCollapsed && (
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-sm">SaaS Platform</h2>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                {user && (
+                  <p className="text-[10px] text-muted-foreground/70 font-mono">
+                    ID: {(user as any).public_id || "-"}
+                  </p>
+                )}
               </div>
             )}
           </div>

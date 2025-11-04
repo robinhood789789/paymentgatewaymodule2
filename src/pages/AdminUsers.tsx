@@ -333,6 +333,7 @@ const AdminUsers = () => {
       tenant_id: user.tenant_id,
       role: user.role,
       role_id: user.role_id,
+      public_id: user.public_id,
     });
     setEditMemberDialogOpen(true);
   };

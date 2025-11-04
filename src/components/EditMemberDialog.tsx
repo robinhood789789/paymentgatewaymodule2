@@ -162,6 +162,11 @@ export function EditMemberDialog({ open, onOpenChange, member }: EditMemberDialo
             <div className="text-sm text-muted-foreground">{member?.email}</div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Public ID</Label>
+            <div className="text-sm text-muted-foreground font-mono">{(member as any)?.public_id || "-"}</div>
+          </div>
+
           <Separator />
 
           <div className="space-y-3">
