@@ -49,10 +49,10 @@ function ShareholderSidebar() {
       <SidebarHeader className="border-b px-4 py-4">
         {open && (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-sm font-bold text-primary">SH</span>
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+              <span className="text-sm font-bold text-white">SH</span>
             </div>
-            <span className="font-semibold">Shareholder</span>
+            <span className="font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Shareholder</span>
           </div>
         )}
       </SidebarHeader>

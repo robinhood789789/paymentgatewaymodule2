@@ -201,18 +201,22 @@ export default function ShareholderTeam() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">ทีมงาน</h1>
-          <p className="text-muted-foreground">จัดการ Owner users</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            👥 ทีมงาน
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            จัดการบัญชี Owner ในทีมของคุณ
+          </p>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white border-0 shadow-lg">
               <Plus className="h-4 w-4 mr-2" />
-              สร้าง Owner user
+              สร้าง Owner ใหม่
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
@@ -382,9 +386,14 @@ export default function ShareholderTeam() {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader>
-          <CardTitle>Owner Users ({owners.length})</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <span>📋 Owner ทั้งหมด</span>
+            <Badge variant="secondary" className="text-sm">
+              {owners.length} คน
+            </Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -416,18 +425,20 @@ export default function ShareholderTeam() {
                       <td className="p-3">
                         <Badge 
                           variant={owner.status === 'Active' ? 'default' : 'secondary'}
+                          className={owner.status === 'Active' ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0" : ""}
                         >
                           {owner.status}
                         </Badge>
                       </td>
                       <td className="p-3">
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          variant="destructive"
+                          size="sm"
+                          className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0"
                           onClick={() => handleDeleteClick(owner)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          ลบ
                         </Button>
                       </td>
                     </tr>

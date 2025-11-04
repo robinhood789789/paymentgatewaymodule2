@@ -87,17 +87,24 @@ export default function ShareholderClients() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">ลูกค้าของฉัน</h1>
-        <p className="text-muted-foreground mt-2">
-          จัดการลูกค้าและค่าคอมมิชชั่น
-        </p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            👥 ลูกค้าของฉัน
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            จัดการลูกค้าและค่าคอมมิชชั่น
+          </p>
+        </div>
+        <Badge variant="secondary" className="text-lg px-4 py-2">
+          {clients?.length || 0} ลูกค้า
+        </Badge>
       </div>
 
-      <Card>
+      <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader>
-          <CardTitle>รายชื่อลูกค้าทั้งหมด ({clients?.length || 0})</CardTitle>
+          <CardTitle className="text-xl">📋 รายชื่อลูกค้าทั้งหมด</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -119,19 +126,30 @@ export default function ShareholderClients() {
                       {client.tenants?.name || "ไม่ระบุ"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                      <Badge 
+                        variant={client.status === "active" ? "default" : "secondary"}
+                        className={client.status === "active" ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0" : ""}
+                      >
                         {client.status === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={client.tenants?.kyc_status === "verified" ? "default" : "secondary"}>
+                      <Badge 
+                        variant={client.tenants?.kyc_status === "verified" ? "default" : "secondary"}
+                        className={client.tenants?.kyc_status === "verified" ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0" : ""}
+                      >
                         {client.tenants?.kyc_status || "pending"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold text-primary">
-                        {client.commission_rate}%
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
+                          <span className="text-xs font-bold text-amber-700 dark:text-amber-400">%</span>
+                        </div>
+                        <span className="font-semibold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                          {client.commission_rate}%
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {new Date(client.referred_at).toLocaleDateString("th-TH")}
@@ -143,6 +161,7 @@ export default function ShareholderClients() {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-400 transition-all"
                               onClick={() => {
                                 setSelectedClient(client);
                                 setNewCommissionRate(client.commission_rate.toString());

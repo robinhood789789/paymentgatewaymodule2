@@ -81,18 +81,18 @@ async function fetchCommissionSeries(range: "3M" | "6M" | "12M"): Promise<Commis
 }
 
 // UI Components
-function StatCard({ icon: Icon, title, value, help }: { icon: any; title: string; value: string; help?: string }) {
+function StatCard({ icon: Icon, title, value, help, gradient }: { icon: any; title: string; value: string; help?: string; gradient: string }) {
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardContent className="p-5 flex items-center gap-4">
-        <div className="p-3 rounded-xl bg-muted">
-          <Icon className="h-6 w-6" />
+    <Card className={`border-l-4 ${gradient} shadow-lg hover:shadow-xl transition-all`}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium">{title}</div>
+          <div className="p-2 rounded-full bg-background/50">
+            <Icon className="h-5 w-5" />
+          </div>
         </div>
-        <div>
-          <div className="text-sm text-muted-foreground">{title}</div>
-          <div className="text-2xl font-semibold leading-tight">{value}</div>
-          {help && <div className="text-xs text-muted-foreground mt-1">{help}</div>}
-        </div>
+        <div className="text-3xl font-bold">{value}</div>
+        {help && <div className="text-xs text-muted-foreground mt-2">{help}</div>}
       </CardContent>
     </Card>
   );
@@ -282,30 +282,38 @@ export default function ShareholderDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users} title="Owner ทั้งหมด" value={summary ? `${summary.totalOwners}` : "-"} />
+        <StatCard 
+          icon={Users} 
+          title="Owner ทั้งหมด" 
+          value={summary ? `${summary.totalOwners}` : "-"}
+          gradient="border-l-blue-500 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background"
+        />
         <StatCard 
           icon={CheckCircle2} 
           title="Active Owner" 
           value={summary ? `${summary.activeOwners}` : "-"} 
-          help={`อัตราอนุมัติ ~${summary?.approvalRate ?? "-"}%`} 
+          help={`อัตราอนุมัติ ~${summary?.approvalRate ?? "-"}%`}
+          gradient="border-l-green-500 bg-gradient-to-br from-green-50 to-white dark:from-green-950/20 dark:to-background"
         />
         <StatCard 
           icon={Wallet} 
           title="รายได้จากคอมมิชชัน/เดือน" 
-          value={summary ? `${summary.monthlyRefRevenue.toLocaleString()} THB` : "-"} 
+          value={summary ? `${summary.monthlyRefRevenue.toLocaleString()} THB` : "-"}
+          gradient="border-l-purple-500 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background"
         />
         <StatCard 
           icon={Percent} 
           title="คอมมิชชันรอจ่าย" 
-          value={summary ? `${summary.pendingCommission.toLocaleString()} THB` : "-"} 
+          value={summary ? `${summary.pendingCommission.toLocaleString()} THB` : "-"}
+          gradient="border-l-amber-500 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-background"
         />
       </div>
 
       {/* Chart - ลบ Referral Tools ออกแล้ว */}
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between">
-            <span>แนวโน้มคอมมิชชัน</span>
+          <CardTitle className="flex items-center justify-between text-xl">
+            <span>📈 แนวโน้มคอมมิชชัน</span>
             <Select value={range} onValueChange={(v: any) => setRange(v)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -334,10 +342,10 @@ export default function ShareholderDashboard() {
       </Card>
 
       {/* Owners Table */}
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between">
-            <span>Owner ที่มาจากคุณ</span>
+          <CardTitle className="flex items-center justify-between text-xl">
+            <span>👥 Owner ที่มาจากคุณ</span>
             <div className="flex items-center gap-2">
               <Select value={status} onValueChange={(v: any) => setStatus(v)}>
                 <SelectTrigger className="w-[140px]">
@@ -406,10 +414,10 @@ export default function ShareholderDashboard() {
       </Card>
 
       {/* Payouts */}
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" /> คอมมิชชัน & Payouts
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Clock className="h-5 w-5" /> 💰 คอมมิชชัน & Payouts
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
