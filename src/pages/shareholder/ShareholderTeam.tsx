@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Copy, Eye, EyeOff, Trash2, Search, Edit, UserSearch } from "lucide-react";
+import { Plus, Loader2, Copy, Eye, EyeOff, Trash2, Search, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { OwnerDetailDrawer } from "@/components/shareholder/OwnerDetailDrawer";
 import { EditOwnerDialog } from "@/components/shareholder/EditOwnerDialog";
 
 type Owner = {
@@ -38,8 +37,6 @@ export default function ShareholderTeam() {
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
-  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [ownerToEdit, setOwnerToEdit] = useState<Owner | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -201,11 +198,6 @@ export default function ShareholderTeam() {
     } finally {
       setDeleting(false);
     }
-  };
-
-  const handleViewDetails = (owner: Owner) => {
-    setSelectedOwnerId(owner.ownerId);
-    setDetailDrawerOpen(true);
   };
 
   const handleEditClick = (owner: Owner) => {
@@ -511,15 +503,6 @@ export default function ShareholderTeam() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-400 transition-all"
-                            onClick={() => handleViewDetails(owner)}
-                          >
-                            <UserSearch className="h-4 w-4 mr-1" />
-                            ดูรายละเอียด
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
                             className="hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-300 hover:text-amber-700 dark:hover:text-amber-400 transition-all"
                             onClick={() => handleEditClick(owner)}
                           >
@@ -575,13 +558,6 @@ export default function ShareholderTeam() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Detail Drawer */}
-      <OwnerDetailDrawer
-        tenantId={selectedOwnerId}
-        open={detailDrawerOpen}
-        onOpenChange={setDetailDrawerOpen}
-      />
 
       {/* Edit Dialog */}
       <EditOwnerDialog
