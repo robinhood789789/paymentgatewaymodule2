@@ -41,7 +41,15 @@ export function EditMemberDialog({ open, onOpenChange, member }: EditMemberDialo
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      // Optimistically update the cached list so UI reflects immediately
+      const { tenantId, userId, newStatus } = variables as { userId: string; tenantId: string; newStatus: string };
+      queryClient.setQueryData(["admin-users", tenantId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return (oldData as any[]).map((u) => (u.id === userId ? { ...u, status: newStatus } : u));
+      });
+
+      // Also invalidate to refetch from server and stay consistent
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("อัพเดทสถานะสำเร็จ!");
       onOpenChange(false);
