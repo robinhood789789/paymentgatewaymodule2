@@ -65,8 +65,22 @@ serve(async (req) => {
       .single();
 
     if (linkError || !clientLink) {
-      console.error('Client link error:', linkError);
-      throw new Error('You do not have permission to delete this owner. This tenant is not linked to your shareholder account.');
+      console.warn('Client link not found, checking tenants fallback...', linkError);
+
+      // Fallback: verify via tenants.referred_by_shareholder_id
+      const { data: tenantRow, error: tenantCheckError } = await supabase
+        .from('tenants')
+        .select('id, referred_by_shareholder_id')
+        .eq('id', tenant_id)
+        .eq('referred_by_shareholder_id', shareholderId)
+        .single();
+
+      if (tenantCheckError || !tenantRow) {
+        console.error('Tenant fallback check failed:', tenantCheckError);
+        throw new Error('You do not have permission to delete this owner. This tenant is not linked to your shareholder account.');
+      }
+
+      console.log('✅ Verified via tenants.referred_by_shareholder_id');
     }
 
     console.log('✅ Verified shareholder owns this tenant');
