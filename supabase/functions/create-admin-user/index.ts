@@ -105,9 +105,16 @@ Deno.serve(async (req) => {
         .eq('id', userId)
         .is('public_id', null);
     } else if (existingProfile) {
-      // Profile exists with this public_id but no auth user - this shouldn't happen
-      throw new Error(`User ID ${public_id} มีข้อมูลผิดพลาดในระบบ กรุณาติดต่อผู้ดูแล`);
-    } else {
+      // Profile exists with this public_id but no auth user - cleanup orphaned profile
+      console.log('Found orphaned profile, cleaning up:', existingProfile.id);
+      await supabaseClient
+        .from('profiles')
+        .delete()
+        .eq('id', existingProfile.id);
+      console.log('Orphaned profile deleted, proceeding with new user creation');
+    }
+    
+    if (!existingUser) {
       // Create the new user
       console.log('Creating new user');
       const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
