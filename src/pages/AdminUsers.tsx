@@ -428,10 +428,16 @@ const AdminUsers = () => {
                         </PermissionGate>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            {user.role === "finance" ? (
-                              <Shield className="w-4 h-4 text-primary" />
+                            {user.role === "owner" ? (
+                              <Shield className="w-4 h-4 text-green-600" />
+                            ) : user.role === "manager" ? (
+                              <ShieldCheck className="w-4 h-4 text-purple-600" />
+                            ) : user.role === "finance" ? (
+                              <ShieldCheck className="w-4 h-4 text-blue-600" />
                             ) : user.role === "developer" ? (
-                              <Code className="w-4 h-4 text-blue-500" />
+                              <Code className="w-4 h-4 text-cyan-600" />
+                            ) : user.role === "viewer" ? (
+                              <Eye className="w-4 h-4 text-gray-600" />
                             ) : (
                               <User className="w-4 h-4 text-muted-foreground" />
                             )}
@@ -446,9 +452,10 @@ const AdminUsers = () => {
                               <Badge variant={
                                 user.role === "super_admin" ? "default" : 
                                 user.role === "owner" ? "secondary" : 
+                                user.role === "manager" ? "secondary" :
                                 user.role === "finance" ? "secondary" :
                                 user.role === "developer" ? "secondary" :
-                                user.role === "manager" ? "secondary" :
+                                user.role === "viewer" ? "outline" :
                                 "outline"
                               }>
                                 {user.role || "No Role"}
@@ -474,6 +481,7 @@ const AdminUsers = () => {
                                         {role.name === "finance" && <ShieldCheck className="w-4 h-4 text-blue-600" />}
                                         {role.name === "developer" && <Code className="w-4 h-4 text-cyan-600" />}
                                         {role.name === "manager" && <ShieldCheck className="w-4 h-4 text-purple-600" />}
+                                        {role.name === "viewer" && <Eye className="w-4 h-4 text-gray-600" />}
                                         <span className="capitalize">{role.name}</span>
                                       </div>
                                     </SelectItem>
