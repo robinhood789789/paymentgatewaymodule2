@@ -793,6 +793,7 @@ export type Database = {
           created_at: string | null
           id: string
           role_id: string | null
+          status: string
           tenant_id: string | null
           user_id: string
         }
@@ -800,6 +801,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           role_id?: string | null
+          status?: string
           tenant_id?: string | null
           user_id: string
         }
@@ -807,6 +809,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           role_id?: string | null
+          status?: string
           tenant_id?: string | null
           user_id?: string
         }

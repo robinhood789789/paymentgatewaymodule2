@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX, Edit, Code } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX, Edit, Code, Edit2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +40,7 @@ import { UserDetailDrawer } from "@/components/UserDetailDrawer";
 import { PermissionGate } from "@/components/PermissionGate";
 import { use2FAChallenge } from "@/hooks/use2FAChallenge";
 import { TwoFactorChallenge } from "@/components/security/TwoFactorChallenge";
+import { EditMemberDialog } from "@/components/EditMemberDialog";
 
 const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,6 +51,8 @@ const AdminUsers = () => {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; email: string } | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [editMemberDialogOpen, setEditMemberDialogOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<any>(null);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
   const { isOpen, setIsOpen, checkAndChallenge, onSuccess } = use2FAChallenge();
@@ -88,6 +91,7 @@ const AdminUsers = () => {
           user_id, 
           tenant_id, 
           role_id,
+          status,
           roles!inner(name),
           tenants!inner(name)
         `)
@@ -125,6 +129,7 @@ const AdminUsers = () => {
           role_id: membership?.role_id || null,
           tenant_id: membership?.tenant_id || null,
           tenant_name: membership?.tenants?.name || "No workspace",
+          status: membership?.status || "active",
           is_locked: false, // Can be extended with actual lock status from profiles
         };
       });
@@ -319,6 +324,17 @@ const AdminUsers = () => {
     }
   };
 
+  const handleEditMember = (user: any) => {
+    setMemberToEdit({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      status: user.status,
+      tenant_id: user.tenant_id,
+    });
+    setEditMemberDialogOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <PermissionGate
@@ -409,6 +425,7 @@ const AdminUsers = () => {
                       <TableHead>User</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>2FA Status</TableHead>
                       <TableHead>Last Verified</TableHead>
                       <TableHead>Joined</TableHead>
@@ -503,6 +520,14 @@ const AdminUsers = () => {
                           </PermissionGate>
                         </TableCell>
                         <TableCell>
+                          <Badge variant={user.status === "active" ? "default" : "destructive"}>
+                            <span className="w-2 h-2 rounded-full mr-2" style={{
+                              backgroundColor: user.status === "active" ? "#22c55e" : "#ef4444"
+                            }}></span>
+                            {user.status === "active" ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           {user.totp_enabled ? (
                             <Badge variant="default" className="gap-1">
                               <ShieldCheck className="w-3 h-3" />
@@ -530,6 +555,16 @@ const AdminUsers = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
+                            <PermissionGate allowOwner={true}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditMember(user)}
+                                title="แก้ไขสถานะ"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                            </PermissionGate>
                             <PermissionGate allowOwner={true}>
                               {!user.totp_enabled && (
                                 <Button
@@ -635,6 +670,11 @@ const AdminUsers = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <EditMemberDialog
+        open={editMemberDialogOpen}
+        onOpenChange={setEditMemberDialogOpen}
+        member={memberToEdit}
+      />
       <TwoFactorChallenge open={isOpen} onOpenChange={setIsOpen} onSuccess={onSuccess} />
       </PermissionGate>
     </DashboardLayout>

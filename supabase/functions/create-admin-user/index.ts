@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       throw new Error(`User ID ${public_id} ถูกใช้แล้วโดยผู้ใช้คนอื่น`);
     }
 
-    let userId: string;
+    let userId: string | undefined;
 
     if (existingUser) {
       console.log('User already exists, adding to tenant:', existingUser.id);
@@ -114,8 +114,8 @@ Deno.serve(async (req) => {
       console.log('Orphaned profile deleted, proceeding with new user creation');
     }
     
-    if (!existingUser) {
-      // Create the new user
+    // Create the new user if needed
+    if (!userId) {
       console.log('Creating new user');
       const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
         email,
