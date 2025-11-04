@@ -30,13 +30,16 @@ Deno.serve(async (req) => {
       throw new Error('ไม่ได้รับอนุญาต');
     }
 
-    const { email, password, full_name, role, tenant_id, permissions } = await req.json();
+    const { prefix, user_number, public_id, password, full_name, role, tenant_id, permissions } = await req.json();
 
-    if (!email || !password || !full_name || !role || !tenant_id) {
+    if (!prefix || !user_number || !public_id || !password || !full_name || !role || !tenant_id) {
       throw new Error('ข้อมูลไม่ครบถ้วน');
     }
 
-    console.log('Creating admin user:', { email, role, tenant_id });
+    // Generate email from public_id
+    const email = `${public_id.toLowerCase()}@user.local`;
+
+    console.log('Creating admin user:', { public_id, email, role, tenant_id });
 
     // Verify user has permission in the tenant
     const { data: membership } = await supabaseClient
@@ -55,9 +58,20 @@ Deno.serve(async (req) => {
       throw new Error('คุณไม่มีสิทธิ์สร้างผู้ใช้');
     }
 
-    // Check if user already exists
+    // Check if user already exists by email or public_id
     const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u) => u.email === email);
+    
+    // Also check if public_id is already used
+    const { data: existingProfile } = await supabaseClient
+      .from('profiles')
+      .select('id, email')
+      .eq('public_id', public_id)
+      .maybeSingle();
+    
+    if (existingProfile && existingUser && existingProfile.id !== existingUser.id) {
+      throw new Error(`User ID ${public_id} ถูกใช้แล้วโดยผู้ใช้คนอื่น`);
+    }
 
     let userId: string;
 
@@ -77,12 +91,22 @@ Deno.serve(async (req) => {
         throw new Error('ผู้ใช้นี้มีอยู่ในเทนนันต์นี้แล้ว');
       }
 
-      // Update user's full_name if provided
+      // Update user's full_name and public_id if provided
       if (full_name && (!existingUser.user_metadata?.full_name || existingUser.user_metadata.full_name === '')) {
         await supabaseClient.auth.admin.updateUserById(userId, {
           user_metadata: { full_name }
         });
       }
+      
+      // Update public_id if not set
+      await supabaseClient
+        .from('profiles')
+        .update({ public_id: public_id })
+        .eq('id', userId)
+        .is('public_id', null);
+    } else if (existingProfile) {
+      // Profile exists with this public_id but no auth user - this shouldn't happen
+      throw new Error(`User ID ${public_id} มีข้อมูลผิดพลาดในระบบ กรุณาติดต่อผู้ดูแล`);
     } else {
       // Create the new user
       console.log('Creating new user');
@@ -107,10 +131,13 @@ Deno.serve(async (req) => {
       userId = newUser.user.id;
       console.log('New user created:', userId);
 
-      // Set requires_password_change for new users
+      // Set requires_password_change and public_id for new users
       await supabaseClient
         .from('profiles')
-        .update({ requires_password_change: true })
+        .update({ 
+          requires_password_change: true,
+          public_id: public_id 
+        })
         .eq('id', userId);
     }
 
@@ -321,6 +348,7 @@ Deno.serve(async (req) => {
         success: true,
         user: {
           id: userId,
+          public_id: public_id,
           email: email,
           full_name,
           role,

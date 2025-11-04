@@ -38,7 +38,10 @@ import { useTenantSwitcher } from "@/hooks/useTenantSwitcher";
 import { CredentialsDialog } from "@/components/admin/CredentialsDialog";
 
 const createUserSchema = z.object({
-  email: z.string().email("กรุณาใส่อีเมลที่ถูกต้อง"),
+  prefix: z.string().min(1, "กรุณาใส่ Prefix").max(10, "Prefix ต้องไม่เกิน 10 ตัวอักษร"),
+  user_number: z.string()
+    .length(6, "ตัวเลขต้องเป็น 6 หลักเท่านั้น")
+    .regex(/^\d{6}$/, "กรุณาใส่ตัวเลข 6 หลักเท่านั้น"),
   password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
   full_name: z.string().min(1, "กรุณาใส่ชื่อ"),
   role: z.string().min(1, "กรุณาเลือกบทบาท"),
@@ -52,6 +55,7 @@ export const CreateUserDialog = () => {
   const [showCredentials, setShowCredentials] = useState(false);
   const [credentials, setCredentials] = useState<{
     email: string;
+    user_id: string;
     display_name: string;
     invitation_code?: string;
     code_id?: string;
@@ -63,7 +67,8 @@ export const CreateUserDialog = () => {
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
-      email: "",
+      prefix: "",
+      user_number: "",
       password: "",
       full_name: "",
       role: "finance",
@@ -142,10 +147,15 @@ export const CreateUserDialog = () => {
         .map(name => allPermissions.find(p => p.name === name)?.id)
         .filter(Boolean) as string[];
 
+      // Generate public_id from prefix and user_number
+      const public_id = `${data.prefix}-${data.user_number}`;
+      
       // Call edge function to create user
       const { data: result, error } = await supabase.functions.invoke("create-admin-user", {
         body: {
-          email: data.email,
+          prefix: data.prefix,
+          user_number: data.user_number,
+          public_id: public_id,
           password: data.password,
           full_name: data.full_name,
           role: data.role,
@@ -170,8 +180,10 @@ export const CreateUserDialog = () => {
       
       // Show credentials dialog if invitation code was generated
       if (result?.invitation_code) {
+        const public_id = `${form.getValues('prefix')}-${form.getValues('user_number')}`;
         setCredentials({
-          email: form.getValues('email'),
+          email: public_id,  // Use public_id as email for display
+          user_id: public_id,
           display_name: form.getValues('full_name'),
           invitation_code: result.invitation_code,
           code_id: result.code_id,
@@ -226,19 +238,45 @@ export const CreateUserDialog = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>อีเมล</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="user@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="prefix"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prefix</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="ACA" 
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="user_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ตัวเลข 6 หลัก</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="112233" 
+                          maxLength={6}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="text-xs text-muted-foreground -mt-1">
+                User ID: {form.watch('prefix') || 'PREFIX'}-{form.watch('user_number') || '000000'}
+              </div>
               <FormField
                 control={form.control}
                 name="password"
