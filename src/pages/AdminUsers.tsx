@@ -337,7 +337,7 @@ const AdminUsers = () => {
           </div>
         }
       >
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 max-w-full overflow-x-hidden">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Members</h1>
@@ -394,7 +394,7 @@ const AdminUsers = () => {
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">กำลังโหลด...</div>
             ) : (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

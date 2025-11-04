@@ -143,9 +143,9 @@ function ShareholderSidebar() {
 export default function ShareholderLayout() {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-primary/[0.02] to-accent/[0.02]">
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-primary/[0.02] to-accent/[0.02] overflow-x-hidden">
         <ShareholderSidebar />
-        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out">
+        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out overflow-x-hidden">
           <div className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4 shadow-sm transition-all duration-300">
             <SidebarTrigger className="hover:bg-primary/10 hover:text-primary transition-all duration-300" />
           </div>

@@ -126,9 +126,9 @@ const PlatformSidebar = () => {
 export function PlatformLayout({ children }: PlatformLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full overflow-x-hidden">
         <PlatformSidebar />
-        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out">
+        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out overflow-x-hidden">
           <div className="sticky top-0 z-10 bg-background border-b border-border p-4 transition-all duration-300">
             <SidebarTrigger className="ml-2" />
           </div>
