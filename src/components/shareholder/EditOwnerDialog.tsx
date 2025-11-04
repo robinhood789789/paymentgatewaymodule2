@@ -46,7 +46,7 @@ export function EditOwnerDialog({ owner, open, onOpenChange, onSuccess }: EditOw
     try {
       setLoading(true);
 
-      // Update tenant name and status
+      // Update tenant status
       const { error: tenantError } = await supabase
         .from("tenants")
         .update({ 
@@ -56,6 +56,14 @@ export function EditOwnerDialog({ owner, open, onOpenChange, onSuccess }: EditOw
         .eq("id", owner.ownerId);
 
       if (tenantError) throw tenantError;
+
+      // Also update shareholder_clients status to keep them in sync
+      const { error: shareholderClientError } = await supabase
+        .from("shareholder_clients")
+        .update({ status: status })
+        .eq("tenant_id", owner.ownerId);
+
+      if (shareholderClientError) throw shareholderClientError;
 
       toast.success("อัปเดทข้อมูลสำเร็จ");
       onSuccess();
