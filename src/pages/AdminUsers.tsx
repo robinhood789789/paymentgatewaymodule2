@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX, Edit, Code, Edit2 } from "lucide-react";
+import { Search, Shield, User, ShieldCheck, Eye, Trash2, UserX, Edit, Code, Edit2, Copy } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -461,7 +461,24 @@ const AdminUsers = () => {
                             {user.full_name || "ไม่ระบุชื่อ"}
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{user.public_id || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs">{user.public_id || "-"}</span>
+                            {user.public_id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(user.public_id);
+                                  toast.success("คัดลอก Public ID แล้ว");
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <PermissionGate 
                             allowOwner={true}
