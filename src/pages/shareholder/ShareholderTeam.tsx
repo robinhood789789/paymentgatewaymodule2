@@ -164,17 +164,17 @@ export default function ShareholderTeam() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      const response = await supabase.functions.invoke('delete-user', {
+      const response = await supabase.functions.invoke('shareholder-delete-owner', {
         headers: { Authorization: `Bearer ${token}` },
-        body: { user_id: ownerToDelete.ownerId },
+        body: { tenant_id: ownerToDelete.ownerId },
       });
 
       if (response.error) throw new Error(response.error.message || 'Failed to delete owner');
       if (!response.data.success) throw new Error(response.data.error || 'Failed to delete owner');
 
       toast({
-        title: "ลบ Owner สำเร็จ",
-        description: `${ownerToDelete.businessName} ถูกลบออกจากระบบแล้ว`,
+        title: "ลบ Owner และบัญชีสำเร็จ",
+        description: `${ownerToDelete.businessName} และบัญชีทั้งหมดถูกลบออกจากระบบแล้ว`,
       });
 
       setDeleteDialogOpen(false);
