@@ -41,24 +41,27 @@ serve(async (req) => {
 
     console.log('🗑️ Delete owner request for tenant:', tenant_id);
 
-    // Get the shareholder profile
-    const { data: shareholderProfile, error: shareholderError } = await supabase
-      .from('profiles')
+    // Get the shareholder record by user_id
+    const { data: shareholderRecord, error: shareholderError } = await supabase
+      .from('shareholders')
       .select('id')
-      .eq('id', requestingUser.id)
+      .eq('user_id', requestingUser.id)
       .single();
 
-    if (shareholderError || !shareholderProfile) {
-      console.error('Shareholder profile error:', shareholderError);
+    if (shareholderError || !shareholderRecord) {
+      console.error('Shareholder lookup error:', shareholderError);
       throw new Error('Not a valid shareholder');
     }
+
+    const shareholderId = shareholderRecord.id;
+    console.log('👤 Shareholder ID:', shareholderId);
 
     // Check if this tenant is linked to this shareholder
     const { data: clientLink, error: linkError } = await supabase
       .from('shareholder_clients')
       .select('id, shareholder_id')
       .eq('tenant_id', tenant_id)
-      .eq('shareholder_id', requestingUser.id)
+      .eq('shareholder_id', shareholderId)
       .single();
 
     if (linkError || !clientLink) {
@@ -100,7 +103,7 @@ serve(async (req) => {
       .from('shareholder_clients')
       .delete()
       .eq('tenant_id', tenant_id)
-      .eq('shareholder_id', requestingUser.id);
+      .eq('shareholder_id', shareholderId);
 
     if (deleteClientLinkError) {
       console.error('Delete client link error:', deleteClientLinkError);
