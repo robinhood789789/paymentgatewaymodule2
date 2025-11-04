@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EditOwnerDialog } from "@/components/shareholder/EditOwnerDialog";
+import { useShareholder } from "@/hooks/useShareholder";
 
 type Owner = {
   ownerId: string;
@@ -25,6 +26,7 @@ type Owner = {
 
 export default function ShareholderTeam() {
   const { toast } = useToast();
+  const { shareholder } = useShareholder();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -234,6 +236,20 @@ export default function ShareholderTeam() {
           <p className="text-muted-foreground mt-2">
             จัดการบัญชี Owner ในทีมของคุณ
           </p>
+          {shareholder && (
+            <div className="flex flex-col gap-1 mt-3 text-sm">
+              <div className="text-muted-foreground">
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                  Shareholder ID: {shareholder.id}
+                </span>
+              </div>
+              <div className="text-muted-foreground">
+                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">
+                  User ID: {shareholder.user_id}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
