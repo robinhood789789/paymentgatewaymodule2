@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Plus, Loader2, Copy, Eye, EyeOff, Trash2, Search, Edit, UserSearch } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OwnerDetailDrawer } from "@/components/shareholder/OwnerDetailDrawer";
+import { EditOwnerDialog } from "@/components/shareholder/EditOwnerDialog";
 
 type Owner = {
   ownerId: string;
@@ -17,6 +20,8 @@ type Owner = {
   publicId: string;
   createdAt: string;
   status: string;
+  email?: string;
+  mrr?: number;
 };
 
 export default function ShareholderTeam() {
@@ -31,6 +36,12 @@ export default function ShareholderTeam() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState<Owner | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
+  const [ownerToEdit, setOwnerToEdit] = useState<Owner | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -191,6 +202,27 @@ export default function ShareholderTeam() {
       setDeleting(false);
     }
   };
+
+  const handleViewDetails = (owner: Owner) => {
+    setSelectedOwnerId(owner.ownerId);
+    setDetailDrawerOpen(true);
+  };
+
+  const handleEditClick = (owner: Owner) => {
+    setOwnerToEdit(owner);
+    setEditDialogOpen(true);
+  };
+
+  const filteredOwners = owners.filter((owner) => {
+    const matchesSearch =
+      owner.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      owner.publicId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (owner.email && owner.email.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesStatus = statusFilter === "all" || owner.status.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -386,13 +418,43 @@ export default function ShareholderTeam() {
         </Dialog>
       </div>
 
+      {/* Search and Filter */}
+      <Card className="shadow-lg hover:shadow-xl transition-all">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="ค้นหาด้วยชื่อธุรกิจ, Public ID หรืออีเมล..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="กรองตามสถานะ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="trial">Trial</SelectItem>
+                <SelectItem value="churned">Churned</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <span>📋 Owner ทั้งหมด</span>
-            <Badge variant="secondary" className="text-sm">
-              {owners.length} คน
-            </Badge>
+          <CardTitle className="text-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span>📋 Owner ทั้งหมด</span>
+              <Badge variant="secondary" className="text-sm">
+                {filteredOwners.length} / {owners.length} คน
+              </Badge>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -402,44 +464,78 @@ export default function ShareholderTeam() {
                 <tr className="border-b">
                   <th className="text-left p-3">Public ID</th>
                   <th className="text-left p-3">ธุรกิจ</th>
+                  <th className="text-left p-3">อีเมล</th>
                   <th className="text-left p-3">วันที่สร้าง</th>
                   <th className="text-left p-3">สถานะ</th>
-                  <th className="text-left p-3">จัดการ</th>
+                  <th className="text-center p-3">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
-                {owners.length === 0 ? (
+                {filteredOwners.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                      ยังไม่มี Owner user
+                    <td colSpan={6} className="text-center py-8 text-muted-foreground">
+                      {searchQuery || statusFilter !== "all"
+                        ? "ไม่พบ Owner ที่ตรงกับเงื่อนไขการค้นหา"
+                        : "ยังไม่มี Owner user"}
                     </td>
                   </tr>
                 ) : (
-                  owners.map((owner) => (
-                    <tr key={owner.ownerId} className="border-b">
+                  filteredOwners.map((owner) => (
+                    <tr key={owner.ownerId} className="border-b hover:bg-muted/50 transition-colors">
                       <td className="p-3 font-mono font-semibold text-primary">{owner.publicId}</td>
                       <td className="p-3 font-medium">{owner.businessName}</td>
                       <td className="p-3 text-sm text-muted-foreground">
-                        {new Date(owner.createdAt).toLocaleDateString('th-TH')}
+                        {owner.email || "-"}
+                      </td>
+                      <td className="p-3 text-sm text-muted-foreground">
+                        {new Date(owner.createdAt).toLocaleDateString("th-TH", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </td>
                       <td className="p-3">
-                        <Badge 
-                          variant={owner.status === 'Active' ? 'default' : 'secondary'}
-                          className={owner.status === 'Active' ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0" : ""}
+                        <Badge
+                          variant={owner.status === "Active" ? "default" : "secondary"}
+                          className={
+                            owner.status === "Active"
+                              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0"
+                              : ""
+                          }
                         >
                           {owner.status}
                         </Badge>
                       </td>
                       <td className="p-3">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0"
-                          onClick={() => handleDeleteClick(owner)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          ลบ
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-400 transition-all"
+                            onClick={() => handleViewDetails(owner)}
+                          >
+                            <UserSearch className="h-4 w-4 mr-1" />
+                            ดูรายละเอียด
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-300 hover:text-amber-700 dark:hover:text-amber-400 transition-all"
+                            onClick={() => handleEditClick(owner)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            แก้ไข
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0"
+                            onClick={() => handleDeleteClick(owner)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            ลบ
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -479,6 +575,21 @@ export default function ShareholderTeam() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail Drawer */}
+      <OwnerDetailDrawer
+        tenantId={selectedOwnerId}
+        open={detailDrawerOpen}
+        onOpenChange={setDetailDrawerOpen}
+      />
+
+      {/* Edit Dialog */}
+      <EditOwnerDialog
+        owner={ownerToEdit}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSuccess={fetchOwners}
+      />
     </div>
   );
 }
