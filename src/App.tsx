@@ -59,6 +59,7 @@ import Reconciliation from "./pages/Reconciliation";
 import Disputes from "./pages/Disputes";
 import KYCVerification from "./pages/KYCVerification";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
+import ResetSuperAdminPassword from "./pages/ResetSuperAdminPassword";
 import TwoFactorChecklist from "./pages/TwoFactorChecklist";
 import Approvals from "./pages/Approvals";
 import PlatformAudit from "./pages/admin/PlatformAudit";
@@ -100,6 +101,7 @@ function AppContent() {
       <Route path="/auth/password-change" element={<PasswordChange />} />
       <Route path="/auth/claim-code" element={<ClaimCode />} />
       <Route path="/auth/create-super-admin" element={<CreateSuperAdmin />} />
+      <Route path="/auth/reset-super-admin" element={<ResetSuperAdminPassword />} />
       <Route path="/first-login/2fa-setup" element={<FirstLogin2FASetup />} />
       <Route path="/first-login/change-password" element={<FirstLoginPasswordChange />} />
       <Route path="/auth" element={<Navigate to="/auth/sign-in" replace />} />

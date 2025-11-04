@@ -60,6 +60,9 @@ verify_jwt = false
 [functions.create-super-admin]
 verify_jwt = false
 
+[functions.reset-super-admin-password]
+verify_jwt = false
+
 [functions.create-owner-user]
 verify_jwt = true
 
