@@ -423,7 +423,7 @@ const AdminUsers = () => {
                         </TableHead>
                       </PermissionGate>
                       <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>User ID</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>2FA Status</TableHead>
@@ -461,7 +461,7 @@ const AdminUsers = () => {
                             {user.full_name || "ไม่ระบุชื่อ"}
                           </div>
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell className="font-mono text-xs">{user.id}</TableCell>
                         <TableCell>
                           <PermissionGate 
                             allowOwner={true}
