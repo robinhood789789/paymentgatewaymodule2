@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -13,6 +14,7 @@ interface EditOwnerDialogProps {
     businessName: string;
     publicId: string;
     email?: string;
+    status?: string;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -22,12 +24,14 @@ interface EditOwnerDialogProps {
 export function EditOwnerDialog({ owner, open, onOpenChange, onSuccess }: EditOwnerDialogProps) {
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("active");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (owner) {
       setBusinessName(owner.businessName || "");
       setEmail(owner.email || "");
+      setStatus(owner.status?.toLowerCase() || "active");
     }
   }, [owner]);
 
@@ -42,10 +46,13 @@ export function EditOwnerDialog({ owner, open, onOpenChange, onSuccess }: EditOw
     try {
       setLoading(true);
 
-      // Update tenant name only (email should be handled separately through proper channels)
+      // Update tenant name and status
       const { error: tenantError } = await supabase
         .from("tenants")
-        .update({ name: businessName })
+        .update({ 
+          name: businessName,
+          status: status 
+        })
         .eq("id", owner.ownerId);
 
       if (tenantError) throw tenantError;
@@ -87,6 +94,32 @@ export function EditOwnerDialog({ owner, open, onOpenChange, onSuccess }: EditOw
               onChange={(e) => setBusinessName(e.target.value)}
               placeholder="บริษัท ABC จำกัด"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>สถานะ *</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    Active (ใช้งาน)
+                  </div>
+                </SelectItem>
+                <SelectItem value="inactive">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-gray-500" />
+                    Inactive (ไม่ใช้งาน)
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              เปลี่ยนสถานะการใช้งานของบัญชี Owner
+            </p>
           </div>
 
           <div className="space-y-2">
