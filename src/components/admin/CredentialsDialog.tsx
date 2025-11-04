@@ -45,11 +45,11 @@ export function CredentialsDialog({ open, onOpenChange, credentials }: Credentia
 
   const handleDownload = () => {
     const content = `
-บัญชีพาร์ทเนอร์ (Shareholder Man)
+บัญชีผู้ใช้
 =====================================
 
 ชื่อแสดงผล: ${credentials.display_name}
-อีเมล (User ID): ${credentials.email}
+User ID: ${credentials.email}
 
 ${credentials.invitation_code ? `รหัสเชิญ (Invitation Code): ${credentials.invitation_code}` : ''}
 ${credentials.temp_password ? `รหัสผ่านชั่วคราว: ${credentials.temp_password}` : ''}
@@ -58,9 +58,9 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
 
 ⚠️ คำเตือนด้านความปลอดภัย:
 - ${credentials.invitation_code ? 'ใช้รหัสเชิญที่ /auth/claim-code เพื่อตั้งรหัสผ่านใหม่' : 'รหัสผ่านชั่วคราวนี้ใช้ได้เพียงครั้งเดียว'}
-- ต้องเปลี่ยนรหัสผ่านและเปิด MFA เมื่อเข้าสู่ระบบครั้งแรก
+- ต้องเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งแรก
 - ส่งข้อมูลนี้ผ่านช่องทางที่ปลอดภัยเท่านั้น
-- ${credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'ลิงก์เชิญมีอายุ 72 ชั่วโมง'}
+- ${credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'รหัสผ่านชั่วคราวนี้ต้องเปลี่ยนทันทีเมื่อเข้าสู่ระบบ'}
 
 สร้างเมื่อ: ${new Date().toLocaleString('th-TH')}
     `.trim();
@@ -69,7 +69,7 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `partner-credentials-${credentials.email}-${Date.now()}.txt`;
+    a.download = `user-credentials-${credentials.email}-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("ดาวน์โหลดข้อมูลแล้ว");
@@ -81,10 +81,10 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-success" />
-            สร้างบัญชีพาร์ทเนอร์สำเร็จ
+            สร้างบัญชีผู้ใช้สำเร็จ
           </DialogTitle>
           <DialogDescription>
-            ข้อมูลต่อไปนี้จะแสดงครั้งเดียว - กรุณาบันทึกข้อมูลอย่างปลอดภัย
+            ข้อมูลต่อไปนี้จะแสดงครั้งเดียว - กรุณาบันทึกและส่งต่อให้ผู้ใช้อย่างปลอดภัย
           </DialogDescription>
         </DialogHeader>
 
@@ -97,9 +97,9 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
                 <p className="font-medium text-sm">คำเตือนด้านความปลอดภัย</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• ข้อมูลนี้จะแสดงครั้งเดียวเท่านั้น</li>
-                  <li>• ส่งข้อมูลให้พาร์ทเนอร์ผ่านช่องทางที่ปลอดภัย</li>
-                  <li>• พาร์ทเนอร์ต้องเปลี่ยนรหัสผ่านและเปิด MFA เมื่อเข้าสู่ระบบครั้งแรก</li>
-                  <li>• {credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'ลิงก์เชิญมีอายุ 72 ชั่วโมง'}</li>
+                  <li>• ส่งข้อมูลให้ผู้ใช้ผ่านช่องทางที่ปลอดภัย</li>
+                  <li>• ผู้ใช้ต้องเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งแรก</li>
+                  <li>• {credentials.invitation_code ? 'รหัสเชิญมีอายุ 72 ชั่วโมง' : 'รหัสผ่านชั่วคราวนี้ใช้ได้เพียงครั้งเดียว'}</li>
                 </ul>
               </div>
             </div>
@@ -132,11 +132,11 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
               </>
             )}
 
-            {/* Temp Password (Fallback) */}
+            {/* Temp Password */}
             {credentials.temp_password && (
               <>
                 <div className="space-y-2">
-                  <Label>รหัสผ่านชั่วคราว (Fallback)</Label>
+                  <Label>รหัสผ่านชั่วคราว</Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Input
@@ -164,7 +164,7 @@ ${credentials.invite_link ? `ลิงก์เชิญเข้าสู่ร
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    16 ตัวอักษร - ตัวพิมพ์เล็ก/ใหญ่/ตัวเลข/สัญลักษณ์
+                    ผู้ใช้ต้องเปลี่ยนรหัสผ่านนี้เมื่อเข้าสู่ระบบครั้งแรก
                   </p>
                 </div>
                 <Separator />

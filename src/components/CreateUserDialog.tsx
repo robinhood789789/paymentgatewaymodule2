@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserPlus } from "lucide-react";
+import { UserPlus, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,10 +49,23 @@ const createUserSchema = z.object({
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 
+// Generate random password
+const generateRandomPassword = () => {
+  const length = 12;
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
+
 export const CreateUserDialog = () => {
   const [open, setOpen] = useState(false);
   const [selectedPermissionGroups, setSelectedPermissionGroups] = useState<string[]>([]);
   const [showCredentials, setShowCredentials] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState("");
   const [credentials, setCredentials] = useState<{
     email: string;
     user_id: string;
@@ -60,6 +73,7 @@ export const CreateUserDialog = () => {
     invitation_code?: string;
     code_id?: string;
     code_expires_at?: string;
+    temp_password?: string;
   } | null>(null);
   const queryClient = useQueryClient();
   const { activeTenantId } = useTenantSwitcher();
@@ -178,23 +192,23 @@ export const CreateUserDialog = () => {
       const message = result?.message || "สร้างบัญชีผู้ใช้สำเร็จ!";
       toast.success(message);
       
-      // Show credentials dialog if invitation code was generated
-      if (result?.invitation_code) {
-        const public_id = `${form.getValues('prefix')}-${form.getValues('user_number')}`;
-        setCredentials({
-          email: public_id,  // Use public_id as email for display
-          user_id: public_id,
-          display_name: form.getValues('full_name'),
-          invitation_code: result.invitation_code,
-          code_id: result.code_id,
-          code_expires_at: result.code_expires_at,
-        });
-        setShowCredentials(true);
-      }
+      // Show credentials dialog with temporary password
+      const public_id = `${form.getValues('prefix')}-${form.getValues('user_number')}`;
+      setCredentials({
+        email: public_id,  // Use public_id as email for display
+        user_id: public_id,
+        display_name: form.getValues('full_name'),
+        invitation_code: result?.invitation_code,
+        code_id: result?.code_id,
+        code_expires_at: result?.code_expires_at,
+        temp_password: temporaryPassword,
+      });
+      setShowCredentials(true);
       
       setOpen(false);
       form.reset();
       setSelectedPermissionGroups([]);
+      setTemporaryPassword("");
     },
     onError: (error: any) => {
       toast.error("เกิดข้อผิดพลาด", {
@@ -282,11 +296,53 @@ export const CreateUserDialog = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>รหัสผ่าน</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
+                    <FormLabel>รหัสผ่านชั่วคราว</FormLabel>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <FormControl>
+                          <Input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="••••••••" 
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setTemporaryPassword(e.target.value);
+                            }}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const newPassword = generateRandomPassword();
+                          form.setValue("password", newPassword);
+                          setTemporaryPassword(newPassword);
+                          toast.success("สร้างรหัสผ่านสุ่มแล้ว");
+                        }}
+                        title="สร้างรหัสผ่านสุ่ม"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      คลิกปุ่มรีเฟรชเพื่อสร้างรหัสผ่านสุ่ม หรือกรอกรหัสผ่านเอง
+                    </p>
                   </FormItem>
                 )}
               />
