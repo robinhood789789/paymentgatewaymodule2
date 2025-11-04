@@ -28,7 +28,7 @@ export function EditMemberDialog({ open, onOpenChange, member }: EditMemberDialo
   const [selectedRole, setSelectedRole] = useState<string>(member?.role || "");
   const queryClient = useQueryClient();
 
-  // Fetch available roles
+  // Fetch available roles (all system roles except owner)
   const { data: roles = [] } = useQuery({
     queryKey: ["roles", member?.tenant_id],
     queryFn: async () => {
@@ -37,7 +37,8 @@ export function EditMemberDialog({ open, onOpenChange, member }: EditMemberDialo
         .from("roles")
         .select("id, name, description")
         .eq("tenant_id", member.tenant_id)
-        .in("name", ["manager", "finance", "developer", "viewer"])
+        .eq("is_system", true)
+        .neq("name", "owner")
         .order("name");
       
       if (error) throw error;
