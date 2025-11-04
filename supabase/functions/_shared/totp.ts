@@ -53,18 +53,23 @@ export function getTOTPQRCodeUrl(secret: string, email: string, issuer: string =
 }
 
 export async function verifyTOTP(secret: string, token: string): Promise<boolean> {
-  const window = 1; // Allow 1 time step before/after
+  const window = 2; // Allow 2 time steps before/after (±60 seconds) for better compatibility
   const timeStep = 30;
   const currentTime = Math.floor(Date.now() / 1000 / timeStep);
+
+  console.log(`[TOTP Verify] Current time: ${currentTime}, Token: ${token}`);
 
   for (let i = -window; i <= window; i++) {
     const time = currentTime + i;
     const hmac = await generateHOTP(secret, time);
+    console.log(`[TOTP Verify] Time offset ${i}: Generated ${hmac}`);
     if (hmac === token) {
+      console.log(`[TOTP Verify] Match found at offset ${i}`);
       return true;
     }
   }
 
+  console.log(`[TOTP Verify] No match found for token ${token}`);
   return false;
 }
 

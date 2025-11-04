@@ -93,9 +93,12 @@ serve(async (req) => {
       throw new Error('TOTP secret not found. Please enroll first.');
     }
 
+    console.log(`[MFA Verify] Secret length: ${profile.totp_secret.length}, First 4 chars: ${profile.totp_secret.substring(0, 4)}...`);
+
     // Verify the TOTP code
     const isValid = await verifyTOTP(profile.totp_secret, code);
     if (!isValid) {
+      console.log(`[MFA Verify] Verification failed for ${user.email}`);
       // Log failed verification attempt
       await supabase
         .from('audit_logs')
