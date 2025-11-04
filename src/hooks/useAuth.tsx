@@ -15,6 +15,7 @@ interface AuthContextType {
   userRole: string | null;
   tenantId: string | null;
   tenantName: string | null;
+  publicId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUserRole(null);
           setTenantId(null);
           setTenantName(null);
+          setPublicId(null);
           setLoading(false);
         }
       }
@@ -72,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if user is super admin first
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("is_super_admin, email, full_name")
+        .select("is_super_admin, email, full_name, public_id")
         .eq("id", userId)
         .maybeSingle();
 
@@ -80,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const isSuperAdminUser = profileData?.is_super_admin || false;
       setIsSuperAdmin(isSuperAdminUser);
+      setPublicId(profileData?.public_id || null);
 
       // Get active tenant from localStorage (user-scoped if present)
       const getKey = (uid?: string) => (uid ? `active_tenant_id:${uid}` : "active_tenant_id");
@@ -386,6 +390,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserRole(null);
       setTenantId(null);
       setTenantName(null);
+      setPublicId(null);
     } finally {
       // เด้งไปหน้า sign-in ทันทีแบบ force reload
       window.location.replace("/auth/sign-in");
@@ -415,6 +420,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userRole,
         tenantId,
         tenantName,
+        publicId,
       }}
     >
       {children}

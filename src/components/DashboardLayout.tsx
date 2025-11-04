@@ -60,7 +60,7 @@ interface DashboardLayoutProps {
 
 const DashboardSidebar = () => {
   const { state } = useSidebar();
-  const { signOut, isSuperAdmin, user } = useAuth();
+  const { signOut, isSuperAdmin, user, publicId } = useAuth();
   const { t } = useI18n();
   const isCollapsed = state === "collapsed";
   const { hasPermission } = usePermissions();
@@ -214,7 +214,7 @@ const DashboardSidebar = () => {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-sm">SaaS Platform</h2>
                 <p className="text-xs text-muted-foreground/70 font-mono">
-                  ID: {(user as any)?.public_id || "-"}
+                  ID: {publicId || "-"}
                 </p>
               </div>
             )}

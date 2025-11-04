@@ -37,7 +37,7 @@ interface PlatformLayoutProps {
 
 const PlatformSidebar = () => {
   const { state } = useSidebar();
-  const { signOut, user } = useAuth();
+  const { signOut, user, publicId } = useAuth();
   const navigate = useNavigate();
   const isCollapsed = state === "collapsed";
 
@@ -77,7 +77,7 @@ const PlatformSidebar = () => {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-sm">Platform Admin</h2>
                 <p className="text-xs text-muted-foreground/70 font-mono">
-                  ID: {(user as any)?.public_id || "-"}
+                  ID: {publicId || "-"}
                 </p>
               </div>
             )}

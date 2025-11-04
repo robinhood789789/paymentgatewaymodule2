@@ -37,7 +37,7 @@ import { toast } from "sonner";
 import { useShareholder } from "@/hooks/useShareholder";
 
 const Dashboard = () => {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, publicId } = useAuth();
   const { activeTenantId } = useTenantSwitcher();
   const roleVisibility = useRoleVisibility();
   const mfaChallenge = use2FAChallenge();
@@ -274,7 +274,7 @@ const Dashboard = () => {
                 </Badge>
               </h1>
               <p className="text-muted-foreground mt-1">
-                ยินดีต้อนรับ <span className="font-mono">{(user as any)?.public_id || "-"}</span>
+                ยินดีต้อนรับ <span className="font-mono">{publicId || "-"}</span>
               </p>
             </div>
             <div className="flex gap-2 flex-wrap">
