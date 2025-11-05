@@ -2710,7 +2710,100 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_tx_daily_by_shareholder: {
+        Row: {
+          deposit_net: number | null
+          failed_count: number | null
+          net_in: number | null
+          net_out: number | null
+          pending_count: number | null
+          shareholder_id: string | null
+          success_count: number | null
+          transfer_net: number | null
+          tx_count: number | null
+          tx_date: string | null
+          withdrawal_net: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_tx_daily_by_tenant: {
+        Row: {
+          deposit_net: number | null
+          failed_count: number | null
+          net_in: number | null
+          net_out: number | null
+          pending_count: number | null
+          success_count: number | null
+          tenant_id: string | null
+          transfer_net: number | null
+          tx_count: number | null
+          tx_date: string | null
+          withdrawal_net: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_tx_monthly_by_shareholder: {
+        Row: {
+          deposit_net: number | null
+          net_in: number | null
+          net_out: number | null
+          shareholder_id: string | null
+          success_count: number | null
+          total_fees: number | null
+          transfer_net: number | null
+          tx_count: number | null
+          tx_month: string | null
+          withdrawal_net: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_tx_monthly_by_tenant: {
+        Row: {
+          deposit_net: number | null
+          net_in: number | null
+          net_out: number | null
+          success_count: number | null
+          tenant_id: string | null
+          total_fees: number | null
+          transfer_net: number | null
+          tx_count: number | null
+          tx_month: string | null
+          withdrawal_net: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       cleanup_expired_codes: { Args: never; Returns: undefined }
