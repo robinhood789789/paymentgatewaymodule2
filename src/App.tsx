@@ -84,6 +84,7 @@ import PlatformPartnerDetail from "./pages/admin/PlatformPartnerDetail";
 import PlatformPartnerPayouts from "./pages/admin/PlatformPartnerPayouts";
 import PlatformPartnerReports from "./pages/admin/PlatformPartnerReports";
 import PlatformPartnerSettings from "./pages/admin/PlatformPartnerSettings";
+import TransactionDashboard from "./pages/TransactionDashboard";
 
 const queryClient = new QueryClient();
 
@@ -255,6 +256,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <MDR />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transactions-dashboard"
+        element={
+          <ProtectedRoute>
+            <TransactionDashboard />
           </ProtectedRoute>
         }
       />
