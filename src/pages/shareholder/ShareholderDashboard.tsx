@@ -83,16 +83,16 @@ async function fetchCommissionSeries(range: "3M" | "6M" | "12M"): Promise<Commis
 // UI Components
 function StatCard({ icon: Icon, title, value, help, gradient }: { icon: any; title: string; value: string; help?: string; gradient: string }) {
   return (
-    <Card className={`border-l-4 ${gradient} shadow-lg hover:shadow-xl transition-all`}>
+    <Card className={`border-l-4 ${gradient} shadow-glow hover:shadow-xl transition-all`}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium">{title}</div>
-          <div className="p-2 rounded-full bg-background/50">
-            <Icon className="h-5 w-5" />
+          <div className="text-sm font-medium text-white">{title}</div>
+          <div className="p-2 rounded-full bg-white/20">
+            <Icon className="h-5 w-5 text-white" />
           </div>
         </div>
-        <div className="text-3xl font-bold">{value}</div>
-        {help && <div className="text-xs text-muted-foreground mt-2">{help}</div>}
+        <div className="text-3xl font-bold text-white">{value}</div>
+        {help && <div className="text-xs text-white/80 mt-2">{help}</div>}
       </CardContent>
     </Card>
   );
@@ -286,26 +286,26 @@ export default function ShareholderDashboard() {
           icon={Users} 
           title="Owner ทั้งหมด" 
           value={summary ? `${summary.totalOwners}` : "-"}
-          gradient="border-l-blue-500 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background"
+          gradient="border-l-primary bg-gradient-users"
         />
         <StatCard 
           icon={CheckCircle2} 
           title="Active Owner" 
           value={summary ? `${summary.activeOwners}` : "-"} 
           help={`อัตราอนุมัติ ~${summary?.approvalRate ?? "-"}%`}
-          gradient="border-l-green-500 bg-gradient-to-br from-green-50 to-white dark:from-green-950/20 dark:to-background"
+          gradient="border-l-success bg-gradient-success"
         />
         <StatCard 
           icon={Wallet} 
           title="รายได้จากคอมมิชชัน/เดือน" 
           value={summary ? `${summary.monthlyRefRevenue.toLocaleString()} THB` : "-"}
-          gradient="border-l-purple-500 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background"
+          gradient="border-l-accent bg-gradient-withdrawal"
         />
         <StatCard 
           icon={Percent} 
           title="คอมมิชชันรอจ่าย" 
           value={summary ? `${summary.pendingCommission.toLocaleString()} THB` : "-"}
-          gradient="border-l-amber-500 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-background"
+          gradient="border-l-warning bg-gradient-balance"
         />
       </div>
 
