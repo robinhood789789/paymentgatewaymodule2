@@ -2307,6 +2307,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string | null
+          currency: string
           id: string
           tenant_id: string
           updated_at: string | null
@@ -2314,6 +2315,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string | null
+          currency?: string
           id?: string
           tenant_id: string
           updated_at?: string | null
@@ -2321,6 +2323,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string | null
+          currency?: string
           id?: string
           tenant_id?: string
           updated_at?: string | null
@@ -2420,6 +2423,111 @@ export type Database = {
             columns: ["referred_by_shareholder_id"]
             isOneToOne: false
             referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          counterparty: string | null
+          created_at: string
+          created_by_id: string | null
+          currency: string
+          direction: Database["public"]["Enums"]["tx_direction"]
+          fee: number
+          id: string
+          metadata: Json | null
+          method: Database["public"]["Enums"]["payment_method"]
+          net_amount: number
+          note: string | null
+          owner_tenant_id: string | null
+          owner_user_id: string | null
+          processed_at: string | null
+          reference: string | null
+          shareholder_id: string | null
+          status: Database["public"]["Enums"]["tx_status"]
+          tenant_id: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+        }
+        Insert: {
+          amount: number
+          counterparty?: string | null
+          created_at?: string
+          created_by_id?: string | null
+          currency?: string
+          direction: Database["public"]["Enums"]["tx_direction"]
+          fee?: number
+          id?: string
+          metadata?: Json | null
+          method: Database["public"]["Enums"]["payment_method"]
+          net_amount: number
+          note?: string | null
+          owner_tenant_id?: string | null
+          owner_user_id?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          shareholder_id?: string | null
+          status?: Database["public"]["Enums"]["tx_status"]
+          tenant_id?: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+        }
+        Update: {
+          amount?: number
+          counterparty?: string | null
+          created_at?: string
+          created_by_id?: string | null
+          currency?: string
+          direction?: Database["public"]["Enums"]["tx_direction"]
+          fee?: number
+          id?: string
+          metadata?: Json | null
+          method?: Database["public"]["Enums"]["payment_method"]
+          net_amount?: number
+          note?: string | null
+          owner_tenant_id?: string | null
+          owner_user_id?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          shareholder_id?: string | null
+          status?: Database["public"]["Enums"]["tx_status"]
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["tx_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_created_by_id_fkey"
+            columns: ["created_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_owner_tenant_id_fkey"
+            columns: ["owner_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2644,6 +2752,10 @@ export type Database = {
         | "approved"
         | "rejected"
         | "expired"
+      payment_method: "BANK" | "QR" | "WECHAT" | "ALIPAY" | "CASH"
+      tx_direction: "IN" | "OUT"
+      tx_status: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED" | "CANCELED"
+      tx_type: "DEPOSIT" | "WITHDRAWAL" | "TRANSFER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2788,6 +2900,10 @@ export const Constants = {
         "rejected",
         "expired",
       ],
+      payment_method: ["BANK", "QR", "WECHAT", "ALIPAY", "CASH"],
+      tx_direction: ["IN", "OUT"],
+      tx_status: ["PENDING", "PROCESSING", "SUCCESS", "FAILED", "CANCELED"],
+      tx_type: ["DEPOSIT", "WITHDRAWAL", "TRANSFER"],
     },
   },
 } as const
