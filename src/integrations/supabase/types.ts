@@ -2735,6 +2735,24 @@ export type Database = {
         Args: { _endpoint: string; _ip: unknown; _prefix: string }
         Returns: Json
       }
+      wallet_apply_delta: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_direction: Database["public"]["Enums"]["tx_direction"]
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
+      wallet_reverse_delta: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_direction: Database["public"]["Enums"]["tx_direction"]
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       api_key_type: "internal" | "external"
