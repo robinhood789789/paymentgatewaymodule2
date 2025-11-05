@@ -147,49 +147,57 @@ export default function SuperAdminDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-primary bg-gradient-primary shadow-glow hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-primary-foreground">Total Tenants</CardTitle>
+            <div className="p-2 rounded-full bg-white/20">
+              <Building2 className="h-4 w-4 text-primary-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalTenants || 0}</div>
-            <p className="text-xs text-muted-foreground">Active merchants</p>
+            <div className="text-3xl font-bold text-primary-foreground">{stats?.totalTenants || 0}</div>
+            <p className="text-xs text-primary-foreground/80">Active merchants</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-secondary bg-gradient-users shadow-glow hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Total Users</CardTitle>
+            <div className="p-2 rounded-full bg-white/20">
+              <Users className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">Platform users</p>
+            <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
+            <p className="text-xs text-white/80">Platform users</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-accent bg-gradient-activity shadow-glow hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-white">Total Payments</CardTitle>
+            <div className="p-2 rounded-full bg-white/20">
+              <Activity className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPayments || 0}</div>
-            <p className="text-xs text-muted-foreground">All time transactions</p>
+            <div className="text-3xl font-bold text-white">{stats?.totalPayments || 0}</div>
+            <p className="text-xs text-white/80">All time transactions</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-success bg-gradient-success shadow-glow-success hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-success-foreground">Total Revenue</CardTitle>
+            <div className="p-2 rounded-full bg-white/20">
+              <TrendingUp className="h-4 w-4 text-success-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold text-success-foreground">
               ฿{((stats?.totalRevenue || 0) / 100).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Platform revenue</p>
+            <p className="text-xs text-success-foreground/80">Platform revenue</p>
           </CardContent>
         </Card>
       </div>
@@ -197,53 +205,61 @@ export default function SuperAdminDashboard() {
       {/* Commission Summary */}
       {commissions && (
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className="border-l-4 border-l-primary bg-gradient-info shadow-glow-info hover:shadow-lg transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">ยอดฐาน (Base)</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-white">ยอดฐาน (Base)</CardTitle>
+              <div className="p-2 rounded-full bg-white/20">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-white">
                 ฿{commissions.summary.totalBase.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">จากธุรกรรมทั้งหมด</p>
+              <p className="text-xs text-white/80">จากธุรกรรมทั้งหมด</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-warning bg-gradient-balance shadow-glow-warning hover:shadow-lg transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Commission ให้ Shareholders</CardTitle>
-              <Percent className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-warning-foreground">Commission ให้ Shareholders</CardTitle>
+              <div className="p-2 rounded-full bg-white/20">
+                <Percent className="h-4 w-4 text-warning-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
+              <div className="text-3xl font-bold text-warning-foreground">
                 ฿{commissions.summary.totalCommission.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">อัตราเฉลี่ย {commissions.summary.avgRate}%</p>
+              <p className="text-xs text-warning-foreground/80">อัตราเฉลี่ย {commissions.summary.avgRate}%</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-success bg-gradient-success shadow-glow-success hover:shadow-lg transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">สุทธิแพลตฟอร์ม</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-success-foreground">สุทธิแพลตฟอร์ม</CardTitle>
+              <div className="p-2 rounded-full bg-white/20">
+                <TrendingUp className="h-4 w-4 text-success-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-success-foreground">
                 ฿{commissions.summary.netToPlatform.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">หลังหัก commission</p>
+              <p className="text-xs text-success-foreground/80">หลังหัก commission</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-accent bg-gradient-withdrawal shadow-glow hover:shadow-lg transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">จำนวน Events</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-white">จำนวน Events</CardTitle>
+              <div className="p-2 rounded-full bg-white/20">
+                <Activity className="h-4 w-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{commissions.events.length}</div>
-              <p className="text-xs text-muted-foreground">commission events</p>
+              <div className="text-3xl font-bold text-white">{commissions.events.length}</div>
+              <p className="text-xs text-white/80">commission events</p>
             </CardContent>
           </Card>
         </div>

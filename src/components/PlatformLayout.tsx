@@ -68,15 +68,15 @@ const PlatformSidebar = () => {
   return (
     <Sidebar className="w-64 border-r" collapsible="icon">
       <SidebarContent>
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-4 border-b bg-gradient-primary">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shadow-sm">
+              <Shield className="w-4 h-4 text-white" />
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-sm">Platform Admin</h2>
-                <p className="text-xs text-muted-foreground/70 font-mono">
+                <h2 className="font-semibold text-sm text-white">Platform Admin</h2>
+                <p className="text-xs text-white/80 font-mono">
                   ID: {publicId || "-"}
                 </p>
               </div>
@@ -130,8 +130,8 @@ export function PlatformLayout({ children }: PlatformLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full overflow-x-hidden">
         <PlatformSidebar />
-        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out overflow-x-hidden">
-          <div className="sticky top-0 z-10 bg-background border-b border-border p-4 transition-all duration-300">
+        <main className="flex-1 overflow-auto transition-all duration-300 ease-in-out overflow-x-hidden bg-gradient-hero">
+          <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm border-b border-border/50 p-4 transition-all duration-300 shadow-sm">
             <SidebarTrigger className="ml-2" />
           </div>
           <div className="p-6 transition-all duration-300">{children}</div>
