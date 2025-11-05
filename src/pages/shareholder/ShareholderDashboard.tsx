@@ -341,11 +341,11 @@ export default function ShareholderDashboard() {
         </CardContent>
       </Card>
 
-      {/* Owners Table */}
+      {/* Owners Table with Commission Details */}
       <Card className="shadow-lg hover:shadow-xl transition-all">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-between text-xl">
-            <span>👥 Owner ที่มาจากคุณ</span>
+            <span>👥 Owner ที่มาจากคุณ (พร้อมสัดส่วน Commission)</span>
             <div className="flex items-center gap-2">
               <Select value={status} onValueChange={(v: any) => setStatus(v)}>
                 <SelectTrigger className="w-[140px]">
@@ -375,22 +375,23 @@ export default function ShareholderDashboard() {
                   <th className="py-2 pr-4 font-medium">Email</th>
                   <th className="py-2 pr-4 font-medium">Created</th>
                   <th className="py-2 pr-4 font-medium">Status</th>
+                  <th className="py-2 pr-4 font-medium text-right">Commission %</th>
                   <th className="py-2 pr-0 font-medium text-right">MRR (THB)</th>
                 </tr>
               </thead>
               <tbody>
                 {owners.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
                       ยังไม่มี Owner ที่มาจาก referral link ของคุณ
                     </td>
                   </tr>
                 ) : (
                   owners.map((o) => (
-                    <tr key={o.ownerId} className="border-t">
+                    <tr key={o.ownerId} className="border-t hover:bg-accent/50 transition-colors">
                       <td className="py-2 pr-4 font-mono text-xs">{o.ownerId}</td>
-                      <td className="py-2 pr-4">{o.businessName}</td>
-                      <td className="py-2 pr-4">{o.email}</td>
+                      <td className="py-2 pr-4 font-medium">{o.businessName}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{o.email}</td>
                       <td className="py-2 pr-4">{new Date(o.createdAt).toLocaleDateString('th-TH')}</td>
                       <td className="py-2 pr-4">
                         <Badge 
@@ -403,7 +404,17 @@ export default function ShareholderDashboard() {
                           {o.status}
                         </Badge>
                       </td>
-                      <td className="py-2 pr-0 text-right font-medium">{o.mrr.toLocaleString()}</td>
+                      <td className="py-2 pr-4 text-right">
+                        <Badge variant="outline" className="font-semibold text-primary">
+                          {o.commission_rate ? `${o.commission_rate}%` : '5%'}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-0 text-right font-semibold">
+                        {o.mrr.toLocaleString()} 
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (คุณได้ {((o.mrr * (o.commission_rate || 5)) / 100).toLocaleString()})
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
