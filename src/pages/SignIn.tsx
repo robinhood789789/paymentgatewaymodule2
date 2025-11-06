@@ -106,14 +106,19 @@ const SignIn = () => {
                 name="publicId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Public ID</FormLabel>
+                    <FormLabel className="text-cyan-200 font-semibold">Public ID</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="OWN-123456" className="pl-10 uppercase" {...field} onChange={(e) => field.onChange(e.target.value.toUpperCase())} />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-primary" />
+                        <Input 
+                          placeholder="OWN-123456" 
+                          className="pl-10 uppercase bg-black/20 backdrop-blur-sm border-2 border-primary/40 text-cyan-100 placeholder:text-cyan-300/40 focus:border-primary focus:shadow-glow-info transition-all duration-300" 
+                          {...field} 
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())} 
+                        />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-pink-300" />
                   </FormItem>
                 )}
               />
@@ -123,14 +128,19 @@ const SignIn = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-cyan-200 font-semibold">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input type="password" placeholder="••••••" className="pl-10" {...field} />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-primary" />
+                        <Input 
+                          type="password" 
+                          placeholder="••••••" 
+                          className="pl-10 bg-black/20 backdrop-blur-sm border-2 border-primary/40 text-cyan-100 placeholder:text-cyan-300/40 focus:border-primary focus:shadow-glow-info transition-all duration-300" 
+                          {...field} 
+                        />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-pink-300" />
                   </FormItem>
                 )}
               />
