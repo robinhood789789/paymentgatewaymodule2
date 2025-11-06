@@ -43,16 +43,21 @@ const Settings = () => {
     }
   }, [location.state, searchParams]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        toast.error("ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
+        return null;
+      }
+      
       setFullName(data?.full_name || "");
       return data;
     },
@@ -89,6 +94,21 @@ const Settings = () => {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  if (profileLoading) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center space-y-3">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">กำลังโหลดข้อมูล...</p>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
