@@ -127,14 +127,10 @@ const Index = () => {
               <Zap className="w-6 h-6 text-primary animate-pulse" />
               <div className="h-px w-12 bg-gradient-neon"></div>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tight leading-tight relative">
-              <span className="bg-gradient-to-r from-cyan-300 via-cyan-100 to-cyan-300 bg-clip-text text-transparent animate-pulse-glow">
-                PAYMENT
-              </span>
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
+              <span className="bg-gradient-neon bg-clip-text text-transparent">PAYMENT</span>
               <br />
-              <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 bg-clip-text text-transparent animate-pulse-glow" style={{ animationDelay: '0.5s' }}>
-                COMMAND
-              </span>
+              <span className="text-white/90">COMMAND</span>
             </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-1 w-20 bg-primary shadow-neon"></div>
