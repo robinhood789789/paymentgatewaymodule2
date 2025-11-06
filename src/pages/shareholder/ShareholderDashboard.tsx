@@ -267,9 +267,16 @@ export default function ShareholderDashboard() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">💰 แดชบอร์ด</h1>
-          <p className="text-muted-foreground mt-1">
-            {shareholder.full_name}
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 mt-1">
+            <p className="text-muted-foreground">
+              {shareholder.full_name}
+            </p>
+            {shareholder.public_id && (
+              <Badge variant="secondary" className="font-mono text-sm w-fit">
+                ID: {shareholder.public_id}
+              </Badge>
+            )}
+          </div>
           {shareholderDetails?.referral_code && (
             <div className="mt-2">
               <Badge variant="outline" className="font-mono text-base px-3 py-1">

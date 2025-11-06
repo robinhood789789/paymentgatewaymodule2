@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, Wallet, TrendingUp, UserPlus, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useShareholder } from "@/hooks/useShareholder";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +37,7 @@ function ShareholderSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { open } = useSidebar();
+  const { shareholder } = useShareholder();
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,16 +50,24 @@ function ShareholderSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarHeader className="border-b border-border/50 px-4 py-4 bg-gradient-to-br from-primary/5 to-accent/5">
         {open && (
-          <div className="flex items-center gap-3 animate-in">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-accent to-pink-500 flex items-center justify-center shadow-lg hover:shadow-glow transition-all duration-300 hover:scale-105">
-              <span className="text-base font-bold text-white">SH</span>
+          <div className="flex flex-col gap-2 animate-in">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-accent to-pink-500 flex items-center justify-center shadow-lg hover:shadow-glow transition-all duration-300 hover:scale-105">
+                <span className="text-base font-bold text-white">SH</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg bg-gradient-to-r from-primary via-accent to-pink-500 bg-clip-text text-transparent animate-gradient">
+                  Shareholder
+                </span>
+                <span className="text-xs text-muted-foreground">ระบบผู้ถือหุ้น</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg bg-gradient-to-r from-primary via-accent to-pink-500 bg-clip-text text-transparent animate-gradient">
-                Shareholder
-              </span>
-              <span className="text-xs text-muted-foreground">ระบบผู้ถือหุ้น</span>
-            </div>
+            {shareholder?.public_id && (
+              <div className="pl-1">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Public ID</div>
+                <div className="text-xs font-mono font-semibold text-primary mt-0.5">{shareholder.public_id}</div>
+              </div>
+            )}
           </div>
         )}
         {!open && (

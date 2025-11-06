@@ -5,28 +5,43 @@ import { useAuth } from "@/hooks/useAuth";
 export const useShareholder = () => {
   const { user } = useAuth();
 
-  const { data: shareholder, isLoading } = useQuery({
+  const { data: shareholderData, isLoading } = useQuery({
     queryKey: ["shareholder", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
+      // Fetch shareholder data
+      const { data: shareholderData, error: shareholderError } = await supabase
         .from("shareholders")
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (shareholderError) throw shareholderError;
+      if (!shareholderData) return null;
+
+      // Fetch profile to get public_id
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("public_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      return {
+        ...shareholderData,
+        public_id: profileData?.public_id,
+      };
     },
     enabled: !!user?.id,
   });
 
-  const isShareholder = !!shareholder && shareholder.status === "active";
+  const isShareholder = !!shareholderData && shareholderData.status === "active";
 
   return {
-    shareholder,
+    shareholder: shareholderData,
     isShareholder,
     isLoading,
   };
