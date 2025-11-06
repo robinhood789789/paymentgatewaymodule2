@@ -127,15 +127,49 @@ const Index = () => {
               <Zap className="w-6 h-6 text-primary animate-pulse" />
               <div className="h-px w-12 bg-gradient-neon"></div>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
-              <span className="shimmer-gold text-3d-gold drop-shadow-[0_0_40px_rgba(251,191,36,0.8)]">
-                PAYMENT
-              </span>
-              <br />
-              <span className="shimmer-silver text-3d-silver drop-shadow-[0_0_40px_rgba(203,213,225,0.8)]">
-                COMMAND
-              </span>
-            </h1>
+            <div className="relative inline-block">
+              {/* Gold Particles for PAYMENT */}
+              {[...Array(15)].map((_, i) => (
+                <div
+                  key={`gold-${i}`}
+                  className="particle particle-gold"
+                  style={{
+                    width: `${Math.random() * 6 + 3}px`,
+                    height: `${Math.random() * 6 + 3}px`,
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 30}%`,
+                    animationDelay: `${Math.random() * 4}s`,
+                    animationDuration: `${Math.random() * 3 + 3}s`,
+                    ['--particle-x' as string]: `${Math.random() * 60 - 30}px`,
+                  }}
+                />
+              ))}
+              {/* Silver Particles for COMMAND */}
+              {[...Array(15)].map((_, i) => (
+                <div
+                  key={`silver-${i}`}
+                  className="particle particle-silver"
+                  style={{
+                    width: `${Math.random() * 6 + 3}px`,
+                    height: `${Math.random() * 6 + 3}px`,
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 30 + 50}%`,
+                    animationDelay: `${Math.random() * 4}s`,
+                    animationDuration: `${Math.random() * 3 + 3}s`,
+                    ['--particle-x' as string]: `${Math.random() * 60 - 30}px`,
+                  }}
+                />
+              ))}
+              <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
+                <span className="shimmer-gold text-3d-gold drop-shadow-[0_0_40px_rgba(251,191,36,0.8)]">
+                  PAYMENT
+                </span>
+                <br />
+                <span className="shimmer-silver text-3d-silver drop-shadow-[0_0_40px_rgba(203,213,225,0.8)]">
+                  COMMAND
+                </span>
+              </h1>
+            </div>
             <div className="flex items-center justify-center gap-2">
               <div className="h-1 w-20 bg-primary shadow-neon"></div>
               <div className="h-1 w-4 bg-secondary"></div>

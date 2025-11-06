@@ -354,4 +354,39 @@ All colors MUST be HSL.
   .perspective-text:hover span:last-child {
     transform: rotateY(2deg) translateZ(20px);
   }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation: floatParticle 4s ease-in-out infinite;
+  }
+
+  .particle-gold {
+    background: radial-gradient(circle, hsl(45 93% 67%), transparent);
+    box-shadow: 0 0 10px hsl(45 93% 67% / 0.8);
+  }
+
+  .particle-silver {
+    background: radial-gradient(circle, hsl(0 0% 95%), transparent);
+    box-shadow: 0 0 10px hsl(0 0% 95% / 0.8);
+  }
+
+  @keyframes floatParticle {
+    0% {
+      opacity: 0;
+      transform: translateY(0) translateX(0) scale(0);
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100px) translateX(var(--particle-x, 20px)) scale(1);
+    }
+  }
 }
