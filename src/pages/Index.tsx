@@ -161,7 +161,7 @@ const Index = () => {
                 />
               ))}
               <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
-                <span className="text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]" style={{
+                <span className="shimmer-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]" style={{
                   textShadow: `
                     0 1px 0 #ccc,
                     0 2px 0 #bbb,
