@@ -181,7 +181,24 @@ const Index = () => {
                   PAYMENT
                 </span>
                 <br />
-                <span className="shimmer-silver text-3d-silver drop-shadow-[0_0_40px_rgba(203,213,225,0.8)]">
+                <span className="drop-shadow-[0_0_40px_rgba(0,255,255,0.8)]" style={{
+                  color: 'hsl(189 100% 50%)',
+                  textShadow: `
+                    0 1px 0 hsl(189 100% 45%),
+                    0 2px 0 hsl(189 100% 42%),
+                    0 3px 0 hsl(189 100% 40%),
+                    0 4px 0 hsl(189 100% 38%),
+                    0 5px 0 hsl(189 100% 36%),
+                    0 6px 0 hsl(189 100% 34%),
+                    0 7px 0 hsl(189 100% 32%),
+                    0 8px 0 hsl(189 100% 30%),
+                    0 9px 0 hsl(189 100% 28%),
+                    0 10px 0 hsl(189 100% 26%),
+                    0 0 30px rgba(0,255,255,0.8),
+                    0 0 60px rgba(0,255,255,0.6),
+                    0 0 90px rgba(0,255,255,0.4)
+                  `
+                }}>
                   COMMAND
                 </span>
               </h1>
