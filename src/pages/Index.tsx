@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useShareholder } from "@/hooks/useShareholder";
 import { Button } from "@/components/ui/button";
-import { Shield, Lock, Users } from "lucide-react";
+import { Shield, Lock, Users, Zap, Hexagon, Cpu } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
@@ -20,99 +20,156 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-hero animate-gradient relative overflow-hidden">
-      {/* Radial Gradient Overlay */}
+      {/* Grid Pattern Background */}
+      <div className="absolute inset-0 grid-pattern opacity-30"></div>
+      
+      {/* Animated Radial Gradients */}
       <div className="absolute inset-0 bg-gradient-radial pointer-events-none"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-radial-bright opacity-20 blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-radial-bright opacity-20 blur-3xl pointer-events-none"></div>
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-30 blur-3xl animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-30 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      
+      {/* Geometric Shapes */}
+      <div className="absolute top-20 right-20 w-32 h-32 border border-primary/20 rotate-45 animate-float"></div>
+      <div className="absolute bottom-40 left-20 w-24 h-24 border border-accent/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/2 left-10 w-16 h-16">
+        <Hexagon className="w-full h-full text-primary/10 animate-float" style={{ animationDelay: '1.5s' }} />
+      </div>
+      <div className="absolute bottom-20 right-1/4 w-20 h-20">
+        <Cpu className="w-full h-full text-secondary/10 animate-float" style={{ animationDelay: '0.5s' }} />
+      </div>
       
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[80vh] relative z-10">
-        <div className="text-center max-w-4xl mx-auto space-y-8 animate-in">
-          {/* Icon */}
-          <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-primary backdrop-blur-sm flex items-center justify-center mb-6 shadow-glow hover:scale-110 transition-all duration-300">
-            <Shield className="w-12 h-12 text-white drop-shadow-lg" />
+        <div className="text-center max-w-5xl mx-auto space-y-10 animate-in">
+          {/* Main Icon with Neon Effect */}
+          <div className="mx-auto w-28 h-28 rounded-3xl bg-gradient-neon backdrop-blur-sm flex items-center justify-center mb-8 shadow-neon hover:scale-110 transition-all duration-500 animate-pulse-glow relative scan-line">
+            <Shield className="w-14 h-14 text-white drop-shadow-2xl" strokeWidth={2.5} />
           </div>
 
-          {/* Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
-            Payment Management Platform
-          </h1>
+          {/* Heading with Cyber Font Style */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="h-px w-12 bg-gradient-neon"></div>
+              <Zap className="w-6 h-6 text-primary animate-pulse" />
+              <div className="h-px w-12 bg-gradient-neon"></div>
+            </div>
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
+              <span className="bg-gradient-neon bg-clip-text text-transparent">PAYMENT</span>
+              <br />
+              <span className="text-white/90">COMMAND</span>
+            </h1>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-1 w-20 bg-primary shadow-neon"></div>
+              <div className="h-1 w-4 bg-secondary"></div>
+              <div className="h-1 w-20 bg-accent shadow-neon"></div>
+            </div>
+          </div>
           
-          <p className="text-xl md:text-2xl text-white/95 mb-8 font-light drop-shadow-lg">
-            ระบบจัดการการชำระเงินสำหรับองค์กรที่ปลอดภัยและมีประสิทธิภาพ
+          <p className="text-xl md:text-2xl text-cyan-200 mb-10 font-light drop-shadow-lg tracking-wide">
+            ระบบจัดการการชำระเงิน <span className="text-primary font-semibold">NEXT-GEN</span> สำหรับองค์กร
           </p>
 
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 mb-12">
-            <Card className="group p-8 bg-gradient-subtle backdrop-blur-md border-white/30 shadow-glow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-radial opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-info flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
-                  <Lock className="w-8 h-8 text-white drop-shadow-md" />
+          {/* Feature Cards - Futuristic Style */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 mb-16">
+            {/* Card 1 */}
+            <Card className="group p-8 bg-black/40 backdrop-blur-xl border-2 border-primary/30 shadow-glow hover:shadow-neon hover:scale-105 hover:border-primary/60 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-neon"></div>
+              <div className="relative z-10 space-y-4">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-info flex items-center justify-center mx-auto shadow-glow-info animate-pulse-glow">
+                  <Lock className="w-10 h-10 text-white drop-shadow-md" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 drop-shadow-md">
-                  Invite-Only System
+                <h3 className="text-2xl font-black text-cyan-200 tracking-tight">
+                  INVITE-ONLY
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed drop-shadow-sm">
-                  บัญชีทั้งหมดจะถูกสร้างโดย Administrator เท่านั้น
+                <p className="text-sm text-cyan-100/80 leading-relaxed font-light">
+                  ระบบรักษาความปลอดภัย<br />ด้วย Administrator Control
                 </p>
+                <div className="flex justify-center gap-1 pt-2">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-neon"></div>
+                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                  <div className="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
               </div>
             </Card>
 
-            <Card className="group p-8 bg-gradient-subtle backdrop-blur-md border-white/30 shadow-glow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-radial opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
-                  <Shield className="w-8 h-8 text-white drop-shadow-md" />
+            {/* Card 2 */}
+            <Card className="group p-8 bg-black/40 backdrop-blur-xl border-2 border-secondary/30 shadow-glow hover:shadow-neon hover:scale-105 hover:border-secondary/60 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-neon"></div>
+              <div className="relative z-10 space-y-4">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto shadow-glow animate-pulse-glow" style={{ animationDelay: '0.5s' }}>
+                  <Shield className="w-10 h-10 text-white drop-shadow-md" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 drop-shadow-md">
-                  Enterprise Security
+                <h3 className="text-2xl font-black text-purple-200 tracking-tight">
+                  ULTRA SECURE
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed drop-shadow-sm">
-                  ความปลอดภัยระดับองค์กร พร้อม 2FA และการเข้ารหัส SSL
+                <p className="text-sm text-purple-100/80 leading-relaxed font-light">
+                  Enterprise-Grade Security<br />พร้อม 2FA & SSL Encryption
                 </p>
+                <div className="flex justify-center gap-1 pt-2">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-neon"></div>
+                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                  <div className="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
               </div>
             </Card>
 
-            <Card className="group p-8 bg-gradient-subtle backdrop-blur-md border-white/30 shadow-glow hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-radial opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-users flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all">
-                  <Users className="w-8 h-8 text-white drop-shadow-md" />
+            {/* Card 3 */}
+            <Card className="group p-8 bg-black/40 backdrop-blur-xl border-2 border-accent/30 shadow-glow hover:shadow-neon hover:scale-105 hover:border-accent/60 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-neon"></div>
+              <div className="relative z-10 space-y-4">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-users flex items-center justify-center mx-auto shadow-glow animate-pulse-glow" style={{ animationDelay: '1s' }}>
+                  <Users className="w-10 h-10 text-white drop-shadow-md" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3 drop-shadow-md">
-                  Multi-Tenant Support
+                <h3 className="text-2xl font-black text-pink-200 tracking-tight">
+                  MULTI-TENANT
                 </h3>
-                <p className="text-sm text-white/90 leading-relaxed drop-shadow-sm">
-                  รองรับการจัดการหลายองค์กรในระบบเดียว
+                <p className="text-sm text-pink-100/80 leading-relaxed font-light">
+                  รองรับการจัดการ<br />หลายองค์กรในระบบเดียว
                 </p>
+                <div className="flex justify-center gap-1 pt-2">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-neon"></div>
+                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                  <div className="w-2 h-2 rounded-full bg-accent"></div>
+                </div>
               </div>
             </Card>
           </div>
 
           {/* CTA Button */}
-          <div className="space-y-4">
+          <div className="space-y-6 mt-12">
             <Button
               variant="default"
               size="lg"
               onClick={() => navigate("/auth/sign-in")}
-              className="text-xl px-12 py-7 bg-white text-primary hover:bg-white/95 shadow-elegant hover:shadow-glow hover:scale-105 transition-all duration-300 font-semibold"
+              className="group relative text-xl px-16 py-8 bg-gradient-neon text-white hover:shadow-neon transition-all duration-500 font-black tracking-wider border-2 border-primary/50 hover:border-primary overflow-hidden scan-line"
             >
-              เข้าสู่ระบบ
+              <span className="relative z-10 flex items-center gap-3">
+                <Zap className="w-6 h-6 group-hover:animate-pulse" />
+                เข้าสู่ระบบ
+                <Zap className="w-6 h-6 group-hover:animate-pulse" />
+              </span>
             </Button>
             
-            <p className="text-base text-white/80 font-light">
-              หากคุณได้รับ invitation code กรุณาติดต่อ Administrator
+            <p className="text-base text-cyan-300/80 font-light tracking-wide">
+              [ AUTHORIZED PERSONNEL ONLY ] หากคุณได้รับ invitation code กรุณาติดต่อ Administrator
             </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/20 py-10 px-4 backdrop-blur-md bg-white/5 relative z-10">
-        <div className="container mx-auto max-w-6xl text-center">
-          <p className="text-sm text-white/80 font-light drop-shadow-md">
-            © 2024 Payment Management Platform. ปลอดภัยด้วยการเข้ารหัส SSL
+      <footer className="border-t-2 border-primary/20 py-12 px-4 backdrop-blur-xl bg-black/30 relative z-10">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="h-px w-20 bg-gradient-neon"></div>
+            <Shield className="w-6 h-6 text-primary animate-pulse" />
+            <div className="h-px w-20 bg-gradient-neon"></div>
+          </div>
+          <p className="text-sm text-cyan-200/70 font-light drop-shadow-md text-center tracking-wider">
+            © 2024 PAYMENT COMMAND • SECURED BY SSL ENCRYPTION • ALL SYSTEMS OPERATIONAL
           </p>
         </div>
       </footer>

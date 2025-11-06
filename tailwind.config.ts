@@ -70,6 +70,7 @@ export default {
         "gradient-subtle": "var(--gradient-subtle)",
         "gradient-radial": "var(--gradient-radial)",
         "gradient-radial-bright": "var(--gradient-radial-bright)",
+        "gradient-neon": "var(--gradient-neon)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
@@ -77,6 +78,7 @@ export default {
         lg: "var(--shadow-lg)",
         glow: "var(--shadow-glow)",
         elegant: "var(--shadow-elegant)",
+        neon: "var(--shadow-neon)",
       },
       transitionTimingFunction: {
         smooth: "var(--transition-smooth)",
