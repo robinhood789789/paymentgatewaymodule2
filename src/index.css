@@ -54,11 +54,12 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(326 100% 55%) 0%, hsl(350 100% 60%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(189 100% 50%) 0%, hsl(200 100% 55%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 100% 60%) 0%, hsl(300 100% 65%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(220 40% 15%) 0%, hsl(280 50% 18%) 50%, hsl(189 60% 16%) 100%);
-    --gradient-subtle: linear-gradient(135deg, hsl(189 80% 50% / 0.1) 0%, hsl(280 80% 60% / 0.1) 100%);
-    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(189 100% 50% / 0.15) 0%, hsl(280 100% 60% / 0.1) 50%, transparent 100%);
-    --gradient-radial-bright: radial-gradient(ellipse at center, hsl(189 100% 50% / 0.2) 0%, hsl(280 100% 60% / 0.15) 50%, transparent 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(230 50% 25%) 0%, hsl(280 60% 30%) 30%, hsl(160 50% 28%) 60%, hsl(230 55% 27%) 100%);
+    --gradient-subtle: linear-gradient(135deg, hsl(160 60% 50% / 0.15) 0%, hsl(280 70% 60% / 0.15) 50%, hsl(230 60% 55% / 0.15) 100%);
+    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(160 80% 50% / 0.25) 0%, hsl(280 80% 60% / 0.2) 50%, transparent 100%);
+    --gradient-radial-bright: radial-gradient(ellipse at center, hsl(160 90% 55% / 0.35) 0%, hsl(280 90% 65% / 0.3) 40%, hsl(230 85% 60% / 0.25) 100%);
     --gradient-neon: linear-gradient(90deg, hsl(189 100% 50%) 0%, hsl(280 100% 60%) 50%, hsl(326 100% 55%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(160 70% 55%) 0%, hsl(280 75% 65%) 25%, hsl(230 70% 60%) 50%, hsl(326 70% 65%) 75%, hsl(160 70% 55%) 100%);
     
     /* Role-specific colors */
     --color-finance: hsl(142 76% 45%);
@@ -125,11 +126,12 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(326 100% 55%) 0%, hsl(350 100% 60%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(189 100% 50%) 0%, hsl(200 100% 55%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 100% 60%) 0%, hsl(300 100% 65%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(220 40% 12%) 0%, hsl(280 50% 15%) 50%, hsl(189 60% 13%) 100%);
-    --gradient-subtle: linear-gradient(135deg, hsl(189 80% 50% / 0.12) 0%, hsl(280 80% 60% / 0.12) 100%);
-    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(189 100% 50% / 0.18) 0%, hsl(280 100% 60% / 0.12) 50%, transparent 100%);
-    --gradient-radial-bright: radial-gradient(ellipse at center, hsl(189 100% 50% / 0.25) 0%, hsl(280 100% 60% / 0.18) 50%, transparent 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(230 50% 20%) 0%, hsl(280 60% 25%) 30%, hsl(160 50% 23%) 60%, hsl(230 55% 22%) 100%);
+    --gradient-subtle: linear-gradient(135deg, hsl(160 60% 50% / 0.18) 0%, hsl(280 70% 60% / 0.18) 50%, hsl(230 60% 55% / 0.18) 100%);
+    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(160 80% 50% / 0.28) 0%, hsl(280 80% 60% / 0.22) 50%, transparent 100%);
+    --gradient-radial-bright: radial-gradient(ellipse at center, hsl(160 90% 55% / 0.4) 0%, hsl(280 90% 65% / 0.35) 40%, hsl(230 85% 60% / 0.3) 100%);
     --gradient-neon: linear-gradient(90deg, hsl(189 100% 50%) 0%, hsl(280 100% 60%) 50%, hsl(326 100% 55%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(160 70% 55%) 0%, hsl(280 75% 65%) 25%, hsl(230 70% 60%) 50%, hsl(326 70% 65%) 75%, hsl(160 70% 55%) 100%);
 
     --shadow-glow: 0 0 40px hsl(189 100% 50% / 0.6), 0 0 80px hsl(189 100% 50% / 0.3);
     --shadow-glow-success: 0 0 35px hsl(142 76% 45% / 0.4);
@@ -158,7 +160,9 @@ All colors MUST be HSL.
 
   @keyframes gradient {
     0% { background-position: 0% 50%; }
+    25% { background-position: 50% 75%; }
     50% { background-position: 100% 50%; }
+    75% { background-position: 50% 25%; }
     100% { background-position: 0% 50%; }
   }
 

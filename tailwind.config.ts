@@ -71,6 +71,7 @@ export default {
         "gradient-radial": "var(--gradient-radial)",
         "gradient-radial-bright": "var(--gradient-radial-bright)",
         "gradient-neon": "var(--gradient-neon)",
+        "gradient-aurora": "var(--gradient-aurora)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",

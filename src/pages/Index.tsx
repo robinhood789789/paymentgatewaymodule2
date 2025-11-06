@@ -31,10 +31,11 @@ const Index = () => {
       {/* Grid Pattern Background */}
       <div className="absolute inset-0 grid-pattern opacity-20"></div>
       
-      {/* Animated Radial Gradients */}
+      {/* Animated Radial Gradients - Aurora Style */}
       <div className="absolute inset-0 bg-gradient-radial pointer-events-none"></div>
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gradient-radial-bright opacity-40 blur-3xl animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-gradient-radial-bright opacity-40 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-gradient-aurora opacity-30 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
       
       {/* Shooting Stars */}
       <div className="shooting-star" style={{ top: '10%', right: '80%', animationDelay: '0s', animationDuration: '3s' }}></div>
