@@ -89,7 +89,8 @@ const SignIn = () => {
         <Star className="w-5 h-5 text-pink-300 fill-pink-300" />
       </div>
       
-      <Card className="w-full max-w-md shadow-neon relative z-10 bg-black/40 backdrop-blur-xl border-2 border-primary/30">
+      <Card className="w-full max-w-md shadow-neon relative z-10 bg-black/40 backdrop-blur-xl border-2 border-primary/30 scan-line overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-neon"></div>
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-neon backdrop-blur-sm flex items-center justify-center mb-4 shadow-neon animate-pulse-glow">
             <Shield className="w-8 h-8 text-white drop-shadow-lg" strokeWidth={2.5} />
