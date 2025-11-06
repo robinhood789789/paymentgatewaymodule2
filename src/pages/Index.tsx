@@ -128,7 +128,10 @@ const Index = () => {
               <div className="h-px w-12 bg-gradient-neon"></div>
             </div>
             <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
-              <span className="bg-gradient-neon bg-clip-text text-transparent font-black tracking-wide" style={{ fontWeight: 950 }}>PAYMENT</span>
+              <span className="text-white font-black tracking-wide" style={{ 
+                fontWeight: 950,
+                textShadow: '0 0 30px rgba(6, 182, 212, 1), 0 0 60px rgba(6, 182, 212, 0.8), 0 0 90px rgba(6, 182, 212, 0.6), 0 4px 12px rgba(0, 0, 0, 0.8)'
+              }}>PAYMENT</span>
               <br />
               <span className="text-white/90">COMMAND</span>
             </h1>
