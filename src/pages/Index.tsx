@@ -130,7 +130,7 @@ const Index = () => {
             <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
               <span className="text-cyan-100 drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] drop-shadow-[0_0_60px_rgba(255,0,255,0.6)] animate-pulse-glow" style={{ textShadow: '0 0 20px rgba(0,255,255,1), 0 0 40px rgba(255,0,255,0.8), 0 0 60px rgba(0,255,255,0.6)' }}>PAYMENT</span>
               <br />
-              <span className="text-white/90">COMMAND</span>
+              <span className="text-purple-100 drop-shadow-[0_0_30px_rgba(255,0,255,0.8)] drop-shadow-[0_0_60px_rgba(255,0,255,0.6)] animate-pulse-glow" style={{ textShadow: '0 0 20px rgba(255,0,255,1), 0 0 40px rgba(255,0,255,0.8), 0 0 60px rgba(0,255,255,0.4)', animationDelay: '0.5s' }}>COMMAND</span>
             </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-1 w-20 bg-primary shadow-neon"></div>
