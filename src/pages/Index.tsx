@@ -130,6 +130,7 @@ const Index = () => {
             <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
               <span className="text-white font-black tracking-wide" style={{ 
                 fontWeight: 950,
+                WebkitTextStroke: '2px rgba(6, 182, 212, 0.8)',
                 textShadow: '0 0 30px rgba(6, 182, 212, 1), 0 0 60px rgba(6, 182, 212, 0.8), 0 0 90px rgba(6, 182, 212, 0.6), 0 4px 12px rgba(0, 0, 0, 0.8)'
               }}>PAYMENT</span>
               <br />
