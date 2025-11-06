@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useShareholder } from "@/hooks/useShareholder";
 import { Button } from "@/components/ui/button";
-import { Shield, Lock, Users, Zap, Hexagon, Cpu } from "lucide-react";
+import { Shield, Lock, Users, Zap, Hexagon, Cpu, Sparkles, Orbit, Rocket, Satellite, Globe, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
@@ -21,12 +21,46 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-hero animate-gradient relative overflow-hidden">
       {/* Grid Pattern Background */}
-      <div className="absolute inset-0 grid-pattern opacity-30"></div>
+      <div className="absolute inset-0 grid-pattern opacity-20"></div>
       
       {/* Animated Radial Gradients */}
       <div className="absolute inset-0 bg-gradient-radial pointer-events-none"></div>
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-30 blur-3xl animate-pulse-glow pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-30 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      
+      {/* Space Theme Background Icons */}
+      <div className="absolute top-10 right-1/4 opacity-10 animate-float">
+        <Rocket className="w-20 h-20 text-primary rotate-45" strokeWidth={1.5} />
+      </div>
+      <div className="absolute top-1/3 left-10 opacity-8 animate-float" style={{ animationDelay: '1s' }}>
+        <Satellite className="w-16 h-16 text-secondary" strokeWidth={1.5} />
+      </div>
+      <div className="absolute bottom-1/4 right-10 opacity-10 animate-float" style={{ animationDelay: '2s' }}>
+        <Globe className="w-24 h-24 text-accent" strokeWidth={1.5} />
+      </div>
+      <div className="absolute top-1/2 right-1/3 opacity-8 animate-float" style={{ animationDelay: '0.5s' }}>
+        <Orbit className="w-20 h-20 text-primary" strokeWidth={1.5} />
+      </div>
+      <div className="absolute bottom-20 left-1/4 opacity-6 animate-float" style={{ animationDelay: '1.5s' }}>
+        <Sparkles className="w-12 h-12 text-primary" strokeWidth={1.5} />
+      </div>
+      
+      {/* Floating Stars */}
+      <div className="absolute top-20 left-1/3 opacity-30 animate-pulse">
+        <Star className="w-6 h-6 text-cyan-300 fill-cyan-300" />
+      </div>
+      <div className="absolute top-40 right-1/4 opacity-40 animate-pulse" style={{ animationDelay: '0.5s' }}>
+        <Star className="w-4 h-4 text-purple-300 fill-purple-300" />
+      </div>
+      <div className="absolute bottom-1/3 left-1/4 opacity-35 animate-pulse" style={{ animationDelay: '1s' }}>
+        <Star className="w-5 h-5 text-pink-300 fill-pink-300" />
+      </div>
+      <div className="absolute top-1/4 left-1/2 opacity-30 animate-pulse" style={{ animationDelay: '1.5s' }}>
+        <Star className="w-4 h-4 text-cyan-400 fill-cyan-400" />
+      </div>
+      <div className="absolute bottom-40 right-1/3 opacity-40 animate-pulse" style={{ animationDelay: '2s' }}>
+        <Star className="w-5 h-5 text-purple-400 fill-purple-400" />
+      </div>
       
       {/* Geometric Shapes */}
       <div className="absolute top-20 right-20 w-32 h-32 border border-primary/20 rotate-45 animate-float"></div>
