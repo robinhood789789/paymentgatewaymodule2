@@ -36,6 +36,14 @@ const Index = () => {
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-radial-bright opacity-20 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
       
+      {/* Shooting Stars */}
+      <div className="shooting-star" style={{ top: '10%', right: '80%', animationDelay: '0s', animationDuration: '3s' }}></div>
+      <div className="shooting-star" style={{ top: '25%', right: '60%', animationDelay: '2s', animationDuration: '4s' }}></div>
+      <div className="shooting-star" style={{ top: '40%', right: '90%', animationDelay: '4s', animationDuration: '3.5s' }}></div>
+      <div className="shooting-star" style={{ top: '60%', right: '70%', animationDelay: '6s', animationDuration: '3s' }}></div>
+      <div className="shooting-star" style={{ top: '15%', right: '40%', animationDelay: '8s', animationDuration: '4s' }}></div>
+      <div className="shooting-star" style={{ top: '75%', right: '85%', animationDelay: '10s', animationDuration: '3.5s' }}></div>
+      
       {/* Space Theme Background Icons with Parallax */}
       <div 
         className="absolute top-10 right-1/4 opacity-10 animate-float transition-transform duration-100"
