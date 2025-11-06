@@ -54,7 +54,8 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(340 82% 62%) 0%, hsl(350 89% 68%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(190 95% 48%) 0%, hsl(200 98% 52%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 87% 65%) 0%, hsl(300 77% 70%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220 25% 97%) 0%, hsl(221 83% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(221 83% 48%) 0%, hsl(262 90% 55%) 100%);
+    --gradient-subtle: linear-gradient(135deg, hsl(221 70% 55% / 0.15) 0%, hsl(262 80% 60% / 0.15) 100%);
     
     /* Role-specific colors */
     --color-finance: hsl(142 76% 45%);
@@ -66,10 +67,11 @@ All colors MUST be HSL.
     --shadow-sm: 0 1px 2px 0 hsl(220 15% 15% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(220 15% 15% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(220 15% 15% / 0.1);
-    --shadow-glow: 0 0 25px hsl(221 83% 58% / 0.4);
-    --shadow-glow-success: 0 0 25px hsl(142 76% 45% / 0.3);
-    --shadow-glow-info: 0 0 25px hsl(200 98% 48% / 0.3);
-    --shadow-glow-warning: 0 0 25px hsl(43 96% 56% / 0.3);
+    --shadow-glow: 0 0 35px hsl(221 83% 58% / 0.5);
+    --shadow-glow-success: 0 0 35px hsl(142 76% 45% / 0.4);
+    --shadow-glow-info: 0 0 35px hsl(200 98% 48% / 0.4);
+    --shadow-glow-warning: 0 0 35px hsl(43 96% 56% / 0.4);
+    --shadow-elegant: 0 20px 50px -10px hsl(221 83% 58% / 0.6);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -119,12 +121,14 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(340 82% 62%) 0%, hsl(350 89% 68%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(190 95% 48%) 0%, hsl(200 98% 52%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 87% 65%) 0%, hsl(300 77% 70%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220 25% 8%) 0%, hsl(220 20% 12%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(221 83% 38%) 0%, hsl(262 90% 45%) 100%);
+    --gradient-subtle: linear-gradient(135deg, hsl(221 70% 45% / 0.2) 0%, hsl(262 80% 50% / 0.2) 100%);
 
-    --shadow-glow: 0 0 25px hsl(221 83% 58% / 0.4);
-    --shadow-glow-success: 0 0 25px hsl(142 76% 45% / 0.3);
-    --shadow-glow-info: 0 0 25px hsl(200 98% 48% / 0.3);
-    --shadow-glow-warning: 0 0 25px hsl(43 96% 56% / 0.3);
+    --shadow-glow: 0 0 35px hsl(221 83% 58% / 0.5);
+    --shadow-glow-success: 0 0 35px hsl(142 76% 45% / 0.4);
+    --shadow-glow-info: 0 0 35px hsl(200 98% 48% / 0.4);
+    --shadow-glow-warning: 0 0 35px hsl(43 96% 56% / 0.4);
+    --shadow-elegant: 0 20px 50px -10px hsl(221 83% 58% / 0.6);
   }
 }
 

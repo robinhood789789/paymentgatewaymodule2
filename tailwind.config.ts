@@ -67,12 +67,14 @@ export default {
         "gradient-info": "var(--gradient-info)",
         "gradient-users": "var(--gradient-users)",
         "gradient-hero": "var(--gradient-hero)",
+        "gradient-subtle": "var(--gradient-subtle)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         glow: "var(--shadow-glow)",
+        elegant: "var(--shadow-elegant)",
       },
       transitionTimingFunction: {
         smooth: "var(--transition-smooth)",
