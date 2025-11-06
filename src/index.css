@@ -54,8 +54,10 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(340 82% 62%) 0%, hsl(350 89% 68%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(190 95% 48%) 0%, hsl(200 98% 52%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 87% 65%) 0%, hsl(300 77% 70%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(221 83% 48%) 0%, hsl(262 90% 55%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(221 83% 48%) 0%, hsl(262 90% 55%) 50%, hsl(280 87% 58%) 100%);
     --gradient-subtle: linear-gradient(135deg, hsl(221 70% 55% / 0.15) 0%, hsl(262 80% 60% / 0.15) 100%);
+    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(221 83% 58% / 0.3) 0%, hsl(262 90% 65% / 0.2) 50%, transparent 100%);
+    --gradient-radial-bright: radial-gradient(ellipse at top, hsl(221 90% 60%) 0%, hsl(262 95% 65%) 40%, hsl(280 90% 60%) 100%);
     
     /* Role-specific colors */
     --color-finance: hsl(142 76% 45%);
@@ -121,8 +123,10 @@ All colors MUST be HSL.
     --gradient-activity: linear-gradient(135deg, hsl(340 82% 62%) 0%, hsl(350 89% 68%) 100%);
     --gradient-info: linear-gradient(135deg, hsl(190 95% 48%) 0%, hsl(200 98% 52%) 100%);
     --gradient-users: linear-gradient(135deg, hsl(280 87% 65%) 0%, hsl(300 77% 70%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(221 83% 38%) 0%, hsl(262 90% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(221 83% 38%) 0%, hsl(262 90% 45%) 50%, hsl(280 87% 40%) 100%);
     --gradient-subtle: linear-gradient(135deg, hsl(221 70% 45% / 0.2) 0%, hsl(262 80% 50% / 0.2) 100%);
+    --gradient-radial: radial-gradient(circle at 50% 50%, hsl(221 83% 48% / 0.3) 0%, hsl(262 90% 55% / 0.2) 50%, transparent 100%);
+    --gradient-radial-bright: radial-gradient(ellipse at top, hsl(221 90% 50%) 0%, hsl(262 95% 55%) 40%, hsl(280 90% 50%) 100%);
 
     --shadow-glow: 0 0 35px hsl(221 83% 58% / 0.5);
     --shadow-glow-success: 0 0 35px hsl(142 76% 45% / 0.4);

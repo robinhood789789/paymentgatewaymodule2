@@ -68,6 +68,8 @@ export default {
         "gradient-users": "var(--gradient-users)",
         "gradient-hero": "var(--gradient-hero)",
         "gradient-subtle": "var(--gradient-subtle)",
+        "gradient-radial": "var(--gradient-radial)",
+        "gradient-radial-bright": "var(--gradient-radial-bright)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
