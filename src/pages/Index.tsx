@@ -87,10 +87,6 @@ const Index = () => {
       
       {/* Geometric Shapes with Parallax */}
       <div 
-        className="absolute top-20 right-20 w-32 h-32 border border-primary/20 rotate-45 animate-float transition-transform duration-100"
-        style={{ transform: `translateY(${parallax2}px)` }}
-      ></div>
-      <div 
         className="absolute bottom-40 left-20 w-24 h-24 border border-accent/20 rounded-full animate-float transition-transform duration-100" 
         style={{ animationDelay: '2s', transform: `translateY(${parallax4}px)` }}
       ></div>
