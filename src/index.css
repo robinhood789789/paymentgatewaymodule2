@@ -364,8 +364,8 @@ All colors MUST be HSL.
   }
 
   .particle-gold {
-    background: radial-gradient(circle, hsl(45 93% 67%), transparent);
-    box-shadow: 0 0 10px hsl(45 93% 67% / 0.8);
+    background: radial-gradient(circle, hsl(0 0% 100%), transparent);
+    box-shadow: 0 0 10px hsl(0 0% 100% / 0.8);
   }
 
   .particle-silver {
