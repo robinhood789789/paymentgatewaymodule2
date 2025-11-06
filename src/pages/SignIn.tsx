@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useShareholder } from "@/hooks/useShareholder";
+import { useParallax } from "@/hooks/useParallax";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Mail, Lock } from "lucide-react";
+import { Shield, Mail, Lock, Star, Sparkles, Orbit } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +22,11 @@ const SignIn = () => {
   const navigate = useNavigate();
   const { isShareholder, isLoading: shLoading } = useShareholder();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Parallax effects
+  const parallax1 = useParallax(0.2);
+  const parallax2 = useParallax(0.3);
+  const parallax3 = useParallax(0.4);
 
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -43,14 +49,53 @@ const SignIn = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-hero px-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-hero animate-gradient px-4 relative overflow-hidden">
+      {/* Grid Pattern Background */}
+      <div className="absolute inset-0 grid-pattern opacity-20"></div>
+      
+      {/* Animated Radial Gradients - Aurora Style */}
+      <div className="absolute inset-0 bg-gradient-radial pointer-events-none"></div>
+      <div className="absolute top-0 left-1/4 w-[900px] h-[900px] bg-gradient-radial-bright opacity-50 blur-3xl animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[900px] h-[900px] bg-gradient-radial-bright opacity-50 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[700px] h-[700px] bg-gradient-aurora opacity-40 blur-3xl animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      
+      {/* Shooting Stars */}
+      <div className="shooting-star" style={{ top: '10%', right: '80%', animationDelay: '0s', animationDuration: '3s' }}></div>
+      <div className="shooting-star" style={{ top: '25%', right: '60%', animationDelay: '2s', animationDuration: '4s' }}></div>
+      <div className="shooting-star" style={{ top: '60%', right: '70%', animationDelay: '4s', animationDuration: '3s' }}></div>
+      
+      {/* Floating Icons with Parallax */}
+      <div 
+        className="absolute top-20 right-20 opacity-8 animate-float transition-transform duration-100"
+        style={{ animationDelay: '1s', transform: `translateY(${parallax1}px)` }}
+      >
+        <Sparkles className="w-12 h-12 text-primary" strokeWidth={1.5} />
+      </div>
+      <div 
+        className="absolute bottom-20 left-20 opacity-8 animate-float transition-transform duration-100" 
+        style={{ animationDelay: '2s', transform: `translateY(${parallax2}px)` }}
+      >
+        <Orbit className="w-16 h-16 text-secondary" strokeWidth={1.5} />
+      </div>
+      
+      {/* Floating Stars */}
+      <div className="absolute top-20 left-1/4 opacity-30 animate-pulse">
+        <Star className="w-6 h-6 text-cyan-300 fill-cyan-300" />
+      </div>
+      <div className="absolute top-40 right-1/4 opacity-40 animate-pulse" style={{ animationDelay: '0.5s' }}>
+        <Star className="w-4 h-4 text-purple-300 fill-purple-300" />
+      </div>
+      <div className="absolute bottom-1/3 left-1/4 opacity-35 animate-pulse" style={{ animationDelay: '1s' }}>
+        <Star className="w-5 h-5 text-pink-300 fill-pink-300" />
+      </div>
+      
+      <Card className="w-full max-w-md shadow-neon relative z-10 bg-black/40 backdrop-blur-xl border-2 border-primary/30">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-            <Shield className="w-6 h-6 text-primary" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-neon backdrop-blur-sm flex items-center justify-center mb-4 shadow-neon animate-pulse-glow">
+            <Shield className="w-8 h-8 text-white drop-shadow-lg" strokeWidth={2.5} />
           </div>
-          <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-3xl font-black text-cyan-200 tracking-tight">SIGN IN</CardTitle>
+          <CardDescription className="text-cyan-100/70">เข้าสู่ระบบด้วย credentials ของคุณ</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -90,23 +135,29 @@ const SignIn = () => {
                 )}
               />
 
-              <Button type="submit" variant="gradient" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-neon text-white hover:shadow-neon transition-all duration-500 font-bold tracking-wide border-2 border-primary/50 hover:border-primary" 
+                disabled={isLoading}
+              >
+                {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
               </Button>
             </form>
           </Form>
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-2">
-          <p className="text-sm text-muted-foreground text-center">
-            Don't have an account?{" "}
-            <Link to="/auth/sign-up" className="text-primary hover:underline">
-              Sign up
+          <p className="text-sm text-cyan-100/70 text-center">
+            ยังไม่มีบัญชี?{" "}
+            <Link to="/auth/sign-up" className="text-primary hover:text-primary/80 underline">
+              สมัครสมาชิก
             </Link>
           </p>
-          <p className="text-xs text-muted-foreground text-center">
-            Protected by SSL encryption
-          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-cyan-300/60">
+            <div className="w-2 h-2 rounded-full bg-primary shadow-neon animate-pulse"></div>
+            <span>Protected by SSL Encryption</span>
+            <div className="w-2 h-2 rounded-full bg-primary shadow-neon animate-pulse"></div>
+          </div>
         </CardFooter>
       </Card>
     </div>
