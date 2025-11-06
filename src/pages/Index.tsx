@@ -162,7 +162,21 @@ const Index = () => {
               ))}
               <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
                 <span className="text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]" style={{
-                  textShadow: '0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(255,255,255,0.6), 0 0 90px rgba(255,255,255,0.4)'
+                  textShadow: `
+                    0 1px 0 #ccc,
+                    0 2px 0 #bbb,
+                    0 3px 0 #aaa,
+                    0 4px 0 #999,
+                    0 5px 0 #888,
+                    0 6px 0 #777,
+                    0 7px 0 #666,
+                    0 8px 0 #555,
+                    0 9px 0 #444,
+                    0 10px 0 #333,
+                    0 0 30px rgba(255,255,255,0.8),
+                    0 0 60px rgba(255,255,255,0.6),
+                    0 0 90px rgba(255,255,255,0.4)
+                  `
                 }}>
                   PAYMENT
                 </span>
