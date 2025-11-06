@@ -127,16 +127,12 @@ const Index = () => {
               <Zap className="w-6 h-6 text-primary animate-pulse" />
               <div className="h-px w-12 bg-gradient-neon"></div>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative">
-              <span className="shimmer-gold drop-shadow-[0_0_40px_rgba(251,191,36,0.8)]" style={{ 
-                filter: 'drop-shadow(0 0 30px rgba(251,191,36,0.6)) drop-shadow(0 0 60px rgba(251,191,36,0.4))'
-              }}>
+            <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
+              <span className="shimmer-gold text-3d-gold drop-shadow-[0_0_40px_rgba(251,191,36,0.8)]">
                 PAYMENT
               </span>
               <br />
-              <span className="shimmer-silver drop-shadow-[0_0_40px_rgba(203,213,225,0.8)]" style={{ 
-                filter: 'drop-shadow(0 0 30px rgba(203,213,225,0.6)) drop-shadow(0 0 60px rgba(203,213,225,0.4))'
-              }}>
+              <span className="shimmer-silver text-3d-silver drop-shadow-[0_0_40px_rgba(203,213,225,0.8)]">
                 COMMAND
               </span>
             </h1>
