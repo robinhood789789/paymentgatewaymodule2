@@ -127,82 +127,11 @@ const Index = () => {
               <Zap className="w-6 h-6 text-primary animate-pulse" />
               <div className="h-px w-12 bg-gradient-neon"></div>
             </div>
-            <div className="relative inline-block">
-              {/* Gold Particles for PAYMENT */}
-              {[...Array(15)].map((_, i) => (
-                <div
-                  key={`gold-${i}`}
-                  className="particle particle-gold"
-                  style={{
-                    width: `${Math.random() * 6 + 3}px`,
-                    height: `${Math.random() * 6 + 3}px`,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 30}%`,
-                    animationDelay: `${Math.random() * 4}s`,
-                    animationDuration: `${Math.random() * 3 + 3}s`,
-                    ['--particle-x' as string]: `${Math.random() * 60 - 30}px`,
-                  }}
-                />
-              ))}
-              {/* Silver Particles for COMMAND */}
-              {[...Array(15)].map((_, i) => (
-                <div
-                  key={`silver-${i}`}
-                  className="particle particle-silver"
-                  style={{
-                    width: `${Math.random() * 6 + 3}px`,
-                    height: `${Math.random() * 6 + 3}px`,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 30 + 50}%`,
-                    animationDelay: `${Math.random() * 4}s`,
-                    animationDuration: `${Math.random() * 3 + 3}s`,
-                    ['--particle-x' as string]: `${Math.random() * 60 - 30}px`,
-                  }}
-                />
-              ))}
-              <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter relative perspective-text">
-                <span className="text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]" style={{
-                  textShadow: `
-                    0 1px 0 #ccc,
-                    0 2px 0 #bbb,
-                    0 3px 0 #aaa,
-                    0 4px 0 #999,
-                    0 5px 0 #888,
-                    0 6px 0 #777,
-                    0 7px 0 #666,
-                    0 8px 0 #555,
-                    0 9px 0 #444,
-                    0 10px 0 #333,
-                    0 0 30px rgba(255,255,255,0.8),
-                    0 0 60px rgba(255,255,255,0.6),
-                    0 0 90px rgba(255,255,255,0.4)
-                  `
-                }}>
-                  PAYMENT
-                </span>
-                <br />
-                <span className="drop-shadow-[0_0_40px_rgba(90,90,90,0.8)]" style={{
-                  color: 'hsl(0 0% 35%)',
-                  textShadow: `
-                    0 1px 0 hsl(0 0% 32%),
-                    0 2px 0 hsl(0 0% 30%),
-                    0 3px 0 hsl(0 0% 28%),
-                    0 4px 0 hsl(0 0% 26%),
-                    0 5px 0 hsl(0 0% 24%),
-                    0 6px 0 hsl(0 0% 22%),
-                    0 7px 0 hsl(0 0% 20%),
-                    0 8px 0 hsl(0 0% 18%),
-                    0 9px 0 hsl(0 0% 16%),
-                    0 10px 0 hsl(0 0% 14%),
-                    0 0 30px rgba(90,90,90,0.8),
-                    0 0 60px rgba(90,90,90,0.6),
-                    0 0 90px rgba(90,90,90,0.4)
-                  `
-                }}>
-                  COMMAND
-                </span>
-              </h1>
-            </div>
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter drop-shadow-2xl relative">
+              <span className="bg-gradient-neon bg-clip-text text-transparent">PAYMENT</span>
+              <br />
+              <span className="text-white/90">COMMAND</span>
+            </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-1 w-20 bg-primary shadow-neon"></div>
               <div className="h-1 w-4 bg-secondary"></div>
