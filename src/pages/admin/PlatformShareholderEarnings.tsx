@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -24,6 +25,7 @@ export default function PlatformShareholderEarnings() {
   const [dateRange, setDateRange] = useState<"today" | "week" | "month" | "custom">("month");
   const [customStartDate, setCustomStartDate] = useState<Date>();
   const [customEndDate, setCustomEndDate] = useState<Date>();
+  const [selectedShareholders, setSelectedShareholders] = useState<Set<string>>(new Set());
 
   // Calculate date range based on selection
   const getDateRange = () => {
@@ -63,6 +65,7 @@ export default function PlatformShareholderEarnings() {
     setDateRange("month");
     setCustomStartDate(undefined);
     setCustomEndDate(undefined);
+    setSelectedShareholders(new Set());
   };
 
   // Check if any filter is active
@@ -150,7 +153,9 @@ export default function PlatformShareholderEarnings() {
 
   // Export detailed CSV with transactions
   const handleExportDetailedCSV = async () => {
-    if (!filteredShareholders || filteredShareholders.length === 0) {
+    const shareholdersToExport = filteredShareholders?.filter(sh => selectedShareholders.has(sh.id));
+    
+    if (!shareholdersToExport || shareholdersToExport.length === 0) {
       return;
     }
 
@@ -160,18 +165,18 @@ export default function PlatformShareholderEarnings() {
       ? `${format(startDate, "d MMM yyyy", { locale: th })} - ${format(endDate, "d MMM yyyy", { locale: th })}`
       : "ทั้งหมด";
 
-    // Create summary file (same as regular export)
+    // Create summary file for selected shareholders only
     const summaryMetadata = [
       `"รายงานรายได้ Shareholder (สรุป)"`,
       `"วันที่ส่งออก:","${exportDate}"`,
       `"ช่วงเวลา:","${dateRangeText}"`,
-      `"จำนวนรายการ:","${filteredShareholders.length}"`,
-      `"รายได้รวม:","${formatCurrency(platformSummary.totalEarnings)}"`,
+      `"จำนวนรายการที่เลือก:","${shareholdersToExport.length}"`,
+      `"รายได้รวมที่เลือก:","${formatCurrency(shareholdersToExport.reduce((sum, sh) => sum + sh.total_earnings, 0))}"`,
       "",
     ];
 
     const summaryHeaders = ["ชื่อ Shareholder", "Email", "Public ID", "สถานะ", "จำนวนลูกค้า", "รายได้ทั้งหมด (บาท)", "รอจ่าย (บาท)", "จ่ายแล้ว (บาท)"];
-    const summaryRows = filteredShareholders.map((sh) => [
+    const summaryRows = shareholdersToExport.map((sh) => [
       sh.full_name || "-",
       sh.email || "-",
       sh.profile?.public_id || "-",
@@ -191,8 +196,8 @@ export default function PlatformShareholderEarnings() {
     const BOM = "\uFEFF";
     zip.file("00_summary.csv", BOM + summaryContent);
 
-    // Fetch and create detailed files for each shareholder
-    for (const shareholder of filteredShareholders) {
+    // Fetch and create detailed files for each selected shareholder
+    for (const shareholder of shareholdersToExport) {
       try {
         let query = supabase
           .from("shareholder_earnings")
@@ -363,6 +368,32 @@ export default function PlatformShareholderEarnings() {
     return matchesSearch && matchesTab;
   });
 
+  // Handle select/deselect all shareholders
+  const handleSelectAll = () => {
+    if (filteredShareholders) {
+      setSelectedShareholders(new Set(filteredShareholders.map(sh => sh.id)));
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedShareholders(new Set());
+  };
+
+  // Toggle individual shareholder selection
+  const toggleShareholderSelection = (shareholderId: string) => {
+    const newSelection = new Set(selectedShareholders);
+    if (newSelection.has(shareholderId)) {
+      newSelection.delete(shareholderId);
+    } else {
+      newSelection.add(shareholderId);
+    }
+    setSelectedShareholders(newSelection);
+  };
+
+  // Check if all filtered shareholders are selected
+  const allSelected = filteredShareholders && filteredShareholders.length > 0 && 
+    filteredShareholders.every(sh => selectedShareholders.has(sh.id));
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -393,9 +424,12 @@ export default function PlatformShareholderEarnings() {
               <Download className="w-4 h-4 mr-2" />
               ส่งออกแบบสรุป
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportDetailedCSV}>
+            <DropdownMenuItem 
+              onClick={handleExportDetailedCSV}
+              disabled={selectedShareholders.size === 0}
+            >
               <Download className="w-4 h-4 mr-2" />
-              ส่งออกแบบละเอียด (ZIP)
+              ส่งออกแบบละเอียด ({selectedShareholders.size} ที่เลือก)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -569,6 +603,36 @@ export default function PlatformShareholderEarnings() {
             </TabsList>
           </Tabs>
 
+          {/* Selection controls */}
+          {filteredShareholders && filteredShareholders.length > 0 && (
+            <div className="flex items-center gap-2 mb-4 p-3 bg-muted/50 rounded-lg">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    handleSelectAll();
+                  } else {
+                    handleDeselectAll();
+                  }
+                }}
+              />
+              <span className="text-sm font-medium">
+                เลือกทั้งหมด ({selectedShareholders.size} / {filteredShareholders.length})
+              </span>
+              {selectedShareholders.size > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeselectAll}
+                  className="ml-auto"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  ยกเลิกการเลือก
+                </Button>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -579,6 +643,18 @@ export default function PlatformShareholderEarnings() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleSelectAll();
+                        } else {
+                          handleDeselectAll();
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Shareholder</TableHead>
                   <TableHead>Public ID</TableHead>
                   <TableHead>สถานะ</TableHead>
@@ -592,6 +668,12 @@ export default function PlatformShareholderEarnings() {
               <TableBody>
                 {filteredShareholders.map((shareholder) => (
                   <TableRow key={shareholder.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedShareholders.has(shareholder.id)}
+                        onCheckedChange={() => toggleShareholderSelection(shareholder.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{shareholder.full_name}</div>
