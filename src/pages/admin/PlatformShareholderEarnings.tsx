@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight, CalendarIcon } from "lucide-react";
+import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight, CalendarIcon, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { th } from "date-fns/locale";
@@ -53,6 +53,18 @@ export default function PlatformShareholderEarnings() {
   };
 
   const { start: startDate, end: endDate } = getDateRange();
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedTab("all");
+    setDateRange("month");
+    setCustomStartDate(undefined);
+    setCustomEndDate(undefined);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = searchTerm !== "" || selectedTab !== "all" || dateRange !== "month";
 
   // Fetch all shareholders with their earnings
   const { data: shareholders, isLoading } = useQuery({
@@ -301,6 +313,18 @@ export default function PlatformShareholderEarnings() {
                   </PopoverContent>
                 </Popover>
               </>
+            )}
+
+            {/* Reset Filters Button */}
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={handleResetFilters}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                รีเซ็ตตัวกรอง
+              </Button>
             )}
           </div>
 
