@@ -66,6 +66,64 @@ export default function PlatformShareholderEarnings() {
   // Check if any filter is active
   const hasActiveFilters = searchTerm !== "" || selectedTab !== "all" || dateRange !== "month";
 
+  // Export to CSV function
+  const handleExportCSV = () => {
+    if (!filteredShareholders || filteredShareholders.length === 0) {
+      return;
+    }
+
+    // Prepare CSV headers
+    const headers = [
+      "ชื่อ Shareholder",
+      "Email",
+      "Public ID",
+      "สถานะ",
+      "จำนวนลูกค้า",
+      "รายได้ทั้งหมด (บาท)",
+      "รอจ่าย (บาท)",
+      "จ่ายแล้ว (บาท)",
+    ];
+
+    // Prepare CSV rows
+    const rows = filteredShareholders.map((sh) => [
+      sh.full_name || "-",
+      sh.email || "-",
+      sh.profile?.public_id || "-",
+      sh.status === "active" ? "Active" : "Inactive",
+      sh.active_clients_count || 0,
+      (sh.total_earnings / 100).toFixed(2),
+      (sh.pending_earnings / 100).toFixed(2),
+      (sh.paid_earnings / 100).toFixed(2),
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    // Add BOM for Thai language support in Excel
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // Create download link
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    
+    // Generate filename with date range
+    const dateRangeStr = startDate && endDate
+      ? `_${format(startDate, "yyyyMMdd")}-${format(endDate, "yyyyMMdd")}`
+      : `_${format(new Date(), "yyyyMMdd")}`;
+    link.setAttribute("download", `shareholder_earnings${dateRangeStr}.csv`);
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Fetch all shareholders with their earnings
   const { data: shareholders, isLoading } = useQuery({
     queryKey: ["platform-shareholders-earnings"],
@@ -162,9 +220,13 @@ export default function PlatformShareholderEarnings() {
             )}
           </p>
         </div>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={handleExportCSV}
+          disabled={!filteredShareholders || filteredShareholders.length === 0}
+        >
           <Download className="w-4 h-4 mr-2" />
-          ส่งออก CSV
+          ส่งออก CSV ({filteredShareholders?.length || 0} รายการ)
         </Button>
       </div>
 
