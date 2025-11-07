@@ -8,13 +8,51 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
-import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatCurrency, cn } from "@/lib/utils";
+import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight, CalendarIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { th } from "date-fns/locale";
 
 export default function PlatformShareholderEarnings() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");
+  const [dateRange, setDateRange] = useState<"today" | "week" | "month" | "custom">("month");
+  const [customStartDate, setCustomStartDate] = useState<Date>();
+  const [customEndDate, setCustomEndDate] = useState<Date>();
+
+  // Calculate date range based on selection
+  const getDateRange = () => {
+    const now = new Date();
+    switch (dateRange) {
+      case "today":
+        return {
+          start: startOfDay(now),
+          end: endOfDay(now),
+        };
+      case "week":
+        return {
+          start: startOfWeek(now, { weekStartsOn: 0 }),
+          end: endOfWeek(now, { weekStartsOn: 0 }),
+        };
+      case "month":
+        return {
+          start: startOfMonth(now),
+          end: endOfMonth(now),
+        };
+      case "custom":
+        return {
+          start: customStartDate ? startOfDay(customStartDate) : undefined,
+          end: customEndDate ? endOfDay(customEndDate) : undefined,
+        };
+      default:
+        return { start: undefined, end: undefined };
+    }
+  };
+
+  const { start: startDate, end: endDate } = getDateRange();
 
   // Fetch all shareholders with their earnings
   const { data: shareholders, isLoading } = useQuery({
@@ -38,13 +76,23 @@ export default function PlatformShareholderEarnings() {
     },
   });
 
-  // Fetch earnings summary
+  // Fetch earnings summary with date filter
   const { data: earnings } = useQuery({
-    queryKey: ["platform-earnings-summary"],
+    queryKey: ["platform-earnings-summary", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shareholder_earnings")
-        .select("shareholder_id, amount, status");
+        .select("shareholder_id, amount, status, created_at");
+
+      // Apply date filter if available
+      if (startDate) {
+        query = query.gte("created_at", startDate.toISOString());
+      }
+      if (endDate) {
+        query = query.lte("created_at", endDate.toISOString());
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
@@ -95,6 +143,11 @@ export default function PlatformShareholderEarnings() {
           <h1 className="text-3xl font-bold">รายงานรายได้ Shareholder</h1>
           <p className="text-muted-foreground mt-2">
             ภาพรวมรายได้ของ Shareholder ทั้งหมดในระบบ
+            {startDate && endDate && (
+              <span className="ml-2 text-primary font-medium">
+                ({format(startDate, "d MMM", { locale: th })} - {format(endDate, "d MMM yyyy", { locale: th })})
+              </span>
+            )}
           </p>
         </div>
         <Button variant="outline">
@@ -169,8 +222,9 @@ export default function PlatformShareholderEarnings() {
           <CardDescription>รายละเอียดรายได้ของแต่ละ Shareholder</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+          {/* Filters Row */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex-1 min-w-[250px]">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -181,6 +235,73 @@ export default function PlatformShareholderEarnings() {
                 />
               </div>
             </div>
+
+            {/* Date Range Filter */}
+            <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="เลือกช่วงเวลา" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">วันนี้</SelectItem>
+                <SelectItem value="week">สัปดาห์นี้</SelectItem>
+                <SelectItem value="month">เดือนนี้</SelectItem>
+                <SelectItem value="custom">กำหนดเอง</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Custom Date Range Pickers */}
+            {dateRange === "custom" && (
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !customStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customStartDate ? format(customStartDate, "d MMM yyyy", { locale: th }) : "วันที่เริ่มต้น"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customStartDate}
+                      onSelect={setCustomStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !customEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customEndDate ? format(customEndDate, "d MMM yyyy", { locale: th }) : "วันที่สิ้นสุด"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customEndDate}
+                      onSelect={setCustomEndDate}
+                      disabled={(date) => customStartDate ? date < customStartDate : false}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-4">
