@@ -10,11 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight, CalendarIcon, X } from "lucide-react";
+import { Search, TrendingUp, Wallet, Clock, Users, Download, ChevronRight, CalendarIcon, X, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { th } from "date-fns/locale";
+import JSZip from "jszip";
 
 export default function PlatformShareholderEarnings() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -146,6 +148,139 @@ export default function PlatformShareholderEarnings() {
     URL.revokeObjectURL(url);
   };
 
+  // Export detailed CSV with transactions
+  const handleExportDetailedCSV = async () => {
+    if (!filteredShareholders || filteredShareholders.length === 0) {
+      return;
+    }
+
+    const zip = new JSZip();
+    const exportDate = format(new Date(), "d MMMM yyyy HH:mm:ss", { locale: th });
+    const dateRangeText = startDate && endDate
+      ? `${format(startDate, "d MMM yyyy", { locale: th })} - ${format(endDate, "d MMM yyyy", { locale: th })}`
+      : "ทั้งหมด";
+
+    // Create summary file (same as regular export)
+    const summaryMetadata = [
+      `"รายงานรายได้ Shareholder (สรุป)"`,
+      `"วันที่ส่งออก:","${exportDate}"`,
+      `"ช่วงเวลา:","${dateRangeText}"`,
+      `"จำนวนรายการ:","${filteredShareholders.length}"`,
+      `"รายได้รวม:","${formatCurrency(platformSummary.totalEarnings)}"`,
+      "",
+    ];
+
+    const summaryHeaders = ["ชื่อ Shareholder", "Email", "Public ID", "สถานะ", "จำนวนลูกค้า", "รายได้ทั้งหมด (บาท)", "รอจ่าย (บาท)", "จ่ายแล้ว (บาท)"];
+    const summaryRows = filteredShareholders.map((sh) => [
+      sh.full_name || "-",
+      sh.email || "-",
+      sh.profile?.public_id || "-",
+      sh.status === "active" ? "Active" : "Inactive",
+      sh.active_clients_count || 0,
+      (sh.total_earnings / 100).toFixed(2),
+      (sh.pending_earnings / 100).toFixed(2),
+      (sh.paid_earnings / 100).toFixed(2),
+    ]);
+
+    const summaryContent = [
+      ...summaryMetadata,
+      summaryHeaders.join(","),
+      ...summaryRows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const BOM = "\uFEFF";
+    zip.file("00_summary.csv", BOM + summaryContent);
+
+    // Fetch and create detailed files for each shareholder
+    for (const shareholder of filteredShareholders) {
+      try {
+        let query = supabase
+          .from("shareholder_earnings")
+          .select(`
+            *,
+            tenants!inner (
+              name,
+              user_id,
+              profiles:user_id (
+                public_id
+              )
+            )
+          `)
+          .eq("shareholder_id", shareholder.id)
+          .order("created_at", { ascending: false });
+
+        if (startDate) {
+          query = query.gte("created_at", startDate.toISOString());
+        }
+        if (endDate) {
+          query = query.lte("created_at", endDate.toISOString());
+        }
+
+        const { data: earningsData } = await query;
+
+        if (earningsData && earningsData.length > 0) {
+          const detailMetadata = [
+            `"รายละเอียดรายได้: ${shareholder.full_name}"`,
+            `"Public ID:","${shareholder.profile?.public_id || "-"}"`,
+            `"Email:","${shareholder.email}"`,
+            `"วันที่ส่งออก:","${exportDate}"`,
+            `"ช่วงเวลา:","${dateRangeText}"`,
+            `"จำนวนธุรกรรม:","${earningsData.length}"`,
+            `"รายได้รวม:","${formatCurrency(shareholder.total_earnings)}"`,
+            "",
+          ];
+
+          const detailHeaders = [
+            "วันที่",
+            "ลูกค้า",
+            "Public ID ลูกค้า",
+            "ยอดฐาน (บาท)",
+            "อัตรา (%)",
+            "รายได้ (บาท)",
+            "สถานะ",
+          ];
+
+          const detailRows = earningsData.map((earning: any) => [
+            format(new Date(earning.created_at), "dd/MM/yyyy HH:mm"),
+            earning.tenants?.name || "-",
+            earning.tenants?.profiles?.public_id || "-",
+            (earning.base_amount / 100).toFixed(2),
+            earning.commission_rate,
+            (earning.amount / 100).toFixed(2),
+            earning.status === "paid" ? "จ่ายแล้ว" : earning.status === "pending" ? "รอจ่าย" : "ยกเลิก",
+          ]);
+
+          const detailContent = [
+            ...detailMetadata,
+            detailHeaders.join(","),
+            ...detailRows.map(row => row.map(cell => `"${cell}"`).join(","))
+          ].join("\n");
+
+          const publicId = shareholder.profile?.public_id || shareholder.id.substring(0, 8);
+          zip.file(`${publicId}_${shareholder.full_name?.replace(/[^a-zA-Z0-9ก-๙]/g, "_") || "unnamed"}.csv`, BOM + detailContent);
+        }
+      } catch (error) {
+        console.error(`Error fetching earnings for shareholder ${shareholder.id}:`, error);
+      }
+    }
+
+    // Generate ZIP file
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(zipBlob);
+    link.setAttribute("href", url);
+    
+    const dateRangeStr = startDate && endDate
+      ? `_${format(startDate, "yyyyMMdd")}-${format(endDate, "yyyyMMdd")}`
+      : `_${format(new Date(), "yyyyMMdd")}`;
+    link.setAttribute("download", `shareholder_earnings_detailed${dateRangeStr}.zip`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Fetch all shareholders with their earnings
   const { data: shareholders, isLoading } = useQuery({
     queryKey: ["platform-shareholders-earnings"],
@@ -242,14 +377,28 @@ export default function PlatformShareholderEarnings() {
             )}
           </p>
         </div>
-        <Button 
-          variant="outline"
-          onClick={handleExportCSV}
-          disabled={!filteredShareholders || filteredShareholders.length === 0}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          ส่งออก CSV ({filteredShareholders?.length || 0} รายการ)
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline"
+              disabled={!filteredShareholders || filteredShareholders.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              ส่งออก CSV ({filteredShareholders?.length || 0} รายการ)
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleExportCSV}>
+              <Download className="w-4 h-4 mr-2" />
+              ส่งออกแบบสรุป
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportDetailedCSV}>
+              <Download className="w-4 h-4 mr-2" />
+              ส่งออกแบบละเอียด (ZIP)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Platform Summary */}
