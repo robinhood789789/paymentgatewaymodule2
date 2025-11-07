@@ -22,8 +22,10 @@ export default function ShareholderEarnings() {
         .select(`
           *,
           tenants (
-            name
-          )
+            name,
+            user_id
+          ),
+          profiles!inner(public_id)
         `)
         .eq("shareholder_id", shareholder.id)
         .order("created_at", { ascending: false });
@@ -123,6 +125,7 @@ export default function ShareholderEarnings() {
                   <TableRow>
                     <TableHead>วันที่</TableHead>
                     <TableHead>ลูกค้า</TableHead>
+                    <TableHead>Public ID</TableHead>
                     <TableHead>ยอดฐาน</TableHead>
                     <TableHead>อัตรา (%)</TableHead>
                     <TableHead>รายได้</TableHead>
@@ -137,6 +140,11 @@ export default function ShareholderEarnings() {
                           {new Date(earning.created_at).toLocaleDateString("th-TH")}
                         </TableCell>
                         <TableCell>{earning.tenants?.name || "ไม่ระบุ"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono">
+                            {earning.profiles?.public_id || "N/A"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>{formatCurrency(earning.base_amount)}</TableCell>
                         <TableCell className="font-semibold text-primary">
                           {earning.commission_rate}%
@@ -165,7 +173,7 @@ export default function ShareholderEarnings() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         ยังไม่มีรายได้
                       </TableCell>
                     </TableRow>
