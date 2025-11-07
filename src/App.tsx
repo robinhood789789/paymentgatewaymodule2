@@ -84,6 +84,7 @@ import PlatformPartnerDetail from "./pages/admin/PlatformPartnerDetail";
 import PlatformPartnerPayouts from "./pages/admin/PlatformPartnerPayouts";
 import PlatformPartnerReports from "./pages/admin/PlatformPartnerReports";
 import PlatformPartnerSettings from "./pages/admin/PlatformPartnerSettings";
+import PlatformShareholderEarnings from "./pages/admin/PlatformShareholderEarnings";
 import TransactionDashboard from "./pages/TransactionDashboard";
 
 const queryClient = new QueryClient();
@@ -399,6 +400,16 @@ function AppContent() {
           <SuperAdminRoute>
             <PlatformLayout>
               <PlatformPartnerSettings />
+            </PlatformLayout>
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/platform/shareholder-earnings"
+        element={
+          <SuperAdminRoute>
+            <PlatformLayout>
+              <PlatformShareholderEarnings />
             </PlatformLayout>
           </SuperAdminRoute>
         }
