@@ -21,11 +21,13 @@ export default function ShareholderEarnings() {
         .from("shareholder_earnings")
         .select(`
           *,
-          tenants (
+          tenants!inner (
             name,
-            user_id
-          ),
-          profiles!inner(public_id)
+            user_id,
+            profiles:user_id (
+              public_id
+            )
+          )
         `)
         .eq("shareholder_id", shareholder.id)
         .order("created_at", { ascending: false });
@@ -142,7 +144,7 @@ export default function ShareholderEarnings() {
                         <TableCell>{earning.tenants?.name || "ไม่ระบุ"}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="font-mono">
-                            {earning.profiles?.public_id || "N/A"}
+                            {earning.tenants?.profiles?.public_id || "N/A"}
                           </Badge>
                         </TableCell>
                         <TableCell>{formatCurrency(earning.base_amount)}</TableCell>
