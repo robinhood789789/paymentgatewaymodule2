@@ -72,6 +72,27 @@ export default function PlatformShareholderEarnings() {
       return;
     }
 
+    // Prepare metadata
+    const exportDate = format(new Date(), "d MMMM yyyy HH:mm:ss", { locale: th });
+    const dateRangeText = startDate && endDate
+      ? `${format(startDate, "d MMM yyyy", { locale: th })} - ${format(endDate, "d MMM yyyy", { locale: th })}`
+      : "ทั้งหมด";
+    const statusFilterText = selectedTab === "all" ? "ทั้งหมด" : selectedTab === "active" ? "Active" : "Inactive";
+    const totalRecords = filteredShareholders.length;
+
+    // Metadata rows
+    const metadata = [
+      `"รายงานรายได้ Shareholder"`,
+      `"วันที่ส่งออก:","${exportDate}"`,
+      `"ช่วงเวลา:","${dateRangeText}"`,
+      `"สถานะ:","${statusFilterText}"`,
+      `"จำนวนรายการ:","${totalRecords}"`,
+      `"รายได้รวม:","${formatCurrency(platformSummary.totalEarnings)}"`,
+      `"รายได้รอจ่าย:","${formatCurrency(platformSummary.pendingEarnings)}"`,
+      `"รายได้ที่จ่ายแล้ว:","${formatCurrency(platformSummary.paidEarnings)}"`,
+      "", // Empty line separator
+    ];
+
     // Prepare CSV headers
     const headers = [
       "ชื่อ Shareholder",
@@ -96,8 +117,9 @@ export default function PlatformShareholderEarnings() {
       (sh.paid_earnings / 100).toFixed(2),
     ]);
 
-    // Create CSV content
+    // Create CSV content with metadata
     const csvContent = [
+      ...metadata,
       headers.join(","),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
     ].join("\n");
